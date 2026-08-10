@@ -52,4 +52,8 @@ See [Development](docs/DEVELOPMENT.md), [Architecture](docs/ARCHITECTURE.md), [U
 
 ## Current release boundary
 
-This is a source-only handoff snapshot. No `.app`, `.exe`, installer, portable build, or other compiled release artifact belongs in the repository at this stage. A public license, Windows CI build, code-signing policy, and GitHub Release workflow remain future decisions.
+This is a source-only handoff snapshot. No `.app`, `.exe`, installer, portable build, or other compiled release artifact belongs in the repository at this stage. Windows CI, code-signing policy, and the GitHub Release workflow remain future decisions.
+
+## License
+
+Kainnne LumaReader is free and open-source software released under the [MIT License](LICENSE). You may use, modify, fork, and redistribute it under the license terms.

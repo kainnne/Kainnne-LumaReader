@@ -42,7 +42,7 @@ Continue from this order:
 4. Add GitHub Actions for macOS and Windows without publishing release artifacts yet.
 5. Build and test the Windows NSIS and portable targets on a Windows runner.
 6. Rebuild and test the macOS DMG and ZIP targets on macOS.
-7. Decide the repository license and signing/notarization policy.
+7. Decide the signing and notarization policy. The source code is already licensed under MIT.
 8. Publish downloadable executables only after both platforms pass launch, folder-selection, persistence, rendering, and shutdown tests.
 
 ## Product intent

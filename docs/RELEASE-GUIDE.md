@@ -5,7 +5,7 @@ Public releases are outside the Phase 1 boundary. This document records the inte
 ## Before the first public release
 
 1. Approve the local interface and folder-selection workflow.
-2. Select an open-source or source-available license.
+2. Confirm that release notices include the existing MIT License.
 3. Add GitHub Actions jobs for macOS and Windows.
 4. Build and test macOS DMG and ZIP artifacts.
 5. Build and test Windows NSIS and portable artifacts on Windows.
