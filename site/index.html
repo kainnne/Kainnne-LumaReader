@@ -4,38 +4,112 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fff7fb" />
-    <meta name="description" content="Kainnne LumaReader — a local-first Markdown desktop reader for macOS and Windows." />
+    <meta
+      name="description"
+      content="Kainnne LumaReader — a calm, local-first Markdown desktop reader for macOS and Windows."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
     <title>Kainnne LumaReader</title>
   </head>
   <body>
     <main>
       <header>
-        <a class="brand" href="https://kainnne.com">Kainnne</a>
-        <a class="source" href="https://github.com/kainnne/Kainnne-LumaReader">Source ↗</a>
+        <a class="brand" href="https://kainnne.com" aria-label="Kainnne home">Kainnne</a>
+        <a class="site-link shimmer-button" href="https://kainnne.com">
+          <span>Kainnne.com</span><span aria-hidden="true">↗</span>
+        </a>
       </header>
 
-      <section class="hero">
+      <section class="hero" aria-labelledby="page-title">
         <img class="app-icon" src="./icon.png" alt="LumaReader application icon" />
         <p class="type">MARKDOWN DESKTOP READER</p>
-        <h1>LumaReader</h1>
-        <div class="platforms"><span>macOS</span><span>Windows</span><span>Open source</span></div>
-        <div class="actions">
-          <a class="primary" href="https://github.com/kainnne/Kainnne-LumaReader">GitHub ↗</a>
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/blob/main/docs/USER-GUIDE.md">User guide ↗</a>
+        <h1 id="page-title">LumaReader</h1>
+        <p class="tagline">Your local Markdown library, made for reading.</p>
+
+        <div class="download-actions" aria-label="Desktop downloads">
+          <button class="download-button shimmer-button" type="button" data-download="macOS" aria-describedby="download-note">
+            <span class="button-copy">
+              <small>DOWNLOAD FOR</small>
+              <strong>macOS</strong>
+            </span>
+            <span class="button-status">Coming soon</span>
+          </button>
+          <button class="download-button shimmer-button" type="button" data-download="Windows" aria-describedby="download-note">
+            <span class="button-copy">
+              <small>DOWNLOAD FOR</small>
+              <strong>Windows</strong>
+            </span>
+            <span class="button-status">Coming soon</span>
+          </button>
         </div>
+
+        <p class="download-note" id="download-note" role="status" aria-live="polite">
+          Desktop downloads are not available yet.
+        </p>
+
+        <a class="github-button" href="https://github.com/kainnne/Kainnne-LumaReader">
+          <span>View on GitHub</span><span aria-hidden="true">↗</span>
+        </a>
       </section>
 
-      <section class="features" aria-label="LumaReader features">
-        <article><span>01</span><strong>Local folders</strong><p>Files stay on your computer.</p></article>
-        <article><span>02</span><strong>Markdown + MDX</strong><p>KaTeX, Mermaid and code highlighting.</p></article>
-        <article><span>03</span><strong>Media preview</strong><p>Images, audio and video.</p></article>
-        <article><span>04</span><strong>Reading modes</strong><p>Vertical, horizontal and paged.</p></article>
-        <article><span>05</span><strong>20 palettes</strong><p>Light and dark appearances.</p></article>
-        <article><span>06</span><strong>11 languages</strong><p>Interface localization.</p></article>
+      <section class="overview" aria-labelledby="overview-title">
+        <div class="overview-heading">
+          <p class="section-label">WHAT IT DOES</p>
+          <h2 id="overview-title" data-copy="overview-title">A focused reader for the files you already own.</h2>
+          <p class="overview-lead" data-copy="overview-lead">
+            Point LumaReader at a folder and turn it into a calm, visual document library. Nothing needs to be imported or uploaded.
+          </p>
+          <button class="language-toggle" type="button" aria-pressed="false" aria-label="Switch feature description to Traditional Chinese">
+            <span class="language-option is-active" data-language-option="en">EN</span>
+            <span class="toggle-track" aria-hidden="true"><span></span></span>
+            <span class="language-option" data-language-option="zh">繁中</span>
+          </button>
+        </div>
+
+        <ol class="feature-list">
+          <li>
+            <span class="feature-number">01</span>
+            <div>
+              <strong data-copy="feature-1-title">Make any folder your library.</strong>
+              <p data-copy="feature-1-body">Browse Markdown files and nested folders from one clean, collapsible sidebar.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-number">02</span>
+            <div>
+              <strong data-copy="feature-2-title">Shape the reading experience.</strong>
+              <p data-copy="feature-2-body">Adjust text size, choose from 20 palettes, switch light or dark appearance, and read vertically, horizontally, or page by page.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-number">03</span>
+            <div>
+              <strong data-copy="feature-3-title">Render more than basic Markdown.</strong>
+              <p data-copy="feature-3-body">Open Markdown and MDX with tables, task lists, alerts, highlighted code, KaTeX mathematics, and Mermaid diagrams.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-number">04</span>
+            <div>
+              <strong data-copy="feature-4-title">Keep media in context.</strong>
+              <p data-copy="feature-4-body">Preview local images, audio, video, linked files, and reusable Markdown includes alongside your writing.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-number">05</span>
+            <div>
+              <strong data-copy="feature-5-title">Stay local, private, and flexible.</strong>
+              <p data-copy="feature-5-body">Your documents remain on your computer. The app supports macOS, Windows, and an interface available in 11 languages.</p>
+            </div>
+          </li>
+        </ol>
       </section>
     </main>
   </body>
