@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-palette="dream-rose">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="referrer" content="no-referrer" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' data: blob: http: https:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>Kainnne LumaReader</title>
+  <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
+  <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
+  <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
+  <link rel="stylesheet" href="styles.css?v=lumareader-2.1.0" />
+</head>
+<body>
+  <div id="app" class="app">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand-row">
+        <img class="brand-icon" src="assets/app-icon-source.png" alt="" />
+        <strong>Kainnne LumaReader</strong>
+      </div>
+
+      <div class="library-controls">
+        <button id="change-library" class="compact-button" type="button" data-i18n-title="changeLibrary" title="Change library folder">
+          <span aria-hidden="true">▰</span><span data-i18n="libraryButton">Library</span>
+        </button>
+        <button id="choose-file" class="compact-button" type="button" data-i18n-title="chooseFile" title="Choose local document">
+          <span aria-hidden="true">＋</span><span data-i18n="fileButton">File</span>
+        </button>
+        <input id="file-picker" type="file" accept=".md,.mkd,.mdx,.markdown,text/markdown,text/plain" hidden />
+        <div id="library-root" class="library-root" data-i18n="noLibraryShort">No folder selected</div>
+      </div>
+
+      <div class="open-source">
+        <div class="source-row">
+          <input id="source-input" type="url" inputmode="url" data-i18n-placeholder="sourcePlaceholder" placeholder="Paste file://, http:// or https://" autocomplete="off" spellcheck="false" />
+          <button id="open-source" class="icon-button" type="button" data-i18n-title="openSource" title="Open source" aria-label="Open source">↗</button>
+        </div>
+      </div>
+
+      <div class="sidebar-tools">
+        <input id="search" type="search" data-i18n-placeholder="search" placeholder="Search documents" autocomplete="off" />
+        <button id="refresh" class="icon-button" type="button" data-i18n-title="rescan" title="Rescan" aria-label="Rescan">↻</button>
+      </div>
+
+      <div class="sidebar-tabs" role="tablist" data-i18n-aria="navigation">
+        <button class="sidebar-tab active" id="files-tab" type="button" role="tab" aria-selected="true" data-panel="files-panel" data-i18n="files">Files</button>
+        <button class="sidebar-tab" id="outline-tab" type="button" role="tab" aria-selected="false" data-panel="outline-panel" data-i18n="outline">Outline</button>
+      </div>
+      <nav id="files-panel" class="sidebar-panel file-tree" role="tabpanel" data-i18n-aria="documents"></nav>
+      <nav id="outline-panel" class="sidebar-panel outline-tree" role="tabpanel" hidden data-i18n-aria="outline"></nav>
+    </aside>
+
+    <button id="sidebar-toggle" class="sidebar-toggle icon-button" type="button" data-i18n-title="collapseSidebar" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
+
+    <main id="reader-shell" class="reader-shell" data-mode="vertical" data-view="rendered">
+      <header class="reader-bar">
+        <div class="file-heading">
+          <h1 id="file-name">Kainnne LumaReader</h1>
+          <p id="file-path" data-i18n="ready">Ready</p>
+        </div>
+        <div class="reader-actions" data-i18n-aria="readerSettings">
+          <div class="mode-switch" role="group" data-i18n-aria="readingMode">
+            <button class="mode-button" data-mode="vertical" type="button" data-i18n="vertical">Vertical</button>
+            <button class="mode-button" data-mode="horizontal" type="button" data-i18n="horizontal">Horizontal</button>
+            <button class="mode-button" data-mode="paged" type="button" data-i18n="paged">Paged</button>
+          </div>
+          <button id="source-view" class="icon-button labeled-button" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
+          <button id="media-view" class="icon-button labeled-button" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
+          <button id="font-down" class="icon-button text-button" type="button" data-i18n-title="smallerText" title="Smaller text" aria-label="Smaller text">A−</button>
+          <button id="font-up" class="icon-button text-button" type="button" data-i18n-title="largerText" title="Larger text" aria-label="Larger text">A＋</button>
+
+          <div class="palette-control">
+            <button id="palette-toggle" class="palette-button" type="button" aria-haspopup="menu" aria-expanded="false" data-i18n-title="palette" title="Color palette">
+              <span id="palette-swatch" class="palette-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span id="palette-name">Dream Rose</span>
+              <span aria-hidden="true">⌄</span>
+            </button>
+            <div id="palette-menu" class="palette-menu" role="menu" hidden></div>
+          </div>
+
+          <label class="language-picker" data-i18n-title="language" title="Interface language">
+            <span aria-hidden="true">文</span>
+            <select id="language" aria-label="Interface language">
+              <option value="en">English</option>
+              <option value="zh-Hant">繁體中文</option>
+              <option value="zh-Hans">简体中文</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="ru">Русский</option>
+              <option value="it">Italiano</option>
+            </select>
+          </label>
+
+          <button id="theme" class="icon-button" type="button" data-i18n-title="darkMode" title="Dark mode" aria-label="Dark mode">◐</button>
+        </div>
+      </header>
+
+      <div class="progress-track" aria-hidden="true"><span id="progress"></span></div>
+      <div class="document-stage">
+        <article id="content" class="content prose"><p class="empty" data-i18n="empty">Choose a document to begin.</p></article>
+        <pre id="raw-source" class="raw-source" hidden><code></code></pre>
+      </div>
+      <div id="page-number" class="page-number" aria-live="polite"></div>
+      <div id="live-status" class="live-status" aria-live="polite"><span class="live-dot"></span><span data-i18n="live">Live</span></div>
+    </main>
+
+    <aside id="media-panel" class="media-panel" aria-hidden="true">
+      <header>
+        <div><strong data-i18n="mediaPreview">Media Preview</strong><span id="media-count"></span></div>
+        <button id="media-close" class="icon-button" type="button" data-i18n-title="close" title="Close" aria-label="Close">×</button>
+      </header>
+      <div id="media-grid" class="media-grid"></div>
+    </aside>
+    <div id="panel-scrim" class="panel-scrim" hidden></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </div>
+
+  <script src="vendor/marked/marked.umd.js?v=17.0.5"></script>
+  <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
+  <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
+  <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
+  <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
+  <script src="app.js?v=lumareader-2.1.0"></script>
+</body>
+</html>

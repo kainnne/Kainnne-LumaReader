@@ -1,0 +1,70 @@
+{
+  "name": "kainnne-lumareader",
+  "version": "2.1.0",
+  "description": "A polished, local-first Markdown reader for macOS and Windows.",
+  "main": "src/main.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": "Kainnne",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check renderer/app.js",
+    "pack:mac": "electron-builder --mac --dir --publish never",
+    "dist:mac": "electron-builder --mac dmg zip --publish never",
+    "dist:win": "electron-builder --win nsis portable --publish never"
+  },
+  "devDependencies": {
+    "electron": "43.3.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "afterPack": "scripts/after-pack.js",
+    "appId": "com.kainnne.lumareader",
+    "productName": "Kainnne LumaReader",
+    "protocols": [
+      {
+        "name": "Kainnne LumaReader",
+        "schemes": ["kainnne-lumareader"]
+      }
+    ],
+    "artifactName": "Kainnne-LumaReader-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "extendInfo": {
+        "NSDesktopFolderUsageDescription": "Kainnne LumaReader needs access only when you choose a library located on the Desktop.",
+        "NSDocumentsFolderUsageDescription": "Kainnne LumaReader needs access only when you choose a library located in Documents.",
+        "NSDownloadsFolderUsageDescription": "Kainnne LumaReader needs access only when you choose a library located in Downloads."
+      }
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
