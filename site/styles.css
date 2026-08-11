@@ -384,6 +384,41 @@ h2 {
   line-height: 1.65;
 }
 
+.format-list {
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  list-style: none;
+}
+
+.format-list li {
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(108px, 0.42fr) minmax(0, 1fr);
+  gap: 14px;
+  border: 0;
+}
+
+.format-list li:is(:hover, :focus-within) {
+  padding-left: 0;
+  border-color: transparent;
+}
+
+.format-list li > span:first-child {
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+}
+
+.format-list li > span:last-child {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 [data-copy] { transition: opacity 0.16s ease, transform 0.16s ease; }
 
 body.is-switching [data-copy] { opacity: 0; transform: translateY(3px); }
@@ -403,6 +438,7 @@ body.is-switching [data-copy] { opacity: 0; transform: translateY(3px); }
   .download-actions { grid-template-columns: 1fr; }
   .download-button { min-height: 84px; border-radius: 23px; }
   .feature-list li { grid-template-columns: 34px 1fr; gap: 9px; }
+  .format-list li { grid-template-columns: 1fr; gap: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
