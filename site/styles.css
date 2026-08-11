@@ -225,6 +225,15 @@ h1 {
   font-weight: 700;
 }
 
+.windows-notice {
+  width: min(620px, 100%);
+  margin: 4px 0 0;
+  color: #91838c;
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
 .download-note.is-notified { animation: note-pulse 0.42s ease; }
 
 @keyframes note-pulse {
@@ -233,7 +242,7 @@ h1 {
 
 .github-button {
   min-height: 48px;
-  margin-top: 18px;
+  margin-top: 20px;
   padding: 0 20px;
   display: inline-flex;
   align-items: center;
