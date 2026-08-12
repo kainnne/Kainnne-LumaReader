@@ -40,11 +40,13 @@ The existing `.gitignore` enforces the main build and dependency exclusions.
 
 1. Run `npm ci`, `npm run check`, and `npm test`.
 2. Run the Windows build workflow and inspect its smoke-test evidence.
-3. Build macOS with a local Developer ID Application identity and stored notarization credentials.
-4. Verify signatures, Hardened Runtime, entitlements, notarization, staple, Gatekeeper, install, launch, folder reading, editing, and shutdown.
+3. Run the `macOS signed release build` workflow on `macos-15` after its five repository secrets are configured.
+4. Inspect its signature, Universal architecture, staple, Gatekeeper, folder scan/open, and shutdown evidence; then install the downloaded DMG on the release Mac for the final visual/editing pass.
 5. Generate SHA-256 checksums from the final artifacts.
 6. Publish the matching `v1.0.0` tag and GitHub Release assets.
 7. Deploy the website and verify both direct-download buttons from the public site.
+
+The release Mac currently runs macOS 26.5.2 (25F84), where local package rehearsals reproduced an operating-system regression that synthesizes `com.apple.provenance` / Finder metadata during signing and makes `codesign` reject Electron bundles. Do not weaken signing or entitlements to bypass it. The target acceptance build therefore runs on GitHub's isolated `macos-15` runner; the resulting notarized artifact is downloaded back to the release Mac for final install and UI verification.
 
 ## Product intent
 
