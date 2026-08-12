@@ -1,0 +1,52 @@
+name: Windows release build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke-test:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check and test source
+        run: |
+          npm run check
+          npm test
+
+      - name: Build unsigned Windows x64 packages
+        run: npm run dist:win
+
+      - name: Smoke-test unpacked, installed, and portable builds
+        shell: pwsh
+        run: ./scripts/windows-smoke.ps1
+
+      - name: Record Windows checksums
+        shell: pwsh
+        run: |
+          Get-FileHash dist/*-Setup.exe, dist/*-Portable.exe -Algorithm SHA256 |
+            Select-Object Hash, Path |
+            ConvertTo-Json | Set-Content dist/windows-sha256.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kainnne-LumaReader-1.0.0-Windows-x64
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/Kainnne-LumaReader-1.0.0-Windows-x64-Setup.exe
+            dist/Kainnne-LumaReader-1.0.0-Windows-x64-Portable.exe
+            dist/windows-smoke-results.json
+            dist/windows-sha256.json

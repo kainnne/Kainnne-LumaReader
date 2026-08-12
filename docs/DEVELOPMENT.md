@@ -40,7 +40,7 @@ tests/       Local service tests and Markdown fixtures
 2. Run `npm test` for document service behavior and path boundaries.
 3. Run the Electron application against `tests/fixtures`.
 4. Inspect desktop and narrow responsive layouts.
-5. Build the unpacked application with `npm run pack:mac`.
+5. Build an unsigned unpacked Universal application with `npm run pack:mac:unsigned`.
 6. Launch the packaged application and verify that folder persistence survives a restart.
 
-Windows packaging is configured but is not considered verified until it runs on a Windows runner.
+`npm run pack:mac` and `npm run dist:mac` are production commands: they require a valid Developer ID Application identity and notarization credentials. Windows packaging and its runtime smoke test run on a genuine Windows x64 GitHub Actions runner.

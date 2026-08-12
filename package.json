@@ -1,7 +1,7 @@
 {
   "name": "kainnne-lumareader",
-  "version": "2.1.0",
-  "description": "A polished, local-first Markdown reader for macOS and Windows.",
+  "version": "1.0.0",
+  "description": "A local-first Markdown and plain-text reader for macOS and Windows.",
   "main": "src/main.js",
   "private": true,
   "license": "MIT",
@@ -10,10 +10,11 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check renderer/app.js",
-    "pack:mac": "electron-builder --mac --dir --publish never",
-    "dist:mac": "electron-builder --mac dmg zip --publish never",
-    "dist:win": "electron-builder --win nsis portable --publish never"
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js",
+    "pack:mac": "electron-builder --mac --universal --dir --publish never",
+    "pack:mac:unsigned": "electron-builder --mac --universal --dir --publish never -c.mac.identity=- -c.mac.hardenedRuntime=false -c.mac.notarize=false -c.mac.forceCodeSigning=false",
+    "dist:mac": "electron-builder --mac dmg zip --universal --publish never",
+    "dist:win": "electron-builder --win nsis portable --x64 --publish never"
   },
   "devDependencies": {
     "electron": "43.3.0",
@@ -23,26 +24,58 @@
     "afterPack": "scripts/after-pack.js",
     "appId": "com.kainnne.lumareader",
     "productName": "Kainnne LumaReader",
+    "copyright": "Copyright © 2026 Kainnne",
     "protocols": [
       {
         "name": "Kainnne LumaReader",
-        "schemes": ["kainnne-lumareader"]
+        "schemes": [
+          "kainnne-lumareader"
+        ]
       }
     ],
-    "artifactName": "Kainnne-LumaReader-${version}-${os}-${arch}.${ext}",
     "asar": true,
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "loadBrowserProcessSpecificV8Snapshot": false,
+      "grantFileProtocolExtraPrivileges": false
+    },
     "directories": {
       "output": "dist",
       "buildResources": "build"
     },
     "files": [
       "src/**/*",
-      "renderer/**/*",
+      "renderer/index.html",
+      "renderer/styles.css",
+      "renderer/reader-utils.js",
+      "renderer/app.js",
+      "renderer/multiformat-ui.js",
+      "renderer/assets/**/*",
+      "renderer/adapters/core.js",
+      "renderer/adapters/plain-text.js",
+      "renderer/adapters/index.js",
+      "renderer/vendor/marked/**/*",
+      "renderer/vendor/katex/**/*",
+      "renderer/vendor/mermaid/**/*",
+      "renderer/vendor/highlight/**/*",
+      "build/icon.png",
+      "docs/THIRD-PARTY-NOTICES.md",
       "package.json"
     ],
     "mac": {
       "icon": "build/icon.icns",
       "category": "public.app-category.productivity",
+      "artifactName": "Kainnne-LumaReader-${version}-macOS-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "notarize": true,
+      "forceCodeSigning": true,
       "target": [
         "dmg",
         "zip"
@@ -61,10 +94,16 @@
       ]
     },
     "nsis": {
+      "artifactName": "Kainnne-LumaReader-${version}-Windows-${arch}-Setup.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kainnne LumaReader"
+    },
+    "portable": {
+      "artifactName": "Kainnne-LumaReader-${version}-Windows-${arch}-Portable.${ext}"
     }
-  }
+  },
+  "dependencies": {}
 }

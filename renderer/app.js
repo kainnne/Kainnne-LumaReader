@@ -1,11 +1,13 @@
 (function () {
   "use strict";
 
-  const SUPPORTED_EXTENSIONS = [".md", ".mkd", ".mdx", ".markdown"];
+  const MARKDOWN_EXTENSIONS = [".md", ".mkd", ".mdx", ".markdown"];
+  const SUPPORTED_EXTENSIONS = [...MARKDOWN_EXTENSIONS, ".txt", ".log"];
+  const SUPPORTED_EXTENSION_SET = new Set(SUPPORTED_EXTENSIONS);
   const translations = {
-    en: { library:"Document Library",sourcePlaceholder:"Paste file://, http:// or https://",openSource:"Open source",chooseFile:"Choose local document",search:"Search documents",rescan:"Rescan",navigation:"Navigation",files:"Files",outline:"Outline",documents:"Documents",ready:"Ready",readerSettings:"Reader settings",readingMode:"Reading mode",vertical:"Vertical",horizontal:"Horizontal",paged:"Paged",source:"Source",media:"Media",smallerText:"Smaller text",largerText:"Larger text",palette:"Color palette",language:"Interface language",darkMode:"Dark mode",lightMode:"Light mode",fullscreen:"Fullscreen",empty:"Choose a document to begin.",mediaPreview:"Media Preview",close:"Close",live:"Live",loading:"Loading…",loadError:"Unable to open this document.",refreshed:"Document refreshed",renderedView:"Rendered view",sourceView:"Source view",noOutline:"No headings in this document.",noMedia:"No media in this document.",copy:"Copy",copied:"Copied",invalidSource:"Enter a file://, http://, https:// or local path.",noMatches:"No matching documents." },
-    "zh-Hant": { library:"文件資料庫",sourcePlaceholder:"貼上 file://、http:// 或 https://",openSource:"開啟來源",chooseFile:"選擇本機文件",search:"搜尋文件",rescan:"重新掃描",navigation:"導覽",files:"檔案",outline:"目錄",documents:"文件",ready:"準備完成",readerSettings:"閱讀設定",readingMode:"閱讀模式",vertical:"直式",horizontal:"橫式",paged:"翻頁",source:"原文",media:"媒體",smallerText:"縮小文字",largerText:"放大文字",palette:"色系",language:"介面語言",darkMode:"深色模式",lightMode:"明亮模式",fullscreen:"全螢幕",empty:"選擇一份文件開始閱讀。",mediaPreview:"媒體預覽",close:"關閉",live:"即時",loading:"載入中…",loadError:"無法開啟這份文件。",refreshed:"文件已更新",renderedView:"閱讀畫面",sourceView:"原始內容",noOutline:"這份文件沒有標題目錄。",noMedia:"這份文件沒有媒體。",copy:"複製",copied:"已複製",invalidSource:"請輸入 file://、http://、https:// 或本機路徑。",noMatches:"找不到符合的文件。" },
-    "zh-Hans": { library:"文档资料库",sourcePlaceholder:"粘贴 file://、http:// 或 https://",openSource:"打开来源",chooseFile:"选择本地文档",search:"搜索文档",rescan:"重新扫描",navigation:"导航",files:"文件",outline:"目录",documents:"文档",ready:"准备完成",readerSettings:"阅读设置",readingMode:"阅读模式",vertical:"纵向",horizontal:"横向",paged:"翻页",source:"原文",media:"媒体",smallerText:"缩小文字",largerText:"放大文字",palette:"配色",language:"界面语言",darkMode:"深色模式",lightMode:"浅色模式",fullscreen:"全屏",empty:"选择一份文档开始阅读。",mediaPreview:"媒体预览",close:"关闭",live:"实时",loading:"加载中…",loadError:"无法打开此文档。",refreshed:"文档已更新",renderedView:"阅读视图",sourceView:"原始内容",noOutline:"此文档没有标题目录。",noMedia:"此文档没有媒体。",copy:"复制",copied:"已复制",invalidSource:"请输入 file://、http://、https:// 或本地路径。",noMatches:"没有匹配的文档。" },
+    en: { library:"Document Library",sourcePlaceholder:"Paste file://, http:// or https://",openSource:"Open source",chooseFile:"Choose local document",search:"Search documents",rescan:"Rescan",navigation:"Navigation",files:"Files",outline:"Current File Outline",documents:"Documents",ready:"Ready",readerSettings:"Reader settings",readingMode:"Reading mode",vertical:"Vertical",horizontal:"Horizontal",paged:"Paged",pagedHorizontal:"Paged · Left / right",pagedVertical:"Paged · Up / down",pageNavigation:"Page navigation",previousPage:"Previous page",nextPage:"Next page",source:"Source",media:"Media",smallerText:"Smaller text",largerText:"Larger text",palette:"Color palette",language:"Interface language",darkMode:"Dark mode",lightMode:"Light mode",fullscreen:"Fullscreen",empty:"Choose a main folder as the root of your preview library.",mediaPreview:"Media Preview",close:"Close",live:"Live",loading:"Loading…",loadError:"Unable to open this document.",refreshed:"Document refreshed",renderedView:"Rendered view",sourceView:"Source view",noOutline:"No headings in this document.",noMedia:"No media in this document.",copy:"Copy",copied:"Copied",invalidSource:"Enter a file://, http://, https:// or local path.",noMatches:"No matching documents." },
+    "zh-Hant": { library:"文件資料庫",sourcePlaceholder:"貼上 file://、http:// 或 https://",openSource:"開啟來源",chooseFile:"選擇本機文件",search:"搜尋文件",rescan:"重新掃描",navigation:"導覽",files:"檔案",outline:"當前檔案目錄",documents:"文件",ready:"準備完成",readerSettings:"閱讀設定",readingMode:"閱讀模式",vertical:"直式",horizontal:"橫式",paged:"翻頁",pagedHorizontal:"翻頁・左右",pagedVertical:"翻頁・上下",pageNavigation:"翻頁導覽",previousPage:"上一頁",nextPage:"下一頁",source:"原文",media:"媒體",smallerText:"縮小文字",largerText:"放大文字",palette:"色系",language:"介面語言",darkMode:"深色模式",lightMode:"明亮模式",fullscreen:"全螢幕",empty:"選擇一個主資料夾作為根目錄進行預覽。",mediaPreview:"媒體預覽",close:"關閉",live:"即時",loading:"載入中…",loadError:"無法開啟這份文件。",refreshed:"文件已更新",renderedView:"閱讀畫面",sourceView:"原始內容",noOutline:"這份文件沒有標題目錄。",noMedia:"這份文件沒有媒體。",copy:"複製",copied:"已複製",invalidSource:"請輸入 file://、http://、https:// 或本機路徑。",noMatches:"找不到符合的文件。" },
+    "zh-Hans": { library:"文档资料库",sourcePlaceholder:"粘贴 file://、http:// 或 https://",openSource:"打开来源",chooseFile:"选择本地文档",search:"搜索文档",rescan:"重新扫描",navigation:"导航",files:"文件",outline:"当前文件目录",documents:"文档",ready:"准备完成",readerSettings:"阅读设置",readingMode:"阅读模式",vertical:"纵向",horizontal:"横向",paged:"翻页",pagedHorizontal:"翻页・左右",pagedVertical:"翻页・上下",pageNavigation:"翻页导航",previousPage:"上一页",nextPage:"下一页",source:"原文",media:"媒体",smallerText:"缩小文字",largerText:"放大文字",palette:"配色",language:"界面语言",darkMode:"深色模式",lightMode:"浅色模式",fullscreen:"全屏",empty:"选择一个主文件夹作为根目录进行预览。",mediaPreview:"媒体预览",close:"关闭",live:"实时",loading:"加载中…",loadError:"无法打开此文档。",refreshed:"文档已更新",renderedView:"阅读视图",sourceView:"原始内容",noOutline:"此文档没有标题目录。",noMedia:"此文档没有媒体。",copy:"复制",copied:"已复制",invalidSource:"请输入 file://、http://、https:// 或本地路径。",noMatches:"没有匹配的文档。" },
     ja: { library:"ドキュメントライブラリ",sourcePlaceholder:"file://、http://、https:// を貼り付け",openSource:"ソースを開く",chooseFile:"ローカル文書を選択",search:"文書を検索",rescan:"再スキャン",navigation:"ナビゲーション",files:"ファイル",outline:"目次",documents:"文書",ready:"準備完了",readerSettings:"閲覧設定",readingMode:"閲覧モード",vertical:"縦書き表示",horizontal:"横スクロール",paged:"ページ",source:"ソース",media:"メディア",smallerText:"文字を小さく",largerText:"文字を大きく",palette:"カラーテーマ",language:"表示言語",darkMode:"ダークモード",lightMode:"ライトモード",fullscreen:"全画面",empty:"文書を選択してください。",mediaPreview:"メディアプレビュー",close:"閉じる",live:"ライブ",loading:"読み込み中…",loadError:"文書を開けません。",refreshed:"文書を更新しました",renderedView:"プレビュー",sourceView:"ソース表示",noOutline:"見出しがありません。",noMedia:"メディアがありません。",copy:"コピー",copied:"コピーしました",invalidSource:"有効な URL またはローカルパスを入力してください。",noMatches:"一致する文書がありません。" },
     ko: { library:"문서 라이브러리",sourcePlaceholder:"file://, http:// 또는 https:// 붙여넣기",openSource:"소스 열기",chooseFile:"로컬 문서 선택",search:"문서 검색",rescan:"다시 검색",navigation:"탐색",files:"파일",outline:"목차",documents:"문서",ready:"준비됨",readerSettings:"읽기 설정",readingMode:"읽기 모드",vertical:"세로",horizontal:"가로",paged:"페이지",source:"원문",media:"미디어",smallerText:"글자 축소",largerText:"글자 확대",palette:"색상 테마",language:"인터페이스 언어",darkMode:"다크 모드",lightMode:"라이트 모드",fullscreen:"전체 화면",empty:"문서를 선택해 읽기를 시작하세요.",mediaPreview:"미디어 미리보기",close:"닫기",live:"실시간",loading:"불러오는 중…",loadError:"문서를 열 수 없습니다.",refreshed:"문서가 업데이트되었습니다",renderedView:"읽기 화면",sourceView:"원문 보기",noOutline:"제목 목차가 없습니다.",noMedia:"미디어가 없습니다.",copy:"복사",copied:"복사됨",invalidSource:"유효한 URL 또는 로컬 경로를 입력하세요.",noMatches:"일치하는 문서가 없습니다." },
     es: { library:"Biblioteca de documentos",sourcePlaceholder:"Pega file://, http:// o https://",openSource:"Abrir origen",chooseFile:"Elegir documento local",search:"Buscar documentos",rescan:"Volver a analizar",navigation:"Navegación",files:"Archivos",outline:"Índice",documents:"Documentos",ready:"Listo",readerSettings:"Ajustes de lectura",readingMode:"Modo de lectura",vertical:"Vertical",horizontal:"Horizontal",paged:"Páginas",source:"Fuente",media:"Medios",smallerText:"Texto más pequeño",largerText:"Texto más grande",palette:"Paleta de colores",language:"Idioma",darkMode:"Modo oscuro",lightMode:"Modo claro",fullscreen:"Pantalla completa",empty:"Elige un documento para comenzar.",mediaPreview:"Vista multimedia",close:"Cerrar",live:"En vivo",loading:"Cargando…",loadError:"No se puede abrir el documento.",refreshed:"Documento actualizado",renderedView:"Vista renderizada",sourceView:"Código fuente",noOutline:"No hay encabezados.",noMedia:"No hay contenido multimedia.",copy:"Copiar",copied:"Copiado",invalidSource:"Introduce una URL o ruta local válida.",noMatches:"No hay documentos coincidentes." },
@@ -17,9 +19,9 @@
   };
 
   const libraryTranslations = {
-    en:{libraryButton:"Library",fileButton:"File",changeLibrary:"Change library folder",noLibraryShort:"No folder selected",noLibrary:"Choose a library folder to begin.",libraryChanged:"Library folder updated",folderSelectionUnavailable:"Folder selection is available in the desktop app.",collapseSidebar:"Collapse sidebar",expandSidebar:"Expand sidebar"},
-    "zh-Hant":{libraryButton:"資料夾",fileButton:"檔案",changeLibrary:"更換資料庫資料夾",noLibraryShort:"尚未選擇資料夾",noLibrary:"請先選擇要閱讀的資料夾。",libraryChanged:"資料庫資料夾已更新",folderSelectionUnavailable:"資料夾選擇功能僅在桌面 App 提供。",collapseSidebar:"收合側欄",expandSidebar:"展開側欄"},
-    "zh-Hans":{libraryButton:"文件夹",fileButton:"文件",changeLibrary:"更换资料库文件夹",noLibraryShort:"尚未选择文件夹",noLibrary:"请先选择要阅读的文件夹。",libraryChanged:"资料库文件夹已更新",folderSelectionUnavailable:"文件夹选择功能仅在桌面 App 提供。",collapseSidebar:"收起侧栏",expandSidebar:"展开侧栏"},
+    en:{libraryButton:"Library",fileButton:"File",changeLibrary:"Change library folder",noLibraryShort:"No folder selected",noLibrary:"Choose a main folder as the root of your preview library.",rootFolderHint:"A broad folder such as Desktop is a good place to start.",noSupportedFiles:"No supported text files were found in this folder.",chooseAnotherRoot:"Choose another main folder, or enable .txt and .log if needed.",scanning:"Scanning folder… {seconds}s",scanEstimate:"Usually about 2–10 seconds.",scanEstimateLong:"Large folders can take longer; scanning will continue.",resizeSidebar:"Resize document sidebar",libraryChanged:"Library folder updated",folderSelectionUnavailable:"Folder selection is available in the desktop app.",collapseSidebar:"Collapse sidebar",expandSidebar:"Expand sidebar"},
+    "zh-Hant":{libraryButton:"資料夾",fileButton:"檔案",changeLibrary:"更換資料庫資料夾",noLibraryShort:"尚未選擇資料夾",noLibrary:"選擇一個主資料夾作為根目錄進行預覽。",rootFolderHint:"建議從 Desktop（桌面）等主要資料夾開始，之後可隨時更換。",noSupportedFiles:"這個資料夾內找不到支援的文字檔案。",chooseAnotherRoot:"請選擇其他主資料夾，或視需要勾選 .txt 與 .log。",scanning:"正在掃描資料夾… {seconds} 秒",scanEstimate:"通常約需 2–10 秒。",scanEstimateLong:"大型資料夾可能需要更久；掃描仍會繼續。",resizeSidebar:"調整文件側欄寬度",libraryChanged:"資料庫資料夾已更新",folderSelectionUnavailable:"資料夾選擇功能僅在桌面 App 提供。",collapseSidebar:"收合側欄",expandSidebar:"展開側欄"},
+    "zh-Hans":{libraryButton:"文件夹",fileButton:"文件",changeLibrary:"更换资料库文件夹",noLibraryShort:"尚未选择文件夹",noLibrary:"选择一个主文件夹作为根目录进行预览。",rootFolderHint:"建议从 Desktop（桌面）等主要文件夹开始，之后可随时更换。",noSupportedFiles:"此文件夹内没有支持的文本文件。",chooseAnotherRoot:"请选择其他主文件夹，或按需勾选 .txt 与 .log。",scanning:"正在扫描文件夹… {seconds} 秒",scanEstimate:"通常约需 2–10 秒。",scanEstimateLong:"大型文件夹可能需要更久；扫描仍会继续。",resizeSidebar:"调整文件侧栏宽度",libraryChanged:"资料库文件夹已更新",folderSelectionUnavailable:"文件夹选择功能仅在桌面 App 提供。",collapseSidebar:"收起侧栏",expandSidebar:"展开侧栏"},
     ja:{libraryButton:"フォルダ",fileButton:"ファイル",changeLibrary:"ライブラリフォルダを変更",noLibraryShort:"フォルダ未選択",noLibrary:"最初にライブラリフォルダを選択してください。",libraryChanged:"ライブラリを更新しました",folderSelectionUnavailable:"フォルダ選択はデスクトップアプリで利用できます。",collapseSidebar:"サイドバーを閉じる",expandSidebar:"サイドバーを開く"},
     ko:{libraryButton:"폴더",fileButton:"파일",changeLibrary:"라이브러리 폴더 변경",noLibraryShort:"선택한 폴더 없음",noLibrary:"먼저 라이브러리 폴더를 선택하세요.",libraryChanged:"라이브러리 폴더가 변경되었습니다",folderSelectionUnavailable:"폴더 선택은 데스크톱 앱에서 사용할 수 있습니다.",collapseSidebar:"사이드바 접기",expandSidebar:"사이드바 펼치기"},
     es:{libraryButton:"Carpeta",fileButton:"Archivo",changeLibrary:"Cambiar carpeta",noLibraryShort:"Sin carpeta",noLibrary:"Elige una carpeta para comenzar.",libraryChanged:"Carpeta actualizada",folderSelectionUnavailable:"La selección de carpetas está disponible en la aplicación de escritorio.",collapseSidebar:"Contraer barra lateral",expandSidebar:"Expandir barra lateral"},
@@ -28,6 +30,32 @@
     "pt-BR":{libraryButton:"Pasta",fileButton:"Arquivo",changeLibrary:"Alterar pasta",noLibraryShort:"Nenhuma pasta",noLibrary:"Escolha uma pasta para começar.",libraryChanged:"Pasta atualizada",folderSelectionUnavailable:"A seleção de pastas está disponível no aplicativo para desktop.",collapseSidebar:"Recolher barra lateral",expandSidebar:"Expandir barra lateral"},
     ru:{libraryButton:"Папка",fileButton:"Файл",changeLibrary:"Сменить папку",noLibraryShort:"Папка не выбрана",noLibrary:"Сначала выберите папку библиотеки.",libraryChanged:"Папка библиотеки обновлена",folderSelectionUnavailable:"Выбор папки доступен в настольном приложении.",collapseSidebar:"Свернуть панель",expandSidebar:"Развернуть панель"},
     it:{libraryButton:"Cartella",fileButton:"File",changeLibrary:"Cambia cartella",noLibraryShort:"Nessuna cartella",noLibrary:"Scegli una cartella per iniziare.",libraryChanged:"Cartella aggiornata",folderSelectionUnavailable:"La selezione delle cartelle è disponibile nell’app desktop.",collapseSidebar:"Comprimi barra laterale",expandSidebar:"Espandi barra laterale"}
+  };
+
+  const imageTranslations = {
+    en:{preview:"Image preview",actual:"Actual size",fit:"Fit to window",close:"Close image preview",open:"View full image",unavailable:"Image unavailable"},
+    "zh-Hant":{preview:"圖片預覽",actual:"原始尺寸",fit:"符合視窗",close:"關閉圖片預覽",open:"檢視完整圖片",unavailable:"圖片無法顯示"},
+    "zh-Hans":{preview:"图片预览",actual:"原始尺寸",fit:"适合窗口",close:"关闭图片预览",open:"查看完整图片",unavailable:"图片无法显示"}
+  };
+
+  const editorTranslations = {
+    en:{edit:"Edit",save:"Save",saved:"Saved",exitEdit:"Exit editing",discardEdits:"Discard edits",markdownEditor:"Markdown source editor",editing:"Editing Markdown · ⌘S / Ctrl+S to save",saveFailed:"Unable to save this document.",editUnavailable:"Only Markdown files inside the selected library can be edited.",unsavedBlocked:"Exit editing before opening another document.",discarded:"Edits discarded.",changedExternally:"This document changed outside LumaReader. Reopen it before saving."},
+    "zh-Hant":{edit:"編輯",save:"儲存",saved:"已儲存",exitEdit:"退出編輯",discardEdits:"放棄修改",markdownEditor:"Markdown 原文編輯器",editing:"正在編輯 Markdown · 按 ⌘S / Ctrl+S 儲存",saveFailed:"無法儲存這份文件。",editUnavailable:"只有所選資料庫內的 Markdown 文件可以編輯。",unsavedBlocked:"請先退出編輯介面，再開啟其他文件。",discarded:"已放棄這次修改。",changedExternally:"這份文件已在 LumaReader 外被修改，請重新開啟後再儲存。"},
+    "zh-Hans":{edit:"编辑",save:"保存",saved:"已保存",exitEdit:"退出编辑",discardEdits:"放弃修改",markdownEditor:"Markdown 原文编辑器",editing:"正在编辑 Markdown · 按 ⌘S / Ctrl+S 保存",saveFailed:"无法保存此文档。",editUnavailable:"只能编辑所选资料库内的 Markdown 文档。",unsavedBlocked:"请先退出编辑界面，再打开其他文档。",discarded:"已放弃此次修改。",changedExternally:"此文档已在 LumaReader 外被修改，请重新打开后再保存。"},
+    ja:{edit:"編集",save:"保存",saved:"保存済み",exitEdit:"編集を終了",discardEdits:"変更を破棄",markdownEditor:"Markdown ソースエディター",editing:"Markdown を編集中 · ⌘S / Ctrl+S で保存",saveFailed:"文書を保存できません。",editUnavailable:"選択したライブラリ内の Markdown のみ編集できます。",unsavedBlocked:"別の文書を開く前に編集を終了してください。",discarded:"編集内容を破棄しました。",changedExternally:"この文書は外部で変更されました。開き直してから保存してください。"},
+    ko:{edit:"편집",save:"저장",saved:"저장됨",exitEdit:"편집 종료",discardEdits:"변경 취소",markdownEditor:"Markdown 원문 편집기",editing:"Markdown 편집 중 · ⌘S / Ctrl+S로 저장",saveFailed:"문서를 저장할 수 없습니다.",editUnavailable:"선택한 라이브러리 안의 Markdown만 편집할 수 있습니다.",unsavedBlocked:"다른 문서를 열기 전에 편집을 종료하세요.",discarded:"편집 내용을 버렸습니다.",changedExternally:"문서가 외부에서 변경되었습니다. 다시 연 후 저장하세요."},
+    es:{edit:"Editar",save:"Guardar",saved:"Guardado",exitEdit:"Salir de edición",discardEdits:"Descartar cambios",markdownEditor:"Editor de código Markdown",editing:"Editando Markdown · ⌘S / Ctrl+S para guardar",saveFailed:"No se pudo guardar el documento.",editUnavailable:"Solo se puede editar Markdown dentro de la biblioteca seleccionada.",unsavedBlocked:"Sal de la edición antes de abrir otro documento.",discarded:"Cambios descartados.",changedExternally:"El documento cambió fuera de LumaReader. Vuelve a abrirlo antes de guardar."},
+    fr:{edit:"Modifier",save:"Enregistrer",saved:"Enregistré",exitEdit:"Quitter la modification",discardEdits:"Ignorer les modifications",markdownEditor:"Éditeur source Markdown",editing:"Modification du Markdown · ⌘S / Ctrl+S pour enregistrer",saveFailed:"Impossible d’enregistrer le document.",editUnavailable:"Seuls les fichiers Markdown de la bibliothèque sélectionnée sont modifiables.",unsavedBlocked:"Quittez la modification avant d’ouvrir un autre document.",discarded:"Modifications annulées.",changedExternally:"Ce document a été modifié hors de LumaReader. Rouvrez-le avant d’enregistrer."},
+    de:{edit:"Bearbeiten",save:"Speichern",saved:"Gespeichert",exitEdit:"Bearbeiten beenden",discardEdits:"Änderungen verwerfen",markdownEditor:"Markdown-Quelltexteditor",editing:"Markdown wird bearbeitet · ⌘S / Strg+S zum Speichern",saveFailed:"Dokument konnte nicht gespeichert werden.",editUnavailable:"Nur Markdown in der gewählten Bibliothek kann bearbeitet werden.",unsavedBlocked:"Bearbeitung vor dem Öffnen eines anderen Dokuments beenden.",discarded:"Änderungen verworfen.",changedExternally:"Das Dokument wurde außerhalb von LumaReader geändert. Vor dem Speichern neu öffnen."},
+    "pt-BR":{edit:"Editar",save:"Salvar",saved:"Salvo",exitEdit:"Sair da edição",discardEdits:"Descartar alterações",markdownEditor:"Editor de fonte Markdown",editing:"Editando Markdown · ⌘S / Ctrl+S para salvar",saveFailed:"Não foi possível salvar o documento.",editUnavailable:"Somente Markdown dentro da biblioteca selecionada pode ser editado.",unsavedBlocked:"Saia da edição antes de abrir outro documento.",discarded:"Alterações descartadas.",changedExternally:"O documento mudou fora do LumaReader. Abra-o novamente antes de salvar."},
+    ru:{edit:"Редактировать",save:"Сохранить",saved:"Сохранено",exitEdit:"Выйти из редактора",discardEdits:"Отменить изменения",markdownEditor:"Редактор исходного Markdown",editing:"Редактирование Markdown · ⌘S / Ctrl+S для сохранения",saveFailed:"Не удалось сохранить документ.",editUnavailable:"Можно редактировать только Markdown из выбранной библиотеки.",unsavedBlocked:"Выйдите из редактора перед открытием другого документа.",discarded:"Изменения отменены.",changedExternally:"Документ изменён вне LumaReader. Откройте его заново перед сохранением."},
+    it:{edit:"Modifica",save:"Salva",saved:"Salvato",exitEdit:"Esci dalla modifica",discardEdits:"Scarta modifiche",markdownEditor:"Editor sorgente Markdown",editing:"Modifica Markdown · ⌘S / Ctrl+S per salvare",saveFailed:"Impossibile salvare il documento.",editUnavailable:"È possibile modificare solo Markdown nella libreria selezionata.",unsavedBlocked:"Esci dalla modifica prima di aprire un altro documento.",discarded:"Modifiche annullate.",changedExternally:"Il documento è cambiato fuori da LumaReader. Riaprilo prima di salvare."}
+  };
+
+  const toolbarTooltips = {
+    en:{readingMode:"Choose reading mode",source:"View original Markdown",edit:"Edit Markdown source",save:"Save changes · Shortcut: ⌘S / Ctrl+S",saved:"Saved",exitEdit:"Exit editing",discardEdits:"Discard unsaved changes",media:"Open media preview",fontDown:"Smaller text · Shortcut: −",fontUp:"Larger text · Shortcut: +",palette:"Choose a palette",language:"Choose interface language",theme:"Light / dark mode"},
+    "zh-Hant":{readingMode:"選擇閱讀模式",source:"檢視 Markdown 原文",edit:"編輯 Markdown 原文",save:"儲存修改 · 快捷鍵：⌘S / Ctrl+S",saved:"已儲存",exitEdit:"退出編輯",discardEdits:"放棄未儲存修改",media:"開啟媒體預覽",fontDown:"縮小文字 · 快捷鍵：−",fontUp:"放大文字 · 快捷鍵：+",palette:"選擇色系",language:"選擇介面語言",theme:"亮色／暗色模式"},
+    "zh-Hans":{readingMode:"选择阅读模式",source:"查看 Markdown 原文",edit:"编辑 Markdown 原文",save:"保存修改 · 快捷键：⌘S / Ctrl+S",saved:"已保存",exitEdit:"退出编辑",discardEdits:"放弃未保存修改",media:"打开媒体预览",fontDown:"缩小文字 · 快捷键：−",fontUp:"放大文字 · 快捷键：+",palette:"选择配色",language:"选择界面语言",theme:"浅色／深色模式"}
   };
 
   const palettes = [
@@ -50,7 +78,9 @@
     ["champagne-gold","Champagne Gold","香檳金",["#fffaf0","#a88745","#eee3c8"]],
     ["silver-lilac","Silver Lilac","銀霧丁香",["#f7f6fa","#817893","#e5e1eb"]],
     ["aurora-teal","Aurora Teal","極光青",["#eff9f8","#2d8d8b","#d0ece9"]],
-    ["ink-paper","Ink Paper","墨色紙張",["#f5f5f2","#536b78","#dce3e5"]]
+    ["ink-paper","Ink Paper","墨色紙張",["#f5f5f2","#536b78","#dce3e5"]],
+    ["studio-white","Studio White","商務純白",["#ffffff","#52606f","#e7eaf0"]],
+    ["graphite","Graphite","石墨灰",["#17191c","#9da5b0","#393e45"]]
   ].map(([id,name,zh,colors]) => ({id,name,zh,colors}));
 
   const emojiMap = { smile:"😊",heart:"❤️",sparkles:"✨",star:"⭐",warning:"⚠️",info:"ℹ️",check:"✅",x:"❌",rocket:"🚀",bulb:"💡",book:"📖",memo:"📝",fire:"🔥",tada:"🎉",eyes:"👀",wave:"👋",thumbsup:"👍",coffee:"☕" };
@@ -58,53 +88,265 @@
     files: [], currentPath:"", currentSource:"", currentBase:"", currentName:"", sourceType:"", rawText:"", renderText:"",
     modifiedNs:null, fontSize:Number(localStorage.getItem("lumareader-font") || localStorage.getItem("md-reader-font") || 18),
     mode:localStorage.getItem("lumareader-mode") || localStorage.getItem("md-reader-mode") || "vertical",
+    pagedDirection:localStorage.getItem("lumareader-paged-direction")==="vertical"?"vertical":"horizontal",
     language:localStorage.getItem("lumareader-language") || "en", palette:localStorage.getItem("lumareader-palette") || localStorage.getItem("md-reader-palette") || "dream-rose",
     openFolders:new Set(), view:"rendered", liveTimer:null, lastWheelAt:0, media:[], libraryRoot:null,
-    sidebarCollapsed:localStorage.getItem("lumareader-sidebar-collapsed")==="true"
+    sidebarCollapsed:localStorage.getItem("lumareader-sidebar-collapsed")==="true",sidebarWidth:Number(localStorage.getItem("lumareader-sidebar-width")||320),
+    enabledExtensions:new Set(MARKDOWN_EXTENSIONS), typeCatalog:new Map(), documentKind:"markdown", activeAdapter:null,
+    documentRequestId:0, documentAbortController:null, libraryRefreshId:0,libraryScanId:0,libraryScanTimer:null,libraryScanStartedAt:0,
+    imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false
   };
 
   const $ = (selector) => document.querySelector(selector);
-  const treeEl = $("#files-panel"), outlineEl = $("#outline-panel"), contentEl = $("#content"), rawEl = $("#raw-source");
-  const searchEl = $("#search"), sourceInputEl = $("#source-input"), nameEl = $("#file-name"), pathEl = $("#file-path");
+  const treeEl = $("#files-panel"), outlineEl = $("#outline-panel"), contentEl = $("#content"), rawEl = $("#raw-source"), sourceEditorEl = $("#source-editor");
+  const searchEl = $("#search"), nameEl = $("#file-name"), pathEl = $("#file-path");
   const progressEl = $("#progress"), sidebarEl = $("#sidebar"), shellEl = $("#reader-shell"), pageNumberEl = $("#page-number");
+  const pagedNavigationEl = $("#paged-navigation"), pagePreviousEl = $("#page-previous"), pageNextEl = $("#page-next");
   const paletteToggleEl = $("#palette-toggle"), paletteMenuEl = $("#palette-menu"), paletteNameEl = $("#palette-name");
-  const languageEl = $("#language"), themeEl = $("#theme"), mediaPanelEl = $("#media-panel"), mediaGridEl = $("#media-grid"), scrimEl = $("#panel-scrim");
-  const libraryRootEl = $("#library-root"), sidebarToggleEl = $("#sidebar-toggle");
+  const languageEl = $("#language"), languageToggleEl = $("#language-toggle"), languageMenuEl = $("#language-menu"), languageNameEl = $("#language-name");
+  const themeEl = $("#theme"), mediaPanelEl = $("#media-panel"), mediaGridEl = $("#media-grid"), scrimEl = $("#panel-scrim");
+  const libraryRootEl = $("#library-root"), sidebarToggleEl = $("#sidebar-toggle"), sidebarResizerEl = $("#sidebar-resizer"), toolbarTooltipEl = $("#toolbar-tooltip");
+  const imageViewerEl = $("#image-viewer"), imageViewerImageEl = $("#image-viewer-image"), imageViewerCaptionEl = $("#image-viewer-caption"), imageViewerSizeEl = $("#image-viewer-size");
+  const readingModeEl = $("#reading-mode"), readingModeControlEl = $("#reading-mode-control"), readingModeToggleEl = $("#reading-mode-toggle"), readingModeMenuEl = $("#reading-mode-menu"), readingModeNameEl = $("#reading-mode-name"), readingModeIconEl = $("#reading-mode-icon");
 
-  function t(key) { return libraryTranslations[state.language]?.[key] || translations[state.language]?.[key] || libraryTranslations.en[key] || translations.en[key] || key; }
+  document.body.append(readingModeMenuEl,paletteMenuEl,languageMenuEl);
+
+  function t(key) { return editorTranslations[state.language]?.[key] || libraryTranslations[state.language]?.[key] || translations[state.language]?.[key] || editorTranslations.en[key] || libraryTranslations.en[key] || translations.en[key] || key; }
+  function imageT(key){return imageTranslations[state.language]?.[key]||imageTranslations.en[key]||key;}
+  function extensionOf(value){const match=String(value||"").toLowerCase().match(/(\.[a-z0-9]+)(?:[?#].*)?$/);return match?match[1]:"";}
+  function isMarkdown(value){return MARKDOWN_EXTENSIONS.includes(extensionOf(value));}
+  function currentFormatIsEnabled(file){const extension=file.extension||file.ext||extensionOf(file.path);return state.enabledExtensions.has(extension);}
+  function fallbackType(extension){
+    if(MARKDOWN_EXTENSIONS.includes(extension))return{kind:"markdown",mime:"text/markdown",binary:false,capabilities:{paged:true,source:true,media:true}};
+    if(extension===".txt")return{kind:"text",mime:"text/plain",binary:false,capabilities:{paged:true,source:true,wrap:true}};
+    if(extension===".log")return{kind:"log",mime:"text/plain",binary:false,capabilities:{paged:true,source:true,wrap:true}};
+    return null;
+  }
+  function persistPreferences(patch){
+    window.lumaDesktop?.setPreferences?.(patch).catch((error)=>console.warn("Unable to persist preferences",error));
+  }
+  async function hydratePreferences(){
+    const saved=await window.lumaDesktop?.getPreferences?.().catch(()=>null);
+    if(!saved)return {};
+    if(Number.isFinite(saved.fontSize))state.fontSize=saved.fontSize;
+    if(typeof saved.language==="string")state.language=saved.language;
+    if(typeof saved.palette==="string")state.palette=saved.palette;
+    if(typeof saved.readingMode==="string")state.mode=saved.readingMode;
+    if(["horizontal","vertical"].includes(saved.pagedDirection))state.pagedDirection=saved.pagedDirection;
+    if(typeof saved.sidebarCollapsed==="boolean")state.sidebarCollapsed=saved.sidebarCollapsed;
+    if(Number.isFinite(saved.sidebarWidth))state.sidebarWidth=saved.sidebarWidth;
+    if(saved.theme==="dark")document.documentElement.classList.add("dark");
+    if(saved.theme==="light")document.documentElement.classList.remove("dark");
+    return saved;
+  }
   function escapeHtml(value) { return String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
   function isDocumentHref(value) { return SUPPORTED_EXTENSIONS.some((ext) => value.toLowerCase().split(/[?#]/)[0].endsWith(ext)); }
   function paletteLabel(palette) { return state.language.startsWith("zh") ? palette.zh : palette.name; }
+  function toolbarTooltip(key){return toolbarTooltips[state.language]?.[key]||toolbarTooltips.en[key]||key;}
+  function updateToolbarTooltips(){document.querySelectorAll(".reader-actions [data-tooltip-key]").forEach((element)=>{element.dataset.tooltip=toolbarTooltip(element.dataset.tooltipKey);element.removeAttribute("title");element.setAttribute("aria-describedby","toolbar-tooltip");});}
+  function showToolbarTooltip(target){const copy=target?.dataset.tooltip;if(!copy)return;toolbarTooltipEl.textContent=copy;toolbarTooltipEl.hidden=false;const rect=target.getBoundingClientRect(),tip=toolbarTooltipEl.getBoundingClientRect();const left=Math.max(8,Math.min(innerWidth-tip.width-8,rect.left+(rect.width-tip.width)/2));toolbarTooltipEl.style.left=`${left}px`;toolbarTooltipEl.style.top=`${Math.max(8,rect.top-tip.height-7)}px`;}
+  function hideToolbarTooltip(){toolbarTooltipEl.hidden=true;}
 
   function applyLanguage(language) {
     state.language = translations[language] ? language : "en";
     localStorage.setItem("lumareader-language", state.language);
+    persistPreferences({language:state.language});
     document.documentElement.lang = state.language;
     languageEl.value = state.language;
+    languageNameEl.textContent = languageEl.selectedOptions[0]?.textContent || "English";
     document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
     document.querySelectorAll("[data-i18n-title]").forEach((el) => { const value=t(el.dataset.i18nTitle); el.title=value; if(el.matches("button")) el.setAttribute("aria-label",value); });
     document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label",t(el.dataset.i18nAria)));
-    updateThemeButton(); renderPaletteMenu(); buildOutline(); rebuildMedia(); updateLibraryDisplay(); updateSidebarToggle();
+    pagedNavigationEl.setAttribute("aria-label",t("pageNavigation"));pagePreviousEl.setAttribute("aria-label",t("previousPage"));pageNextEl.setAttribute("aria-label",t("nextPage"));
+    updateImageViewerLabels();updateThemeButton();updateEditorControls();updateToolbarTooltips();renderReadingModeMenu();renderPaletteMenu();renderLanguageMenu();buildOutline();rebuildMedia();renderTree();updateLibraryDisplay();updateSidebarToggle();if(state.libraryScanTimer)renderLibraryScanStatus();else if(!state.currentPath)renderLibraryPrompt();
   }
 
   function folderName(value){return String(value||"").split(/[\\/]/).filter(Boolean).pop()||t("noLibraryShort");}
   function updateLibraryDisplay(){libraryRootEl.textContent=state.libraryRoot?folderName(state.libraryRoot):t("noLibraryShort");libraryRootEl.title=state.libraryRoot||t("noLibraryShort");}
   function isNarrow(){return matchMedia("(max-width: 820px)").matches;}
-  function updateSidebarToggle(){const collapsed=isNarrow()?!sidebarEl.classList.contains("open"):state.sidebarCollapsed;const label=t(collapsed?"expandSidebar":"collapseSidebar");sidebarToggleEl.textContent=collapsed?"☰":"‹";sidebarToggleEl.title=label;sidebarToggleEl.setAttribute("aria-label",label);sidebarToggleEl.setAttribute("aria-expanded",collapsed?"false":"true");document.body.classList.toggle("sidebar-collapsed",!isNarrow()&&state.sidebarCollapsed);}
-  function toggleSidebar(){if(isNarrow()){sidebarEl.classList.toggle("open");document.body.classList.toggle("sidebar-open",sidebarEl.classList.contains("open"));}else{state.sidebarCollapsed=!state.sidebarCollapsed;localStorage.setItem("lumareader-sidebar-collapsed",String(state.sidebarCollapsed));}updateSidebarToggle();}
+  function clampSidebarWidth(value){return Math.round(Math.max(240,Math.min(520,Math.min(innerWidth-360,Number(value)||320))));}
+  function applySidebarWidth(width,{save=false}={}){state.sidebarWidth=clampSidebarWidth(width);document.documentElement.style.setProperty("--sidebar-width",`${state.sidebarWidth}px`);sidebarResizerEl.setAttribute("aria-valuemin","240");sidebarResizerEl.setAttribute("aria-valuemax",String(clampSidebarWidth(520)));sidebarResizerEl.setAttribute("aria-valuenow",String(state.sidebarWidth));if(save){localStorage.setItem("lumareader-sidebar-width",String(state.sidebarWidth));persistPreferences({sidebarWidth:state.sidebarWidth});}}
+  function updateSidebarToggle(){const collapsed=isNarrow()?!sidebarEl.classList.contains("open"):state.sidebarCollapsed;const label=t(collapsed?"expandSidebar":"collapseSidebar");sidebarToggleEl.textContent="☰";sidebarToggleEl.title=label;sidebarToggleEl.setAttribute("aria-label",label);sidebarToggleEl.setAttribute("aria-expanded",collapsed?"false":"true");document.body.classList.toggle("sidebar-collapsed",!isNarrow()&&state.sidebarCollapsed);}
+  function captureReadingPosition(){
+    if(state.editing)return{ratio:readingRatio()};
+    if(state.activeAdapter)return{ratio:readingRatio()};
+    const blocks=[...contentEl.children];if(!blocks.length)return{ratio:readingRatio()};
+    const horizontal=!usesVerticalAxis();const boundary=horizontal?contentEl.getBoundingClientRect().left+12:Math.max(0,$(".reader-bar")?.getBoundingClientRect().bottom||0)+12;
+    let index=blocks.findIndex((block)=>{const rect=block.getBoundingClientRect();return horizontal?rect.right>=boundary:rect.bottom>=boundary;});if(index<0)index=blocks.length-1;
+    const block=blocks[index];return{blockId:block.id||"",index,ratio:readingRatio()};
+  }
+  function restoreReadingPosition(position){
+    if(!position||typeof position==="number"){restoreReadingRatio(Number(position)||0);return;}
+    if(state.activeAdapter){restoreReadingRatio(position.ratio||0);return;}
+    const block=(position.blockId&&document.getElementById(position.blockId))||contentEl.children[position.index];
+    if(!block){restoreReadingRatio(position.ratio||0);return;}
+    if(state.mode==="vertical")block.scrollIntoView({block:"start",behavior:"auto"});else if(usesVerticalAxis())contentEl.scrollTop=Math.max(0,block.offsetTop-parseFloat(getComputedStyle(contentEl).paddingTop||0));else contentEl.scrollLeft=Math.max(0,block.offsetLeft-parseFloat(getComputedStyle(contentEl).paddingLeft||0));
+    updatePagination();
+  }
+  function scheduleLayoutRefresh(position=captureReadingPosition()){requestAnimationFrame(()=>{updatePagination();clearTimeout(scheduleLayoutRefresh.timer);scheduleLayoutRefresh.timer=setTimeout(()=>restoreReadingPosition(position),240);});}
+  function toggleSidebar(){const position=captureReadingPosition();if(isNarrow()){sidebarEl.classList.toggle("open");document.body.classList.toggle("sidebar-open",sidebarEl.classList.contains("open"));}else{state.sidebarCollapsed=!state.sidebarCollapsed;localStorage.setItem("lumareader-sidebar-collapsed",String(state.sidebarCollapsed));persistPreferences({sidebarCollapsed:state.sidebarCollapsed});}updateSidebarToggle();scheduleLayoutRefresh(position);}
   function closeSidebarOnNarrow(){if(!isNarrow())return;sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");updateSidebarToggle();}
-  function showEmptyLibrary(){stopLiveRefresh();state.currentPath="";state.currentSource="";state.rawText="";state.renderText="";nameEl.textContent="Kainnne LumaReader";pathEl.textContent=t("ready");contentEl.innerHTML=`<p class="empty">${escapeHtml(t("noLibrary"))}</p>`;rawEl.querySelector("code").textContent="";buildOutline();rebuildMedia();}
+  function disposeActiveAdapter(){state.activeAdapter?.dispose?.();state.activeAdapter=null;contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");document.body.removeAttribute("data-document-kind");}
+  function renderLibraryPrompt(){
+    contentEl.replaceChildren();contentEl.classList.remove("library-scanning-active");
+    const button=document.createElement("button");button.type="button";button.className="root-folder-prompt";button.setAttribute("aria-label",t("changeLibrary"));
+    const icon=document.createElement("span");icon.className="root-folder-prompt-icon";icon.setAttribute("aria-hidden","true");icon.textContent="▰";
+    const heading=document.createElement("strong");heading.textContent=t(state.libraryRoot?"noSupportedFiles":"noLibrary");
+    const copy=document.createElement("span");copy.textContent=t(state.libraryRoot?"chooseAnotherRoot":"rootFolderHint");
+    button.append(icon,heading,copy);contentEl.classList.add("library-prompt-active");contentEl.appendChild(button);
+  }
+  function scanCopy(key,seconds){return t(key).replace("{seconds}",String(seconds));}
+  function renderLibraryScanStatus(seconds=Math.max(0,Math.floor((Date.now()-state.libraryScanStartedAt)/1000))){const label=scanCopy("scanning",seconds);pathEl.textContent=label;if(state.currentPath)return;contentEl.replaceChildren();contentEl.classList.remove("library-prompt-active");contentEl.classList.add("library-scanning-active");const section=document.createElement("section");section.className="library-scan-status";const spinner=document.createElement("span");spinner.className="library-scan-spinner";spinner.setAttribute("aria-hidden","true");const heading=document.createElement("strong");heading.textContent=label;const copy=document.createElement("span");copy.textContent=t(seconds>10?"scanEstimateLong":"scanEstimate");section.append(spinner,heading,copy);contentEl.appendChild(section);}
+  function startLibraryScan(){const scanId=++state.libraryScanId;clearInterval(state.libraryScanTimer);state.libraryScanStartedAt=Date.now();document.body.classList.add("scanning-library");renderLibraryScanStatus(0);state.libraryScanTimer=setInterval(()=>{if(scanId===state.libraryScanId)renderLibraryScanStatus();},250);return scanId;}
+  function stopLibraryScan(scanId){if(scanId!==state.libraryScanId)return;clearInterval(state.libraryScanTimer);state.libraryScanTimer=null;document.body.classList.remove("scanning-library");contentEl.classList.remove("library-scanning-active");pathEl.textContent=state.currentPath||t("ready");}
+  function cancelDocumentRequest(){state.documentRequestId+=1;state.documentAbortController?.abort();state.documentAbortController=null;setLoading(false);}
+  function showEmptyLibrary(){stopLiveRefresh();disposeActiveAdapter();resetEditorState();state.currentPath="";state.currentSource="";state.rawText="";state.renderText="";state.documentKind="markdown";cancelDocumentRequest();nameEl.textContent="Kainnne LumaReader";pathEl.textContent=t("ready");contentEl.hidden=false;rawEl.hidden=true;shellEl.dataset.view="rendered";renderLibraryPrompt();rawEl.querySelector("code").textContent="";buildOutline();rebuildMedia();updateEditorControls();}
+
+  function showUnsupportedDocument(name,extension,message){
+    stopLiveRefresh();disposeActiveAdapter();resetEditorState();contentEl.classList.remove("library-prompt-active");state.currentPath=name||"";state.currentName=name||"Unsupported file";state.documentKind="unsupported";
+    nameEl.textContent=state.currentName;pathEl.textContent=extension?`${extension.toUpperCase()} · Unsupported preview format`:"Unsupported preview format";
+    contentEl.replaceChildren();const section=document.createElement("section");section.className="document-message unsupported-document";
+    const badge=document.createElement("span");badge.className="document-message-badge";badge.textContent=extension?extension.slice(1).toUpperCase():"FILE";
+    const heading=document.createElement("h2");heading.textContent="This file is not available in Preview";
+    const copy=document.createElement("p");copy.textContent=message||"LumaReader keeps this format disabled so the file cannot execute or alter local content.";
+    section.append(badge,heading,copy);contentEl.appendChild(section);rawEl.hidden=true;contentEl.hidden=false;setView("rendered");
+  }
+
+  function updateToolbarCapabilities(kind,capabilities={}){
+    const markdown=kind==="markdown";const sourceButton=$("#source-view");
+    sourceButton.hidden=!(markdown||capabilities.source||capabilities.raw);
+    $("#media-view").hidden=!(markdown&&capabilities.media!==false);
+    const paged=markdown||Boolean(capabilities.paged);
+    readingModeControlEl.hidden=!paged;
+    updateEditorControls();
+  }
+
+  function canEditCurrentDocument(){return Boolean(window.lumaDesktop?.saveDocument&&state.sourceType==="project"&&state.documentKind==="markdown"&&isMarkdown(state.currentPath));}
+  function updateEditorControls(){
+    const editButton=$("#edit-document"),cancelButton=$("#cancel-edit"),label=$("#edit-document-label"),icon=$("#edit-document-icon"),editable=canEditCurrentDocument();
+    editButton.hidden=!editable&&!state.editing;
+    editButton.disabled=state.saving;
+    editButton.classList.toggle("is-editing",state.editing);
+    editButton.classList.toggle("is-dirty",state.editing&&state.editorDirty);
+    const editKey=state.editing?(state.editorSaved&&!state.editorDirty?"saved":"save"):"edit";
+    editButton.dataset.tooltipKey=editKey;
+    label.textContent=t(editKey);
+    icon.textContent=state.editing?"✓":"✎";
+    editButton.setAttribute("aria-label",t(editKey));
+    cancelButton.hidden=!state.editing;
+    cancelButton.disabled=state.saving;
+    const exitKey=state.editorDirty?"discardEdits":"exitEdit";
+    cancelButton.dataset.tooltipKey=exitKey;
+    cancelButton.setAttribute("aria-label",t(exitKey));
+    const sourceButton=$("#source-view");
+    sourceButton.setAttribute("aria-disabled",state.editing?"true":"false");
+    document.body.classList.toggle("editing-document",state.editing);
+    updateToolbarTooltips();
+  }
+  function resetEditorState(){state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;document.body.classList.remove("editing-document");}
+  function blockWhileEditing(){if(!state.editing)return false;showToast(t("unsavedBlocked"));sourceEditorEl.focus();return true;}
+  function beginEditing(){
+    if(!canEditCurrentDocument()){showToast(t("editUnavailable"));return;}
+    stopLiveRefresh();state.editing=true;state.editorDirty=false;state.editorSaved=false;sourceEditorEl.value=state.rawText;pathEl.textContent=t("editing");updateEditorControls();setView("source");
+    requestAnimationFrame(()=>{sourceEditorEl.focus();sourceEditorEl.setSelectionRange(0,0);});
+  }
+  async function leaveEditing({discarded=false}={}){const hadChanges=state.editorDirty;resetEditorState();updateEditorControls();pathEl.textContent=state.currentPath||t("ready");setView("rendered");if(state.documentKind==="markdown")await renderDocument(false);startLiveRefresh();if(discarded&&hadChanges)showToast(t("discarded"));}
+  async function saveEditing(){
+    if(!state.editing){showToast(t("editUnavailable"));return;}
+    if(state.saving)return;
+    if(!state.editorDirty){state.editorSaved=true;pathEl.textContent=t("saved");updateEditorControls();showToast(t("saved"));return;}
+    state.saving=true;updateEditorControls();
+    try{
+      const result=await window.lumaDesktop.saveDocument({path:state.currentPath,text:sourceEditorEl.value,expectedModifiedNs:state.modifiedNs});
+      if(!result?.ok){showToast(result?.code==="DOCUMENT_CHANGED"?t("changedExternally"):(result?.message||t("saveFailed")));return;}
+      state.rawText=result.document.text||"";state.renderText=result.document.renderText||result.document.text||"";state.modifiedNs=result.document.modifiedNs??state.modifiedNs;state.currentBase=result.document.base||state.currentBase;
+      rawEl.querySelector("code").textContent=state.rawText;state.editorDirty=false;state.editorSaved=true;pathEl.textContent=t("saved");
+      showToast(t("saved"));
+    }catch(error){showToast(error?.message||t("saveFailed"));}
+    finally{state.saving=false;updateEditorControls();}
+  }
+
+  async function sourceFromPayload(data){
+    const url=data.contentUrl||data.content?.url||"";
+    return {
+      name:data.name,path:data.path,kind:data.kind,extension:data.extension||data.ext,mime:data.mime,
+      text:data.renderText||data.text||null,url,
+      data:data.uploadedFile?async()=>data.uploadedFile.arrayBuffer():url?async()=>{const response=await fetch(url,{cache:"no-store"});if(!response.ok)throw new Error(`Unable to read binary content (${response.status})`);return response.arrayBuffer();}:null,
+      meta:data,
+    };
+  }
+
+  async function renderAdapterPayload(data,requestId=state.documentRequestId){
+    disposeActiveAdapter();const source=await sourceFromPayload(data);
+    const options={PlainTextAdapter:{pageSize:70}};
+    const adapter=window.LumaDocumentAdapters?.createAdapterFor?.(source,options);
+    if(!adapter)throw new Error(`No safe preview adapter is available for ${data.extension||data.kind}.`);
+    state.activeAdapter=adapter;contentEl.classList.remove("prose");contentEl.classList.add("adapter-content");document.body.dataset.documentKind=data.kind;
+    await adapter.loadDocument(source);
+    if(requestId!==state.documentRequestId){adapter.dispose?.();if(state.activeAdapter===adapter)state.activeAdapter=null;return false;}
+    await adapter.renderDocument(contentEl,{
+      mode:state.mode,
+      onPageChange:(page)=>{if(requestId!==state.documentRequestId||state.activeAdapter!==adapter)return;state.activeAdapter.currentPage=page;updatePagination();},
+      onPageModelChange:(model)=>{if(requestId!==state.documentRequestId||state.activeAdapter!==adapter)return;if(Number.isFinite(model?.current))state.activeAdapter.currentPage=model.current;updatePagination();},
+      onLayoutChange:()=>{if(requestId===state.documentRequestId&&state.activeAdapter===adapter)scheduleLayoutRefresh(readingRatio());},
+    });
+    if(requestId!==state.documentRequestId||state.activeAdapter!==adapter){adapter.dispose?.();return false;}
+    rawEl.querySelector("code").textContent=data.text||"";outlineEl.replaceChildren();const empty=document.createElement("p");empty.className="sidebar-empty";empty.textContent=t("noOutline");outlineEl.appendChild(empty);
+    state.media=[];mediaGridEl.replaceChildren();updateToolbarCapabilities(data.kind,data.capabilities||{});requestAnimationFrame(updatePagination);
+    return true;
+  }
+
+  const readingModeIcons={vertical:"↕",horizontal:"↔","paged-horizontal":"▤","paged-vertical":"▥"};
+  function currentReadingLayout(){return state.mode==="paged"?`paged-${state.pagedDirection}`:state.mode;}
+  function usesVerticalAxis(){return state.mode==="vertical"||(state.mode==="paged"&&state.pagedDirection==="vertical");}
+
+  function dropdownPairs(){return[[readingModeMenuEl,readingModeToggleEl],[paletteMenuEl,paletteToggleEl],[languageMenuEl,languageToggleEl]];}
+  function positionToolbarMenu(menu,toggle){
+    const rect=toggle.getBoundingClientRect();
+    menu.style.visibility="hidden";menu.hidden=false;
+    const width=menu.offsetWidth,height=Math.min(menu.scrollHeight,innerHeight-16);
+    const left=Math.max(8,Math.min(innerWidth-width-8,rect.left));
+    const below=rect.bottom+8,top=below+height<=innerHeight-8?below:Math.max(8,rect.top-height-8);
+    menu.style.left=`${left}px`;menu.style.top=`${top}px`;menu.style.maxHeight=`${Math.max(120,innerHeight-top-8)}px`;menu.style.visibility="";
+  }
+  function closeToolbarMenu(menu,toggle,{focus=false}={}){menu.hidden=true;toggle.setAttribute("aria-expanded","false");toggle.classList.remove("active");if(focus)toggle.focus();}
+  function closeToolbarMenus(except=null){dropdownPairs().forEach(([menu,toggle])=>{if(menu!==except)closeToolbarMenu(menu,toggle);});}
+  function openToolbarMenu(menu,toggle){closeToolbarMenus(menu);positionToolbarMenu(menu,toggle);toggle.setAttribute("aria-expanded","true");toggle.classList.add("active");}
+  function toggleToolbarMenu(menu,toggle){if(menu.hidden)openToolbarMenu(menu,toggle);else closeToolbarMenu(menu,toggle);}
+
+  function renderReadingModeMenu(){
+    readingModeMenuEl.replaceChildren();
+    const selected=currentReadingLayout();
+    ["vertical","horizontal","paged-horizontal","paged-vertical"].forEach((layout)=>{
+      const labelKey=layout==="paged-horizontal"?"pagedHorizontal":layout==="paged-vertical"?"pagedVertical":layout;
+      const button=document.createElement("button");button.type="button";button.className="toolbar-menu-option";button.setAttribute("role","menuitemradio");button.setAttribute("aria-checked",layout===selected?"true":"false");
+      button.innerHTML=`<span class="menu-option-icon" aria-hidden="true">${readingModeIcons[layout]}</span><span>${escapeHtml(t(labelKey))}</span><b aria-hidden="true">${layout===selected?"✓":""}</b>`;
+      button.addEventListener("click",()=>{setMode(layout);closeToolbarMenu(readingModeMenuEl,readingModeToggleEl,{focus:true});});readingModeMenuEl.appendChild(button);
+    });
+    const labelKey=selected==="paged-horizontal"?"pagedHorizontal":selected==="paged-vertical"?"pagedVertical":selected;
+    readingModeNameEl.textContent=selected==="paged-horizontal"?`${t("paged")} →`:selected==="paged-vertical"?`${t("paged")} ↓`:t(labelKey);readingModeIconEl.textContent=readingModeIcons[selected];
+  }
+
+  function renderLanguageMenu(){
+    languageMenuEl.replaceChildren();
+    [...languageEl.options].forEach((option)=>{
+      const button=document.createElement("button");button.type="button";button.className="toolbar-menu-option";button.setAttribute("role","menuitemradio");button.setAttribute("lang",option.value);button.setAttribute("aria-checked",option.value===state.language?"true":"false");
+      button.innerHTML=`<span class="menu-option-icon language-code" aria-hidden="true">${escapeHtml(option.value.split("-")[0].toUpperCase())}</span><span>${escapeHtml(option.textContent)}</span><b aria-hidden="true">${option.value===state.language?"✓":""}</b>`;
+      button.addEventListener("click",()=>{applyLanguage(option.value);closeToolbarMenu(languageMenuEl,languageToggleEl,{focus:true});});languageMenuEl.appendChild(button);
+    });
+    languageNameEl.textContent=languageEl.selectedOptions[0]?.textContent||"English";
+  }
 
   function renderPaletteMenu() {
     paletteMenuEl.innerHTML = "";
     palettes.forEach((palette) => {
-      const button=document.createElement("button"); button.type="button"; button.className="palette-option"; button.setAttribute("role","menuitemradio");
+      const button=document.createElement("button"); button.type="button"; button.className="toolbar-menu-option palette-option"; button.setAttribute("role","menuitemradio");
       button.setAttribute("aria-checked",palette.id===state.palette?"true":"false"); button.dataset.palette=palette.id;
       const swatches=palette.colors.map((color)=>`<i style="--swatch:${color}"></i>`).join("");
       button.innerHTML=`<span class="palette-swatch">${swatches}</span><span>${escapeHtml(paletteLabel(palette))}</span><b aria-hidden="true">${palette.id===state.palette?"✓":""}</b>`;
-      button.addEventListener("click",()=>{ applyPalette(palette.id,true); closePalette(); }); paletteMenuEl.appendChild(button);
+      button.addEventListener("click",()=>{applyPalette(palette.id,true);closeToolbarMenu(paletteMenuEl,paletteToggleEl,{focus:true});});paletteMenuEl.appendChild(button);
     });
     const selected=palettes.find((item)=>item.id===state.palette)||palettes[0]; paletteNameEl.textContent=paletteLabel(selected);
     const swatch=$("#palette-swatch"); swatch.innerHTML=selected.colors.map((color)=>`<i style="--swatch:${color}"></i>`).join("");
@@ -112,14 +354,14 @@
 
   function applyPalette(palette, rerender=false) {
     state.palette=palettes.some((item)=>item.id===palette)?palette:"dream-rose";
-    document.documentElement.dataset.palette=state.palette; localStorage.setItem("lumareader-palette",state.palette); renderPaletteMenu();
-    if(rerender&&state.renderText) renderDocument(true);
+    document.documentElement.dataset.palette=state.palette; localStorage.setItem("lumareader-palette",state.palette); persistPreferences({palette:state.palette}); renderPaletteMenu();
+    if(rerender&&state.renderText&&state.documentKind==="markdown") renderDocument(true);
   }
-  function openPalette(){ paletteMenuEl.hidden=false; paletteToggleEl.setAttribute("aria-expanded","true"); }
-  function closePalette(){ paletteMenuEl.hidden=true; paletteToggleEl.setAttribute("aria-expanded","false"); }
+  function openPalette(){openToolbarMenu(paletteMenuEl,paletteToggleEl);}
+  function closePalette(){closeToolbarMenu(paletteMenuEl,paletteToggleEl);}
 
-  function updateThemeButton(){ const dark=document.documentElement.classList.contains("dark"); themeEl.textContent=dark?"☀":"◐"; themeEl.dataset.i18nTitle=dark?"lightMode":"darkMode"; themeEl.title=t(dark?"lightMode":"darkMode"); themeEl.setAttribute("aria-label",themeEl.title); themeEl.classList.toggle("active",dark); $("#highlight-light").disabled=dark; $("#highlight-dark").disabled=!dark; }
-  function toggleTheme(){ const dark=document.documentElement.classList.toggle("dark"); localStorage.setItem("lumareader-theme",dark?"dark":"light"); updateThemeButton(); if(state.renderText)renderDocument(true); }
+  function updateThemeButton(){ const dark=document.documentElement.classList.contains("dark"),label=t(dark?"lightMode":"darkMode"); themeEl.textContent=dark?"☀":"◐"; themeEl.dataset.i18nTitle=dark?"lightMode":"darkMode"; themeEl.removeAttribute("title"); themeEl.setAttribute("aria-label",label); themeEl.classList.toggle("active",dark); $("#highlight-light").disabled=dark; $("#highlight-dark").disabled=!dark; }
+  function toggleTheme(){ const dark=document.documentElement.classList.toggle("dark"); localStorage.setItem("lumareader-theme",dark?"dark":"light"); persistPreferences({theme:dark?"dark":"light"}); updateThemeButton(); if(state.renderText&&state.documentKind==="markdown")renderDocument(true); }
 
   function showToast(message){ const toast=$("#toast"); toast.textContent=message; toast.hidden=false; clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>{toast.hidden=true;},2200); }
   function setLoading(loading){ document.body.classList.toggle("loading",loading); pathEl.textContent=loading?t("loading"):(state.currentPath||t("ready")); }
@@ -138,65 +380,132 @@
   function mediaUrl(raw){ const value=String(raw||"").trim().replace(/^<|>$/g,""); if(/^(data:image\/|blob:)/i.test(value))return value;if(/^https?:/i.test(value))return value;if(state.sourceType==="remote"){try{return new URL(value,state.currentBase).href;}catch{return"";}}if(state.sourceType==="upload")return"";const query=new URLSearchParams({path:value,from:state.currentPath});return`/api/media?${query}`; }
   function rewriteMedia(root){ root.querySelectorAll("img, audio, video").forEach((el)=>{const raw=el.getAttribute("src")||"";el.dataset.originalSrc=raw;const resolved=mediaUrl(raw);if(resolved)el.setAttribute("src",resolved);else el.removeAttribute("src");el.setAttribute("loading","lazy");}); }
 
+  function updateImageViewerLabels(){
+    $("#image-viewer-title").textContent=imageT("preview");
+    $("#image-viewer-close").setAttribute("aria-label",imageT("close"));
+    imageViewerSizeEl.textContent=imageT(state.imageViewerActual?"fit":"actual");
+  }
+  function setImageViewerActual(actual){state.imageViewerActual=Boolean(actual);imageViewerEl.classList.toggle("actual-size",state.imageViewerActual);updateImageViewerLabels();}
+  function closeImageViewer(){if(imageViewerEl.open)imageViewerEl.close();imageViewerImageEl.removeAttribute("src");imageViewerCaptionEl.textContent="";setImageViewerActual(false);}
+  function openImageViewer(image){
+    const src=image.currentSrc||image.src;if(!src)return;
+    const label=image.alt||image.title||image.dataset.originalSrc||imageT("preview");
+    imageViewerImageEl.src=src;imageViewerImageEl.alt=image.alt||"";imageViewerCaptionEl.textContent=label;setImageViewerActual(false);
+    if(!imageViewerEl.open)imageViewerEl.showModal();
+  }
+  function enhanceDocumentImages(root){
+    root.querySelectorAll("img").forEach((image)=>{
+      image.classList.add("document-image");image.tabIndex=0;image.setAttribute("role","button");image.setAttribute("aria-label",`${imageT("open")}: ${image.alt||image.dataset.originalSrc||imageT("preview")}`);image.title=imageT("open");
+      const classify=()=>{if(!image.naturalWidth||!image.naturalHeight)return;image.style.setProperty("--image-natural-width",`${image.naturalWidth}px`);const ratio=image.naturalHeight/image.naturalWidth;image.classList.toggle("image-portrait",ratio>1.25);image.classList.toggle("image-long",ratio>2.35);};
+      image.addEventListener("load",classify,{once:true});if(image.complete)classify();
+      image.addEventListener("error",()=>{image.classList.add("image-error");image.setAttribute("aria-label",imageT("unavailable"));if(!image.nextElementSibling?.classList.contains("image-error-note")){const note=document.createElement("small");note.className="image-error-note";note.textContent=`${imageT("unavailable")} · ${image.dataset.originalSrc||""}`;image.after(note);}},{once:true});
+      image.addEventListener("click",()=>openImageViewer(image));image.addEventListener("keydown",(event)=>{if(event.key!=="Enter"&&event.key!==" ")return;event.preventDefault();openImageViewer(image);});
+    });
+  }
+
   function enhanceTextNodes(root,abbreviations){ const terms=Object.keys(abbreviations).sort((a,b)=>b.length-a.length);const abbrPattern=terms.length?terms.map(escapeRegExp).join("|"):"(?!)";const pattern=new RegExp(`(:[a-z0-9_+-]+:|\\^[^\\^\\n]+\\^|~[^~\\n]+~|\\b(?:${abbrPattern})\\b)`,"gi");const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach((node)=>{if(node.parentElement?.closest("pre,code,kbd,a,.katex,.mermaid,abbr,sup,sub"))return;const text=node.nodeValue;if(!pattern.test(text)){pattern.lastIndex=0;return;}pattern.lastIndex=0;const fragment=document.createDocumentFragment();let last=0;for(const match of text.matchAll(pattern)){fragment.append(text.slice(last,match.index));const token=match[0];let element=null;if(/^:[a-z0-9_+-]+:$/i.test(token)&&emojiMap[token.slice(1,-1)])fragment.append(emojiMap[token.slice(1,-1)]);else if(token.startsWith("^")&&token.endsWith("^")){element=document.createElement("sup");element.textContent=token.slice(1,-1);}else if(token.startsWith("~")&&token.endsWith("~")){element=document.createElement("sub");element.textContent=token.slice(1,-1);}else{const key=terms.find((term)=>term.toLowerCase()===token.toLowerCase());if(key){element=document.createElement("abbr");element.title=abbreviations[key];element.textContent=token;}}if(element)fragment.append(element);else if(!emojiMap[token.slice(1,-1)])fragment.append(token);last=match.index+token.length;}fragment.append(text.slice(last));node.replaceWith(fragment);}); }
 
   function enhanceAlerts(root){ root.querySelectorAll("blockquote").forEach((quote)=>{const first=quote.querySelector("p");if(!first)return;const match=/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i.exec(first.textContent);if(!match)return;quote.classList.add("callout",`callout-${match[1].toLowerCase()}`);first.innerHTML=first.innerHTML.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i,`<strong>${match[1]}</strong><br>`);}); }
   function slugify(text,used){const base=text.trim().toLowerCase().replace(/\s+/g,"-").replace(/[^\p{L}\p{N}_-]/gu,"")||"section";let id=base,index=2;while(used.has(id))id=`${base}-${index++}`;used.add(id);return id;}
   function buildOutline(){ outlineEl.innerHTML="";const headings=[...contentEl.querySelectorAll("h1,h2,h3,h4")];if(!headings.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noOutline");outlineEl.appendChild(p);return;}headings.forEach((heading)=>{const button=document.createElement("button");button.type="button";button.className=`outline-item level-${heading.tagName.slice(1)}`;button.textContent=heading.textContent;button.addEventListener("click",()=>{heading.scrollIntoView({behavior:"smooth",block:"start"});sidebarEl.classList.remove("open");});outlineEl.appendChild(button);});}
 
-  async function renderDocument(preserve=false){ if(!state.renderText)return;const ratio=preserve?readingRatio():0;const extensions=extractExtensions(state.renderText);const protectedMath=protectMath(extensions.source);let html=window.marked.parse(protectSubscript(protectedMath.source),{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceAlerts(contentEl);
+  async function renderDocument(preserve=false,requestId=state.documentRequestId){ if(!state.renderText||requestId!==state.documentRequestId)return false;const position=preserve?captureReadingPosition():{ratio:0};closeImageViewer();if(state.activeAdapter)disposeActiveAdapter();state.documentKind="markdown";document.body.dataset.documentKind="markdown";contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");const extensions=extractExtensions(state.renderText);const protectedMath=protectMath(extensions.source);const normalizedStrong=window.LumaReaderUtils.normalizeStrongEmphasis(protectedMath.source);let html=window.marked.parse(protectSubscript(normalizedStrong),{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceDocumentImages(contentEl);enhanceAlerts(contentEl);
     if(window.renderMathInElement){try{window.renderMathInElement(contentEl,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:"ignore",ignoredTags:["script","noscript","style","textarea","pre","code"]});}catch(error){console.warn("KaTeX",error);}}
     enhanceTextNodes(contentEl,extensions.abbreviations);contentEl.querySelectorAll("pre code").forEach((code)=>{if(code.classList.contains("language-mermaid")){const container=document.createElement("div");container.className="mermaid";container.textContent=code.textContent;code.parentElement.replaceWith(container);return;}try{window.hljs?.highlightElement(code);}catch{}const pre=code.closest("pre");if(pre&&!pre.querySelector(".copy-code")){const copy=document.createElement("button");copy.type="button";copy.className="copy-code";copy.textContent=t("copy");copy.addEventListener("click",async()=>{await navigator.clipboard.writeText(code.textContent);copy.textContent=t("copied");setTimeout(()=>copy.textContent=t("copy"),1200);});pre.appendChild(copy);}});
     if(window.mermaid&&contentEl.querySelector(".mermaid")){try{window.mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:document.documentElement.classList.contains("dark")?"dark":"default",fontFamily:"-apple-system, BlinkMacSystemFont, sans-serif",suppressErrorRendering:true});await window.mermaid.run({nodes:contentEl.querySelectorAll(".mermaid")});}catch(error){console.warn("Mermaid",error);}}
-    rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();requestAnimationFrame(()=>{updatePagination();if(preserve)restoreReadingRatio(ratio);}); }
+    if(requestId!==state.documentRequestId)return false;
+    rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(preserve)restoreReadingPosition(position);});document.fonts?.ready?.then(()=>{if(requestId===state.documentRequestId)scheduleLayoutRefresh(position);});contentEl.querySelectorAll("img").forEach((image)=>image.addEventListener("load",()=>{if(requestId===state.documentRequestId)scheduleLayoutRefresh(captureReadingPosition());},{once:true}));return true; }
 
-  function rebuildMedia(){state.media=[...contentEl.querySelectorAll("img,audio,video")].map((el)=>({tag:el.tagName.toLowerCase(),src:el.currentSrc||el.src||"",alt:el.alt||el.title||""})).filter((item)=>item.src);mediaGridEl.innerHTML="";$("#media-count").textContent=state.media.length?` · ${state.media.length}`:"";if(!state.media.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noMedia");mediaGridEl.appendChild(p);return;}state.media.forEach((item,index)=>{const figure=document.createElement("figure");if(item.tag==="img"){const img=document.createElement("img");img.src=item.src;img.alt=item.alt;figure.appendChild(img);}else{const media=document.createElement(item.tag);media.src=item.src;media.controls=true;figure.appendChild(media);}const caption=document.createElement("figcaption");caption.textContent=item.alt||`${t("media")} ${index+1}`;figure.appendChild(caption);mediaGridEl.appendChild(figure);});}
+  function rebuildMedia(){state.media=[...contentEl.querySelectorAll("img,audio,video")].map((el)=>({tag:el.tagName.toLowerCase(),src:el.currentSrc||el.src||"",alt:el.alt||el.title||""})).filter((item)=>item.src);mediaGridEl.innerHTML="";$("#media-count").textContent=state.media.length?` · ${state.media.length}`:"";if(!state.media.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noMedia");mediaGridEl.appendChild(p);return;}state.media.forEach((item,index)=>{const figure=document.createElement("figure");if(item.tag==="img"){const img=document.createElement("img");img.src=item.src;img.alt=item.alt;img.loading="lazy";img.tabIndex=0;img.setAttribute("role","button");img.setAttribute("aria-label",`${imageT("open")}: ${item.alt||index+1}`);img.addEventListener("click",()=>openImageViewer(img));img.addEventListener("keydown",(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openImageViewer(img);}});figure.appendChild(img);}else{const media=document.createElement(item.tag);media.src=item.src;media.controls=true;figure.appendChild(media);}const caption=document.createElement("figcaption");caption.textContent=item.alt||`${t("media")} ${index+1}`;figure.appendChild(caption);mediaGridEl.appendChild(figure);});}
 
-  function treeFromFiles(files){const root={dirs:new Map(),files:[]};files.forEach((file)=>{const parts=file.path.split("/"),name=parts.pop();let node=root;parts.forEach((part)=>{if(!node.dirs.has(part))node.dirs.set(part,{dirs:new Map(),files:[]});node=node.dirs.get(part);});node.files.push({...file,displayName:name.replace(/\.(md|mkd|mdx|markdown)$/i,"")});});return root;}
-  function renderTreeNode(node,container,parentPath=""){[...node.dirs.entries()].sort((a,b)=>a[0].localeCompare(b[0],state.language,{numeric:true})).forEach(([name,child])=>{const folderPath=parentPath?`${parentPath}/${name}`:name,details=document.createElement("details");details.className="folder";details.open=state.openFolders.has(folderPath);details.addEventListener("toggle",()=>details.open?state.openFolders.add(folderPath):state.openFolders.delete(folderPath));const summary=document.createElement("summary");summary.textContent=name;details.appendChild(summary);const inner=document.createElement("div");inner.className="folder-contents";renderTreeNode(child,inner,folderPath);details.appendChild(inner);container.appendChild(details);});[...node.files].sort((a,b)=>a.displayName.localeCompare(b.displayName,state.language,{numeric:true})).forEach((file)=>{const button=document.createElement("button");button.type="button";button.className="file-button";button.textContent=file.displayName;button.title=file.path;button.classList.toggle("active",file.path===state.currentPath);button.addEventListener("click",()=>openProjectFile(file.path));container.appendChild(button);});}
-  function renderTree(){const query=searchEl.value.trim().toLocaleLowerCase(state.language);const visible=query?state.files.filter((file)=>file.path.toLocaleLowerCase(state.language).includes(query)):state.files;treeEl.innerHTML="";if(!visible.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=state.libraryRoot?t("noMatches"):t("noLibrary");treeEl.appendChild(p);return;}renderTreeNode(treeFromFiles(visible),treeEl);}
+  function treeFromFiles(files){const root={dirs:new Map(),files:[]};files.forEach((file)=>{const parts=file.path.split("/"),name=parts.pop(),extension=file.extension||file.ext||extensionOf(name);let node=root;parts.forEach((part)=>{if(!node.dirs.has(part))node.dirs.set(part,{dirs:new Map(),files:[]});node=node.dirs.get(part);});node.files.push({...file,extension,displayName:name});});return root;}
+  function renderTreeNode(node,container,parentPath="",autoOpenFolders=null){[...node.dirs.entries()].sort((a,b)=>a[0].localeCompare(b[0],state.language,{numeric:true})).forEach(([name,child])=>{const folderPath=parentPath?`${parentPath}/${name}`:name,details=document.createElement("details");details.className="folder";details.open=autoOpenFolders?autoOpenFolders.has(folderPath):state.openFolders.has(folderPath);details.addEventListener("toggle",()=>{if(autoOpenFolders)return;details.open?state.openFolders.add(folderPath):state.openFolders.delete(folderPath);});const summary=document.createElement("summary");summary.textContent=name;details.appendChild(summary);const inner=document.createElement("div");inner.className="folder-contents";renderTreeNode(child,inner,folderPath,autoOpenFolders);details.appendChild(inner);container.appendChild(details);});[...node.files].sort((a,b)=>a.displayName.localeCompare(b.displayName,state.language,{numeric:true})).forEach((file)=>{const button=document.createElement("button");button.type="button";button.className="file-button";button.textContent=file.displayName;button.title=file.path;button.classList.toggle("active",file.path===state.currentPath);button.addEventListener("click",()=>openProjectFile(file.path));container.appendChild(button);});}
+  function renderTree(){const query=searchEl.value.trim().toLocaleLowerCase(state.language);const enabled=state.files.filter(currentFormatIsEnabled);const visible=query?enabled.filter((file)=>file.path.toLocaleLowerCase(state.language).includes(query)):enabled;treeEl.innerHTML="";if(!visible.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=state.libraryRoot?t("noMatches"):t("noLibrary");treeEl.appendChild(p);return;}const autoOpenFolders=query?new Set(window.LumaReaderUtils.ancestorFolderPaths(visible)):null;renderTreeNode(treeFromFiles(visible),treeEl,"",autoOpenFolders);}
 
-  async function loadFiles(){const response=await fetch("/api/files",{cache:"no-store"}),data=await response.json();state.libraryRoot=data.root||null;state.files=data.files||[];updateLibraryDisplay();renderTree();return data;}
-  async function consumePayload(data,{preserve=false}={}){if(data.error)throw new Error(data.error);state.currentPath=data.path;state.currentSource=data.path;state.currentBase=data.base||"";state.currentName=data.name;state.sourceType=data.sourceType;state.rawText=data.text||"";state.renderText=data.renderText||data.text||"";state.modifiedNs=data.modifiedNs??null;nameEl.textContent=data.name;pathEl.textContent=data.path;sourceInputEl.value=data.sourceType==="project"?"":data.path;history.replaceState(null,"",`?source=${encodeURIComponent(data.path)}`);renderTree();setView("rendered");await renderDocument(preserve);startLiveRefresh();closeSidebarOnNarrow();}
-  async function openProjectFile(path,options={}){setLoading(true);try{const response=await fetch(`/api/file?path=${encodeURIComponent(path)}`,{cache:"no-store"});await consumePayload(await response.json(),options);}catch(error){showToast(`${t("loadError")} ${error.message}`);}finally{setLoading(false);}}
-  async function openSource(source,options={}){source=String(source||"").trim();if(!source){showToast(t("invalidSource"));return;}setLoading(true);try{const response=await fetch(`/api/open?source=${encodeURIComponent(source)}`,{cache:"no-store"});await consumePayload(await response.json(),options);}catch(error){showToast(`${t("loadError")} ${error.message}`);}finally{setLoading(false);}}
-  async function openUploadedFile(file){if(!file||!SUPPORTED_EXTENSIONS.some((ext)=>file.name.toLowerCase().endsWith(ext))){showToast(t("loadError"));return;}const text=await file.text();state.currentPath=file.name;state.currentSource="";state.currentBase="";state.currentName=file.name;state.sourceType="upload";state.rawText=text;state.renderText=text;state.modifiedNs=null;nameEl.textContent=file.name;pathEl.textContent=file.name;setView("rendered");await renderDocument(false);stopLiveRefresh();}
-  async function changeLibrary(){if(!window.lumaDesktop?.chooseLibrary){showToast(t("folderSelectionUnavailable"));return;}await window.lumaDesktop.chooseLibrary();}
+  async function loadFiles({showProgress=false}={}){const scanId=showProgress?startLibraryScan():null;try{const response=await fetch("/api/files",{cache:"no-store"}),data=await response.json();if(!response.ok||data.error)throw new Error(data.error||`Unable to scan library (${response.status})`);state.libraryRoot=data.root||null;state.files=data.files||[];state.typeCatalog=new Map((data.types||[]).map((type)=>[type.extension||type.ext,type]));updateLibraryDisplay();renderTree();return data;}finally{if(scanId!==null)stopLibraryScan(scanId);}}
+  function beginDocumentRequest(){state.documentRequestId+=1;state.documentAbortController?.abort();state.documentAbortController=new AbortController();stopLiveRefresh();setLoading(true);return{id:state.documentRequestId,signal:state.documentAbortController.signal};}
+  function requestIsCurrent(requestId){return requestId===state.documentRequestId;}
+  function finishDocumentRequest(requestId){if(!requestIsCurrent(requestId))return;state.documentAbortController=null;setLoading(false);}
+  async function consumePayload(data,{preserve=false,requestId=state.documentRequestId}={}){if(data.error)throw new Error(data.error);if(!requestIsCurrent(requestId))return false;resetEditorState();contentEl.classList.remove("library-prompt-active");state.currentPath=data.path;state.currentSource=data.path;state.currentBase=data.base||"";state.currentName=data.name;state.sourceType=data.sourceType;state.rawText=data.text||"";state.renderText=data.renderText||data.text||"";state.modifiedNs=data.modifiedNs??null;state.documentKind=data.kind||"markdown";nameEl.textContent=data.name;pathEl.textContent=data.path;history.replaceState(null,"",`?source=${encodeURIComponent(data.path)}`);renderTree();setView("rendered");if(state.documentKind==="markdown")await renderDocument(preserve,requestId);else await renderAdapterPayload(data,requestId);if(!requestIsCurrent(requestId))return false;updateEditorControls();startLiveRefresh();closeSidebarOnNarrow();return true;}
+  async function openProjectFile(path,options={}){if(blockWhileEditing())return;const request=beginDocumentRequest();try{const response=await fetch(`/api/file?path=${encodeURIComponent(path)}`,{cache:"no-store",signal:request.signal}),data=await response.json();if(!requestIsCurrent(request.id))return;if(!response.ok&&data.error)throw new Error(data.error);await consumePayload(data,{...options,requestId:request.id});}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(String(path).split("/").pop(),extensionOf(path),error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
+  async function openSource(source,options={}){if(blockWhileEditing())return;source=String(source||"").trim();if(!source){showToast(t("invalidSource"));return;}const request=beginDocumentRequest();try{const response=await fetch(`/api/open?source=${encodeURIComponent(source)}`,{cache:"no-store",signal:request.signal}),data=await response.json();if(!requestIsCurrent(request.id))return;if(!response.ok&&data.error)throw new Error(data.error);await consumePayload(data,{...options,requestId:request.id});}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(String(source).split(/[\\/]/).pop(),extensionOf(source),error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
+  async function openUploadedFile(file){if(!file||blockWhileEditing())return;const extension=extensionOf(file.name),type=state.typeCatalog.get(extension)||fallbackType(extension);if(!type||!SUPPORTED_EXTENSION_SET.has(extension)){showUnsupportedDocument(file.name,extension);return;}const request=beginDocumentRequest();try{const text=type.binary?"":await file.text();if(!requestIsCurrent(request.id))return;const payload={path:file.name,name:file.name,extension,ext:extension,kind:type.kind,mime:type.mime,binary:type.binary,capabilities:type.capabilities||{},sourceType:"upload",text,renderText:text,uploadedFile:file,modifiedNs:null,size:file.size};state.currentSource="";state.currentBase="";await consumePayload(payload,{requestId:request.id});if(requestIsCurrent(request.id))stopLiveRefresh();}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(file.name,extension,error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
+  async function changeLibrary(){if(blockWhileEditing())return;if(!window.lumaDesktop?.chooseLibrary){showToast(t("folderSelectionUnavailable"));return;}try{await window.lumaDesktop.chooseLibrary();}catch(error){cancelDocumentRequest();showToast(error.message||t("loadError"));}}
 
-  function startLiveRefresh(){stopLiveRefresh();if(!["project","external"].includes(state.sourceType)||!state.currentSource)return;state.liveTimer=setInterval(async()=>{try{const response=await fetch(`/api/meta?source=${encodeURIComponent(state.currentSource)}`,{cache:"no-store"});if(!response.ok)return;const data=await response.json();if(data.modifiedNs&&state.modifiedNs&&data.modifiedNs!==state.modifiedNs){if(state.sourceType==="project")await openProjectFile(state.currentSource,{preserve:true});else await openSource(state.currentSource,{preserve:true});showToast(t("refreshed"));}}catch{}},1500);}
+  function startLiveRefresh(){stopLiveRefresh();if(state.editing||!["project","external"].includes(state.sourceType)||!state.currentSource)return;state.liveTimer=setInterval(async()=>{if(state.editing||state.saving)return;try{const response=await fetch(`/api/meta?source=${encodeURIComponent(state.currentSource)}`,{cache:"no-store"});if(!response.ok)return;const data=await response.json();if(data.modifiedNs&&state.modifiedNs&&data.modifiedNs!==state.modifiedNs){if(state.sourceType==="project")await openProjectFile(state.currentSource,{preserve:true});else await openSource(state.currentSource,{preserve:true});showToast(t("refreshed"));}}catch{}},1500);}
   function stopLiveRefresh(){if(state.liveTimer)clearInterval(state.liveTimer);state.liveTimer=null;}
 
-  function applyFontSize(){state.fontSize=Math.max(14,Math.min(28,state.fontSize));document.documentElement.style.setProperty("--reader-size",`${state.fontSize}px`);localStorage.setItem("lumareader-font",String(state.fontSize));requestAnimationFrame(updatePagination);}
-  function setMode(mode){if(!["vertical","horizontal","paged"].includes(mode))return;state.mode=mode;localStorage.setItem("lumareader-mode",mode);shellEl.dataset.mode=mode;document.querySelectorAll(".mode-button").forEach((button)=>{const active=button.dataset.mode===mode;button.classList.toggle("active",active);button.setAttribute("aria-pressed",active?"true":"false");});contentEl.scrollLeft=0;window.scrollTo({top:0,behavior:"auto"});requestAnimationFrame(updatePagination);}
-  function setView(view){state.view=view;const source=view==="source";contentEl.hidden=source;rawEl.hidden=!source;shellEl.dataset.view=source?"source":"rendered";$("#source-view").classList.toggle("active",source);$("#source-view").title=t(source?"renderedView":"sourceView");requestAnimationFrame(updatePagination);}
-  function readingRatio(){if(state.mode==="vertical"){const max=document.documentElement.scrollHeight-innerHeight;return max>0?scrollY/max:0;}const target=state.view==="source"?rawEl:contentEl,max=target.scrollWidth-target.clientWidth;return max>0?target.scrollLeft/max:0;}
-  function restoreReadingRatio(ratio){if(state.mode==="vertical"){const max=document.documentElement.scrollHeight-innerHeight;window.scrollTo({top:max*ratio,behavior:"auto"});}else{const target=state.view==="source"?rawEl:contentEl,max=target.scrollWidth-target.clientWidth;target.scrollLeft=max*ratio;}updatePagination();}
+  function applyFontSize(){const position=captureReadingPosition();state.fontSize=Math.max(14,Math.min(28,state.fontSize));document.documentElement.style.setProperty("--reader-size",`${state.fontSize}px`);localStorage.setItem("lumareader-font",String(state.fontSize));persistPreferences({fontSize:state.fontSize});scheduleLayoutRefresh(position);}
+  function setMode(layout){
+    if(layout==="paged")layout=`paged-${state.pagedDirection}`;
+    if(!["vertical","horizontal","paged-horizontal","paged-vertical"].includes(layout))layout="vertical";
+    const paged=layout.startsWith("paged-");state.mode=paged?"paged":layout;if(paged)state.pagedDirection=layout.endsWith("vertical")?"vertical":"horizontal";
+    localStorage.setItem("lumareader-mode",state.mode);localStorage.setItem("lumareader-paged-direction",state.pagedDirection);persistPreferences({readingMode:state.mode,pagedDirection:state.pagedDirection});
+    shellEl.dataset.mode=state.mode;shellEl.dataset.pageDirection=state.pagedDirection;readingModeEl.value=currentReadingLayout();renderReadingModeMenu();
+    if(!state.activeAdapter){contentEl.scrollLeft=0;contentEl.scrollTop=0;}window.scrollTo({top:0,behavior:"auto"});requestAnimationFrame(()=>{updatePagination();updateToolbarCapabilities(state.documentKind,state.activeAdapter?.document?.meta?.capabilities||{});});
+  }
+  function setView(view){const sourceButton=$("#source-view");if(view==="source"&&sourceButton.hidden)return false;if(state.editing&&view!=="source"){blockWhileEditing();return false;}state.view=view;const source=view==="source";contentEl.hidden=source;rawEl.hidden=!source||state.editing;sourceEditorEl.hidden=!source||!state.editing;shellEl.dataset.view=source?"source":"rendered";sourceButton.classList.toggle("active",source);sourceButton.setAttribute("aria-label",t(source?"renderedView":"sourceView"));sourceButton.removeAttribute("title");requestAnimationFrame(updatePagination);return true;}
+  function sourceScrollTarget(){return state.editing?sourceEditorEl:rawEl;}
+  function activeScrollTarget(){return state.activeAdapter?.viewport||null;}
+  function readingRatio(){const adapterTarget=activeScrollTarget();if(adapterTarget){const horizontal=adapterTarget.scrollWidth>adapterTarget.clientWidth&&adapterTarget.scrollHeight<=adapterTarget.clientHeight*1.2;const max=horizontal?adapterTarget.scrollWidth-adapterTarget.clientWidth:adapterTarget.scrollHeight-adapterTarget.clientHeight;return max>0?(horizontal?adapterTarget.scrollLeft:adapterTarget.scrollTop)/max:0;}if(state.editing){const max=sourceEditorEl.scrollHeight-sourceEditorEl.clientHeight;return max>0?sourceEditorEl.scrollTop/max:0;}if(state.mode==="vertical"){const max=document.documentElement.scrollHeight-innerHeight;return max>0?scrollY/max:0;}const target=state.view==="source"?sourceScrollTarget():contentEl,vertical=usesVerticalAxis(),max=vertical?target.scrollHeight-target.clientHeight:target.scrollWidth-target.clientWidth;return max>0?(vertical?target.scrollTop:target.scrollLeft)/max:0;}
+  function restoreReadingRatio(ratio){const adapterTarget=activeScrollTarget();if(adapterTarget){const horizontal=adapterTarget.scrollWidth>adapterTarget.clientWidth&&adapterTarget.scrollHeight<=adapterTarget.clientHeight*1.2;const max=horizontal?adapterTarget.scrollWidth-adapterTarget.clientWidth:adapterTarget.scrollHeight-adapterTarget.clientHeight;if(horizontal)adapterTarget.scrollLeft=max*ratio;else adapterTarget.scrollTop=max*ratio;}else if(state.editing){sourceEditorEl.scrollTop=(sourceEditorEl.scrollHeight-sourceEditorEl.clientHeight)*ratio;}else if(state.mode==="vertical"){const max=document.documentElement.scrollHeight-innerHeight;window.scrollTo({top:max*ratio,behavior:"auto"});}else{const target=state.view==="source"?sourceScrollTarget():contentEl,vertical=usesVerticalAxis(),max=vertical?target.scrollHeight-target.clientHeight:target.scrollWidth-target.clientWidth;if(vertical)target.scrollTop=max*ratio;else target.scrollLeft=max*ratio;}updatePagination();}
   function updateProgress(){const ratio=readingRatio();progressEl.style.width=`${Math.max(0,Math.min(100,ratio*100))}%`;}
-  function updatePagination(){const paged=state.mode==="paged",target=state.view==="source"?rawEl:contentEl;pageNumberEl.classList.toggle("visible",paged);if(!paged){pageNumberEl.textContent="";updateProgress();return;}const width=Math.max(1,target.clientWidth),total=Math.max(1,Math.ceil(target.scrollWidth/width)),current=Math.min(total,Math.max(1,Math.round(target.scrollLeft/width)+1));pageNumberEl.textContent=`${current} / ${total}`;updateProgress();}
-  function moveReading(direction){if(state.mode==="vertical")return;const target=state.view==="source"?rawEl:contentEl,step=state.mode==="paged"?target.clientWidth:Math.max(360,target.clientWidth*.78);target.scrollBy({left:direction*step,behavior:"smooth"});setTimeout(updatePagination,260);}
+  function updatePageNavigation(visible,current=1,total=1){total=Math.max(1,total);current=Math.min(total,Math.max(1,current));pagedNavigationEl.hidden=!visible;pagedNavigationEl.classList.toggle("visible",visible);pageNumberEl.textContent=visible?`${current} / ${total}`:"";pagePreviousEl.textContent=state.pagedDirection==="vertical"?"↑":"‹";pageNextEl.textContent=state.pagedDirection==="vertical"?"↓":"›";pagePreviousEl.disabled=!visible||current<=1;pageNextEl.disabled=!visible||current>=total;}
+  function updatePagination(){if(state.editing){updatePageNavigation(false);updateProgress();return;}if(state.activeAdapter){const total=Math.max(1,state.activeAdapter.getPageCount?.()||1),current=Math.min(total,Math.max(1,state.activeAdapter.currentPage||1)),visible=state.mode==="paged"&&Boolean(state.activeAdapter.supportsPagedMode?.());updatePageNavigation(visible,current,total);updateProgress();return;}const paged=state.mode==="paged",target=state.view==="source"?sourceScrollTarget():contentEl;if(!paged){updatePageNavigation(false);updateProgress();return;}const vertical=usesVerticalAxis(),extent=Math.max(1,vertical?target.clientHeight:target.clientWidth),scrollExtent=vertical?target.scrollHeight:target.scrollWidth,offset=vertical?target.scrollTop:target.scrollLeft,total=Math.max(1,Math.ceil(scrollExtent/extent)),current=Math.min(total,Math.max(1,Math.round(offset/extent)+1));updatePageNavigation(true,current,total);updateProgress();}
+  function moveReading(direction){if(state.editing)return;if(state.activeAdapter?.supportsPagedMode?.()){const next=(state.activeAdapter.currentPage||1)+direction;state.activeAdapter.goToPage?.(next);setTimeout(updatePagination,260);return;}if(state.mode==="vertical")return;const target=state.view==="source"?sourceScrollTarget():contentEl;if(state.mode==="paged"&&usesVerticalAxis())target.scrollBy({top:direction*target.clientHeight,behavior:"smooth"});else{const step=state.mode==="paged"?target.clientWidth:Math.max(360,target.clientWidth*.78);target.scrollBy({left:direction*step,behavior:"smooth"});}setTimeout(updatePagination,260);}
 
-  function openMediaPanel(){mediaPanelEl.classList.add("open");mediaPanelEl.setAttribute("aria-hidden","false");scrimEl.hidden=false;}
-  function closeMediaPanel(){mediaPanelEl.classList.remove("open");mediaPanelEl.setAttribute("aria-hidden","true");scrimEl.hidden=true;}
+  function openMediaPanel(){if(window.LumaReaderUI?.openUtilityPanel){window.LumaReaderUI.openUtilityPanel("media");return;}mediaPanelEl.classList.add("open");mediaPanelEl.setAttribute("aria-hidden","false");scrimEl.hidden=false;}
+  function closeMediaPanel(){if(window.LumaReaderUI?.closeUtilityPanel){window.LumaReaderUI.closeUtilityPanel();return;}mediaPanelEl.classList.remove("open");mediaPanelEl.setAttribute("aria-hidden","true");scrimEl.hidden=true;}
   function switchSidebarPanel(panelId){document.querySelectorAll(".sidebar-tab").forEach((tab)=>{const active=tab.dataset.panel===panelId;tab.classList.toggle("active",active);tab.setAttribute("aria-selected",active?"true":"false");});document.querySelectorAll(".sidebar-panel").forEach((panel)=>panel.hidden=panel.id!==panelId);}
 
-  contentEl.addEventListener("click",(event)=>{const link=event.target.closest("a");if(!link)return;const href=link.getAttribute("href")||"";if(!href)return;if(href.startsWith("#")){event.preventDefault();contentEl.querySelector(href)?.scrollIntoView({behavior:"smooth"});return;}if(href.startsWith("file://")||(/^https?:/i.test(href)&&isDocumentHref(href))){event.preventDefault();openSource(href);return;}if(isDocumentHref(href)){event.preventDefault();if(state.sourceType==="remote"){openSource(new URL(href,state.currentBase).href);return;}if(state.sourceType==="external"){const base=new URL(state.currentBase);openSource(new URL(href,base).href);return;}const parts=state.currentPath.split("/");parts.pop();href.split(/[?#]/)[0].split("/").forEach((part)=>{if(!part||part===".")return;if(part==="..")parts.pop();else parts.push(decodeURIComponent(part));});const target=parts.join("/");if(state.files.some((file)=>file.path===target))openProjectFile(target);}});
+  async function syncFormats(extensions){
+    state.enabledExtensions=new Set((extensions||MARKDOWN_EXTENSIONS).filter((extension)=>SUPPORTED_EXTENSION_SET.has(extension)));
+    renderTree();
+    if(state.editing)return;
+    const current=state.files.find((file)=>file.path===state.currentPath);
+    if(current&&currentFormatIsEnabled(current))return;
+    const next=state.files.find(currentFormatIsEnabled);
+    if(next)await openProjectFile(next.path);
+  }
 
-  paletteToggleEl.addEventListener("click",()=>paletteMenuEl.hidden?openPalette():closePalette());
-  document.addEventListener("click",(event)=>{if(!event.target.closest(".palette-control"))closePalette();});
-  languageEl.addEventListener("change",()=>applyLanguage(languageEl.value)); themeEl.addEventListener("click",toggleTheme);
-  searchEl.addEventListener("input",renderTree);$("#refresh").addEventListener("click",async()=>{await loadFiles();showToast(t("refreshed"));});
-  $("#open-source").addEventListener("click",()=>openSource(sourceInputEl.value));sourceInputEl.addEventListener("keydown",(event)=>{if(event.key==="Enter")openSource(sourceInputEl.value);});
+  document.addEventListener("luma:ui-ready",(event)=>syncFormats(event.detail?.formats?.extensions));
+  document.addEventListener("luma:format-selection-change",(event)=>syncFormats(event.detail?.extensions));
+
+  contentEl.addEventListener("click",(event)=>{if(!state.currentPath&&contentEl.classList.contains("library-prompt-active")){event.preventDefault();changeLibrary();return;}const link=event.target.closest("a");if(!link)return;const href=link.getAttribute("href")||"";if(!href)return;if(href.startsWith("#")){event.preventDefault();contentEl.querySelector(href)?.scrollIntoView({behavior:"smooth"});return;}if(href.startsWith("file://")||(/^https?:/i.test(href)&&isDocumentHref(href))){event.preventDefault();openSource(href);return;}if(isDocumentHref(href)){event.preventDefault();if(state.sourceType==="remote"){openSource(new URL(href,state.currentBase).href);return;}if(state.sourceType==="external"){const base=new URL(state.currentBase);openSource(new URL(href,base).href);return;}const parts=state.currentPath.split("/");parts.pop();href.split(/[?#]/)[0].split("/").forEach((part)=>{if(!part||part===".")return;if(part==="..")parts.pop();else parts.push(decodeURIComponent(part));});const target=parts.join("/");if(state.files.some((file)=>file.path===target))openProjectFile(target);}});
+
+  readingModeToggleEl.addEventListener("click",()=>toggleToolbarMenu(readingModeMenuEl,readingModeToggleEl));
+  paletteToggleEl.addEventListener("click",()=>toggleToolbarMenu(paletteMenuEl,paletteToggleEl));
+  languageToggleEl.addEventListener("click",()=>toggleToolbarMenu(languageMenuEl,languageToggleEl));
+  document.addEventListener("click",(event)=>{if(!event.target.closest(".toolbar-select-button")&&!event.target.closest(".toolbar-menu"))closeToolbarMenus();});
+  languageEl.addEventListener("change",()=>applyLanguage(languageEl.value));themeEl.addEventListener("click",toggleTheme);
+  searchEl.addEventListener("input",renderTree);$("#refresh").addEventListener("click",async()=>{if(blockWhileEditing())return;try{await loadFiles({showProgress:true});showToast(t("refreshed"));}catch(error){showToast(error.message||t("loadError"));}});
   $("#change-library").addEventListener("click",changeLibrary);
-  $("#choose-file").addEventListener("click",()=>$("#file-picker").click());$("#file-picker").addEventListener("change",(event)=>openUploadedFile(event.target.files?.[0]));
+  $("#choose-file").addEventListener("click",()=>{if(!blockWhileEditing())$("#file-picker").click();});$("#file-picker").addEventListener("change",(event)=>openUploadedFile(event.target.files?.[0]));
   $("#font-down").addEventListener("click",()=>{state.fontSize-=1;applyFontSize();});$("#font-up").addEventListener("click",()=>{state.fontSize+=1;applyFontSize();});
-  $("#source-view").addEventListener("click",()=>setView(state.view==="source"?"rendered":"source"));$("#media-view").addEventListener("click",openMediaPanel);$("#media-close").addEventListener("click",closeMediaPanel);scrimEl.addEventListener("click",closeMediaPanel);
-  document.querySelectorAll(".mode-button").forEach((button)=>button.addEventListener("click",()=>setMode(button.dataset.mode)));document.querySelectorAll(".sidebar-tab").forEach((button)=>button.addEventListener("click",()=>switchSidebarPanel(button.dataset.panel)));
+  pagePreviousEl.addEventListener("click",()=>moveReading(-1));pageNextEl.addEventListener("click",()=>moveReading(1));
+  $("#source-view").addEventListener("click",()=>{if(blockWhileEditing())return;setView(state.view==="source"?"rendered":"source");});
+  $("#edit-document").addEventListener("click",()=>state.editing?saveEditing():beginEditing());$("#cancel-edit").addEventListener("click",()=>leaveEditing({discarded:true}));
+  $("#media-view").addEventListener("click",openMediaPanel);$("#media-close").addEventListener("click",closeMediaPanel);scrimEl.addEventListener("click",closeMediaPanel);
+  $("#image-viewer-close").addEventListener("click",closeImageViewer);imageViewerSizeEl.addEventListener("click",()=>setImageViewerActual(!state.imageViewerActual));imageViewerEl.addEventListener("click",(event)=>{if(event.target===imageViewerEl)closeImageViewer();});imageViewerEl.addEventListener("close",()=>setImageViewerActual(false));
+  readingModeEl.addEventListener("change",()=>setMode(readingModeEl.value));document.querySelectorAll(".sidebar-tab").forEach((button)=>button.addEventListener("click",()=>switchSidebarPanel(button.dataset.panel)));
+  document.querySelectorAll(".reader-actions [data-tooltip-key]").forEach((button)=>{button.addEventListener("pointerenter",()=>showToolbarTooltip(button));button.addEventListener("pointerleave",hideToolbarTooltip);button.addEventListener("focus",()=>showToolbarTooltip(button));button.addEventListener("blur",hideToolbarTooltip);button.addEventListener("click",hideToolbarTooltip);});
   sidebarToggleEl.addEventListener("click",toggleSidebar);
-  window.addEventListener("scroll",updateProgress,{passive:true});window.addEventListener("resize",()=>{sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");updateSidebarToggle();requestAnimationFrame(updatePagination);});contentEl.addEventListener("scroll",updatePagination,{passive:true});rawEl.addEventListener("scroll",updatePagination,{passive:true});
+  let resizeStartX=0,resizeStartWidth=0;
+  sidebarResizerEl.addEventListener("pointerdown",(event)=>{if(isNarrow()||state.sidebarCollapsed)return;resizeStartX=event.clientX;resizeStartWidth=state.sidebarWidth;sidebarResizerEl.setPointerCapture(event.pointerId);document.body.classList.add("sidebar-resizing");});
+  sidebarResizerEl.addEventListener("pointermove",(event)=>{if(!sidebarResizerEl.hasPointerCapture(event.pointerId))return;applySidebarWidth(resizeStartWidth+event.clientX-resizeStartX);});
+  const finishSidebarResize=(event)=>{if(!sidebarResizerEl.hasPointerCapture(event.pointerId))return;sidebarResizerEl.releasePointerCapture(event.pointerId);document.body.classList.remove("sidebar-resizing");applySidebarWidth(state.sidebarWidth,{save:true});scheduleLayoutRefresh();};
+  sidebarResizerEl.addEventListener("pointerup",finishSidebarResize);sidebarResizerEl.addEventListener("pointercancel",finishSidebarResize);
+  sidebarResizerEl.addEventListener("dblclick",()=>{applySidebarWidth(320,{save:true});scheduleLayoutRefresh();});
+  sidebarResizerEl.addEventListener("keydown",(event)=>{if(!["ArrowLeft","ArrowRight","Home"].includes(event.key))return;event.preventDefault();applySidebarWidth(event.key==="Home"?320:state.sidebarWidth+(event.key==="ArrowRight"?16:-16),{save:true});scheduleLayoutRefresh();});
+  sourceEditorEl.addEventListener("input",()=>{state.editorDirty=sourceEditorEl.value!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();});
+  sourceEditorEl.addEventListener("keydown",(event)=>{if(event.key!=="Tab"||event.metaKey||event.ctrlKey||event.altKey)return;event.preventDefault();const start=sourceEditorEl.selectionStart,end=sourceEditorEl.selectionEnd;sourceEditorEl.setRangeText("  ",start,end,"end");sourceEditorEl.dispatchEvent(new Event("input",{bubbles:true}));});
+  window.addEventListener("scroll",()=>{updateProgress();closeToolbarMenus();},{passive:true});window.addEventListener("resize",()=>{hideToolbarTooltip();closeToolbarMenus();const position=captureReadingPosition();sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");applySidebarWidth(state.sidebarWidth);updateSidebarToggle();scheduleLayoutRefresh(position);});contentEl.addEventListener("scroll",updatePagination,{passive:true});rawEl.addEventListener("scroll",updatePagination,{passive:true});sourceEditorEl.addEventListener("scroll",updatePagination,{passive:true});
+  if("ResizeObserver" in window){const paginationObserver=new ResizeObserver(()=>requestAnimationFrame(updatePagination));paginationObserver.observe(shellEl);paginationObserver.observe(contentEl);paginationObserver.observe(rawEl);paginationObserver.observe(sourceEditorEl);}
   [contentEl,rawEl].forEach((target)=>target.addEventListener("wheel",(event)=>{if(state.mode==="vertical")return;event.preventDefault();if(state.mode==="horizontal"){target.scrollBy({left:event.deltaY+event.deltaX,behavior:"auto"});return;}const now=Date.now();if(now-state.lastWheelAt<420||Math.abs(event.deltaY)+Math.abs(event.deltaX)<12)return;state.lastWheelAt=now;moveReading(event.deltaY+event.deltaX>0?1:-1);},{passive:false}));
 
-  document.addEventListener("keydown",(event)=>{const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(command&&event.shiftKey&&key==="o"){event.preventDefault();changeLibrary();}else if(command&&key==="o"){event.preventDefault();$("#file-picker").click();}else if(command&&key==="l"){event.preventDefault();sourceInputEl.focus();}else if(command&&event.shiftKey&&key==="s"){event.preventDefault();setView(state.view==="source"?"rendered":"source");}else if(command&&event.shiftKey&&key==="m"){event.preventDefault();openMediaPanel();}else if(command&&event.shiftKey&&key==="p"){event.preventDefault();openPalette();}else if(event.key==="Escape"){closePalette();closeMediaPanel();closeSidebarOnNarrow();}else if(key==="/" ){event.preventDefault();searchEl.focus();}else if(key==="d"){event.preventDefault();toggleTheme();}else if(["-","["].includes(key)){state.fontSize-=1;applyFontSize();}else if(["+","=","]"].includes(key)){state.fontSize+=1;applyFontSize();}else if(["1","2","3"].includes(key)){setMode({1:"vertical",2:"horizontal",3:"paged"}[key]);}else if(event.key==="ArrowLeft"&&state.mode!=="vertical"){event.preventDefault();moveReading(-1);}else if(event.key==="ArrowRight"&&state.mode!=="vertical"){event.preventDefault();moveReading(1);}});
+  document.addEventListener("keydown",(event)=>{const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(command&&!event.shiftKey&&key==="s"){event.preventDefault();if(state.editing)saveEditing();return;}if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(event.key==="Escape"){closeToolbarMenus();closeMediaPanel();closeSidebarOnNarrow();}else if(key==="-"){state.fontSize-=1;applyFontSize();}else if(["+","="].includes(key)){state.fontSize+=1;applyFontSize();}});
+  window.addEventListener("beforeunload",(event)=>{if(!state.editing||!state.editorDirty)return;event.preventDefault();event.returnValue="";});
 
-  async function initialize(){if(localStorage.getItem("lumareader-theme")==="dark"||(!localStorage.getItem("lumareader-theme")&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark");applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();window.lumaDesktop?.onLibraryChanged(async(payload)=>{state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();await loadFiles();const first=state.files[0];if(first)await openProjectFile(first.path);showToast(t("libraryChanged"));});await loadFiles();const params=new URLSearchParams(location.search),requested=params.get("source")||params.get("url")||params.get("file");if(requested){if(state.files.some((file)=>file.path===requested))await openProjectFile(requested);else await openSource(requested);return;}const preferred=state.files.find((file)=>file.path.endsWith("docs/story-review/00-閱讀順序與驗收範圍.md"))||state.files[0];if(preferred)await openProjectFile(preferred.path);else showEmptyLibrary();}
-  initialize().catch((error)=>{contentEl.innerHTML=`<p class="error">${escapeHtml(error.message||error)}</p>`;});
+  async function initialize(){const localTheme=localStorage.getItem("lumareader-theme");document.documentElement.classList.toggle("dark",localTheme==="dark");const saved=await hydratePreferences();if(Number(saved.readerDefaultsVersion||0)<2){state.language="en";state.palette="dream-rose";document.documentElement.classList.remove("dark");localStorage.setItem("lumareader-language","en");localStorage.setItem("lumareader-theme","light");localStorage.setItem("lumareader-palette","dream-rose");persistPreferences({language:"en",theme:"light",palette:"dream-rose"});}if(Number(saved.readerDefaultsVersion||0)<3){state.mode="vertical";localStorage.setItem("lumareader-mode","vertical");persistPreferences({readingMode:"vertical",readerDefaultsVersion:3});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();});window.lumaDesktop?.onLibraryChanged(async(payload)=>{const refreshId=++state.libraryRefreshId;state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();try{await loadFiles({showProgress:true});if(refreshId!==state.libraryRefreshId)return;const first=state.files.find(currentFormatIsEnabled);if(first)await openProjectFile(first.path);else showEmptyLibrary();showToast(t("libraryChanged"));}catch(error){if(refreshId!==state.libraryRefreshId)return;showEmptyLibrary();showToast(error.message||t("loadError"));}});await loadFiles({showProgress:true});const params=new URLSearchParams(location.search),requested=params.get("source")||params.get("url")||params.get("file");if(requested){if(state.files.some((file)=>file.path===requested))await openProjectFile(requested);else await openSource(requested);return;}const preferred=state.files.find((file)=>file.path.endsWith("docs/story-review/00-閱讀順序與驗收範圍.md")&&currentFormatIsEnabled(file))||state.files.find(currentFormatIsEnabled);if(preferred)await openProjectFile(preferred.path);else showEmptyLibrary();}
+  initialize().catch((error)=>{setLoading(false);contentEl.innerHTML=`<p class="error">${escapeHtml(error.message||error)}</p>`;});
 })();

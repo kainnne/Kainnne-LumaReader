@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <meta name="referrer" content="no-referrer" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' data: blob: http: https:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' data: blob: http: https:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>Kainnne LumaReader</title>
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=lumareader-2.1.0" />
+  <link rel="stylesheet" href="styles.css?v=1.0.0" />
 </head>
 <body>
   <div id="app" class="app">
@@ -18,6 +18,7 @@
       <div class="brand-row">
         <img class="brand-icon" src="assets/app-icon-source.png" alt="" />
         <strong>Kainnne LumaReader</strong>
+        <button id="refresh" class="brand-refresh icon-button" type="button" data-i18n-title="rescan" title="Rescan" aria-label="Rescan">↻</button>
       </div>
 
       <div class="library-controls">
@@ -27,31 +28,54 @@
         <button id="choose-file" class="compact-button" type="button" data-i18n-title="chooseFile" title="Choose local document">
           <span aria-hidden="true">＋</span><span data-i18n="fileButton">File</span>
         </button>
-        <input id="file-picker" type="file" accept=".md,.mkd,.mdx,.markdown,text/markdown,text/plain" hidden />
+        <input id="file-picker" type="file" accept=".md,.markdown,.mkd,.mdx,.txt,.log" hidden />
         <div id="library-root" class="library-root" data-i18n="noLibraryShort">No folder selected</div>
-      </div>
-
-      <div class="open-source">
-        <div class="source-row">
-          <input id="source-input" type="url" inputmode="url" data-i18n-placeholder="sourcePlaceholder" placeholder="Paste file://, http:// or https://" autocomplete="off" spellcheck="false" />
-          <button id="open-source" class="icon-button" type="button" data-i18n-title="openSource" title="Open source" aria-label="Open source">↗</button>
-        </div>
       </div>
 
       <div class="sidebar-tools">
         <input id="search" type="search" data-i18n-placeholder="search" placeholder="Search documents" autocomplete="off" />
-        <button id="refresh" class="icon-button" type="button" data-i18n-title="rescan" title="Rescan" aria-label="Rescan">↻</button>
       </div>
+
+      <section id="format-filter" class="format-filter" aria-label="File types">
+        <button id="format-filter-toggle" class="format-filter-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="format-filter-popover">
+          <span aria-hidden="true" class="format-filter-icon">⌁</span>
+          <span id="format-filter-summary">Formats (.md, .markdown, .mkd, .mdx)</span>
+          <span aria-hidden="true" class="format-filter-chevron">⌄</span>
+        </button>
+        <div id="format-filter-popover" class="format-filter-popover" role="dialog" aria-modal="false" aria-labelledby="format-filter-title" hidden>
+          <header class="format-filter-header">
+            <div>
+              <strong id="format-filter-title">File types</strong>
+              <span id="format-filter-count">4 selected</span>
+            </div>
+            <button id="format-filter-close" class="format-filter-close" type="button" aria-label="Close format selector">×</button>
+          </header>
+          <div class="format-filter-actions" role="group" aria-label="Format selection actions">
+            <button id="formats-select-all" type="button">Select all</button>
+            <button id="formats-clear-all" type="button">Clear all</button>
+          </div>
+          <div id="format-options" class="format-options text-format-options">
+            <label><input type="checkbox" value=".md" data-format /><span>.md</span></label>
+            <label><input type="checkbox" value=".markdown" data-format /><span>.markdown</span></label>
+            <label><input type="checkbox" value=".mkd" data-format /><span>.mkd</span></label>
+            <label><input type="checkbox" value=".mdx" data-format /><span>.mdx</span></label>
+            <label><input type="checkbox" value=".txt" data-format /><span>.txt</span></label>
+            <label><input type="checkbox" value=".log" data-format /><span>.log</span></label>
+          </div>
+          <footer class="format-filter-footer">Markdown types are selected by default. Enable .txt or .log when needed.</footer>
+        </div>
+      </section>
 
       <div class="sidebar-tabs" role="tablist" data-i18n-aria="navigation">
         <button class="sidebar-tab active" id="files-tab" type="button" role="tab" aria-selected="true" data-panel="files-panel" data-i18n="files">Files</button>
-        <button class="sidebar-tab" id="outline-tab" type="button" role="tab" aria-selected="false" data-panel="outline-panel" data-i18n="outline">Outline</button>
+        <button class="sidebar-tab" id="outline-tab" type="button" role="tab" aria-selected="false" data-panel="outline-panel" data-i18n="outline">Current File Outline</button>
       </div>
       <nav id="files-panel" class="sidebar-panel file-tree" role="tabpanel" data-i18n-aria="documents"></nav>
       <nav id="outline-panel" class="sidebar-panel outline-tree" role="tabpanel" hidden data-i18n-aria="outline"></nav>
+      <div id="sidebar-resizer" class="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize document sidebar" data-i18n-aria="resizeSidebar" tabindex="0"></div>
     </aside>
 
-    <button id="sidebar-toggle" class="sidebar-toggle icon-button" type="button" data-i18n-title="collapseSidebar" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
+    <button id="sidebar-toggle" class="sidebar-toggle icon-button" type="button" data-i18n-title="collapseSidebar" title="Collapse sidebar" aria-label="Collapse sidebar">☰</button>
 
     <main id="reader-shell" class="reader-shell" data-mode="vertical" data-view="rendered">
       <header class="reader-bar">
@@ -60,28 +84,41 @@
           <p id="file-path" data-i18n="ready">Ready</p>
         </div>
         <div class="reader-actions" data-i18n-aria="readerSettings">
-          <div class="mode-switch" role="group" data-i18n-aria="readingMode">
-            <button class="mode-button" data-mode="vertical" type="button" data-i18n="vertical">Vertical</button>
-            <button class="mode-button" data-mode="horizontal" type="button" data-i18n="horizontal">Horizontal</button>
-            <button class="mode-button" data-mode="paged" type="button" data-i18n="paged">Paged</button>
-          </div>
-          <button id="source-view" class="icon-button labeled-button" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
-          <button id="media-view" class="icon-button labeled-button" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
-          <button id="font-down" class="icon-button text-button" type="button" data-i18n-title="smallerText" title="Smaller text" aria-label="Smaller text">A−</button>
-          <button id="font-up" class="icon-button text-button" type="button" data-i18n-title="largerText" title="Larger text" aria-label="Larger text">A＋</button>
-
-          <div class="palette-control">
-            <button id="palette-toggle" class="palette-button" type="button" aria-haspopup="menu" aria-expanded="false" data-i18n-title="palette" title="Color palette">
-              <span id="palette-swatch" class="palette-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span id="palette-name">Dream Rose</span>
-              <span aria-hidden="true">⌄</span>
+          <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
+          <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
+          <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
+          <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
+          <div id="reading-mode-control" class="toolbar-dropdown">
+            <button id="reading-mode-toggle" class="toolbar-select-button reading-mode-button" data-tooltip-key="readingMode" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="reading-mode-menu" data-i18n-aria="readingMode" aria-label="Reading mode">
+              <span id="reading-mode-icon" class="dropdown-leading-icon" aria-hidden="true">↕</span>
+              <span id="reading-mode-name" class="dropdown-label">Vertical</span>
+              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
             </button>
-            <div id="palette-menu" class="palette-menu" role="menu" hidden></div>
+            <select id="reading-mode" hidden aria-hidden="true" tabindex="-1">
+              <option value="vertical" data-i18n="vertical" selected>Vertical</option>
+              <option value="horizontal" data-i18n="horizontal">Horizontal</option>
+              <option value="paged-horizontal">Paged →</option>
+              <option value="paged-vertical">Paged ↓</option>
+            </select>
+            <div id="reading-mode-menu" class="toolbar-menu reading-mode-menu" role="menu" hidden></div>
           </div>
 
-          <label class="language-picker" data-i18n-title="language" title="Interface language">
-            <span aria-hidden="true">文</span>
-            <select id="language" aria-label="Interface language">
+          <div class="toolbar-dropdown palette-control">
+            <button id="palette-toggle" class="toolbar-select-button palette-button" data-tooltip-key="palette" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="palette-menu" data-i18n-aria="palette" aria-label="Color palette">
+              <span id="palette-swatch" class="palette-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span id="palette-name" class="dropdown-label">Dream Rose</span>
+              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div id="palette-menu" class="toolbar-menu palette-menu" role="menu" hidden></div>
+          </div>
+
+          <div class="toolbar-dropdown language-control">
+            <button id="language-toggle" class="toolbar-select-button language-button" data-tooltip-key="language" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="language-menu" data-i18n-aria="language" aria-label="Interface language">
+              <span class="dropdown-leading-icon language-glyph" aria-hidden="true">文</span>
+              <span id="language-name" class="dropdown-label">English</span>
+              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <select id="language" hidden aria-hidden="true" tabindex="-1">
               <option value="en">English</option>
               <option value="zh-Hant">繁體中文</option>
               <option value="zh-Hans">简体中文</option>
@@ -94,18 +131,33 @@
               <option value="ru">Русский</option>
               <option value="it">Italiano</option>
             </select>
-          </label>
+            <div id="language-menu" class="toolbar-menu language-menu" role="menu" hidden></div>
+          </div>
 
-          <button id="theme" class="icon-button" type="button" data-i18n-title="darkMode" title="Dark mode" aria-label="Dark mode">◐</button>
+          <button id="font-down" class="icon-button text-button" data-tooltip-key="fontDown" type="button" data-i18n-title="smallerText" title="Smaller text" aria-label="Smaller text">A−</button>
+          <button id="font-up" class="icon-button text-button" data-tooltip-key="fontUp" type="button" data-i18n-title="largerText" title="Larger text" aria-label="Larger text">A＋</button>
+
+          <button id="theme" class="icon-button" data-tooltip-key="theme" type="button" data-i18n-title="darkMode" title="Dark mode" aria-label="Dark mode">◐</button>
         </div>
       </header>
 
       <div class="progress-track" aria-hidden="true"><span id="progress"></span></div>
       <div class="document-stage">
-        <article id="content" class="content prose"><p class="empty" data-i18n="empty">Choose a document to begin.</p></article>
+        <article id="content" class="content prose">
+          <button class="root-folder-prompt" type="button">
+            <span class="root-folder-prompt-icon" aria-hidden="true">▰</span>
+            <strong data-i18n="empty">Choose a main folder as the root of your preview library.</strong>
+            <span>Desktop is a good place to start.</span>
+          </button>
+        </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
+        <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="off" hidden></textarea>
       </div>
-      <div id="page-number" class="page-number" aria-live="polite"></div>
+      <nav id="paged-navigation" class="paged-navigation" aria-label="Page navigation" hidden>
+        <button id="page-previous" class="page-turn-button" type="button" aria-label="Previous page">‹</button>
+        <span id="page-number" class="page-number" aria-live="polite"></span>
+        <button id="page-next" class="page-turn-button" type="button" aria-label="Next page">›</button>
+      </nav>
       <div id="live-status" class="live-status" aria-live="polite"><span class="live-dot"></span><span data-i18n="live">Live</span></div>
     </main>
 
@@ -117,7 +169,35 @@
       <div id="media-grid" class="media-grid"></div>
     </aside>
     <div id="panel-scrim" class="panel-scrim" hidden></div>
+    <dialog id="image-viewer" class="image-viewer" aria-labelledby="image-viewer-title">
+      <header class="image-viewer-bar">
+        <strong id="image-viewer-title">Image preview</strong>
+        <div>
+          <button id="image-viewer-size" class="compact-button" type="button">Actual size</button>
+          <button id="image-viewer-close" class="icon-button" type="button" aria-label="Close image preview">×</button>
+        </div>
+      </header>
+      <div id="image-viewer-stage" class="image-viewer-stage">
+        <img id="image-viewer-image" class="image-viewer-image" alt="" />
+      </div>
+      <p id="image-viewer-caption" class="image-viewer-caption"></p>
+    </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <div id="toolbar-tooltip" class="toolbar-tooltip" role="tooltip" hidden></div>
+
+    <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-copy" hidden>
+      <div class="onboarding-spotlight" aria-hidden="true"></div>
+      <section class="onboarding-card">
+        <div id="onboarding-progress" class="onboarding-progress" aria-label="Tour progress"></div>
+        <p id="onboarding-kicker" class="onboarding-kicker">Step 1 of 4</p>
+        <h2 id="onboarding-title">Choose your library</h2>
+        <p id="onboarding-copy">Start with a folder. LumaReader keeps your files on this device.</p>
+        <div class="onboarding-actions">
+          <button id="onboarding-skip" class="onboarding-skip" type="button">Skip tour</button>
+          <button id="onboarding-next" class="onboarding-next" type="button">Next</button>
+        </div>
+      </section>
+    </div>
   </div>
 
   <script src="vendor/marked/marked.umd.js?v=17.0.5"></script>
@@ -125,6 +205,11 @@
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="app.js?v=lumareader-2.1.0"></script>
+  <script src="reader-utils.js?v=1.0.0"></script>
+  <script src="adapters/core.js?v=1.0.0"></script>
+  <script src="adapters/plain-text.js?v=1.0.0"></script>
+  <script src="adapters/index.js?v=1.0.0"></script>
+  <script src="app.js?v=1.0.0"></script>
+  <script src="multiformat-ui.js?v=1.0.0"></script>
 </body>
 </html>

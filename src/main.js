@@ -7,13 +7,36 @@ const path = require("node:path");
 const { LocalReaderService } = require("./local-server");
 
 const PROTOCOL = "kainnne-lumareader";
+const APP_ID = "com.kainnne.lumareader";
+const APP_TITLE = "Kainnne LumaReader";
+const PREFERENCE_KEYS = new Set([
+  "appMode",
+  "fontSize",
+  "formatSelections",
+  "language",
+  "onboardingVersion",
+  "palette",
+  "pagedDirection",
+  "readingMode",
+  "readerDefaultsVersion",
+  "rightPanelOpen",
+  "rightPanelTab",
+  "sidebarCollapsed",
+  "sidebarWidth",
+  "textFormatSelections",
+  "theme",
+]);
+
+app.setName(APP_TITLE);
+app.setPath("userData", path.join(app.getPath("appData"), APP_TITLE));
+
 const singleInstance = app.requestSingleInstanceLock();
 if (!singleInstance) app.quit();
 
 let mainWindow = null;
 let readerService = null;
 let settingsPath = null;
-let settings = { libraryRoot: null };
+let settings = { libraryRoot: null, preferences: {} };
 let shutdownStarted = false;
 let readerOrigin = null;
 let pendingSource = null;
@@ -72,13 +95,30 @@ function validDirectory(candidate) {
   }
 }
 
+function isPreferenceValue(value) {
+  if (value === null) return true;
+  return ["string", "number", "boolean", "object"].includes(typeof value);
+}
+
+function sanitizePreferences(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const preferences = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (PREFERENCE_KEYS.has(key) && isPreferenceValue(entry)) preferences[key] = entry;
+  }
+  return preferences;
+}
+
 async function loadSettings() {
   settingsPath = path.join(app.getPath("userData"), "settings.json");
   try {
     const data = JSON.parse(await fsp.readFile(settingsPath, "utf8"));
-    settings.libraryRoot = validDirectory(data.libraryRoot);
+    settings = {
+      libraryRoot: validDirectory(data.libraryRoot),
+      preferences: sanitizePreferences(data.preferences),
+    };
   } catch {
-    settings = { libraryRoot: null };
+    settings = { libraryRoot: null, preferences: {} };
   }
   const commandLineRoot = process.argv.find((argument) => argument.startsWith("--library="))?.slice("--library=".length);
   const environmentRoot = process.env.LUMAREADER_LIBRARY_ROOT;
@@ -93,9 +133,9 @@ async function saveSettings() {
 async function chooseLibrary({ automatic = false } = {}) {
   const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
   const result = await dialog.showOpenDialog(window, {
-    title: "Choose your Markdown library",
-    message: "Kainnne LumaReader will remember this folder. You can change it later from the sidebar.",
-    defaultPath: settings.libraryRoot || app.getPath("documents"),
+    title: "Choose your document library",
+    message: `${APP_TITLE} will remember this folder. You can change it later from the sidebar.`,
+    defaultPath: settings.libraryRoot || app.getPath("desktop"),
     buttonLabel: "Use This Folder",
     properties: ["openDirectory", "createDirectory"],
   });
@@ -116,7 +156,8 @@ function installMenu() {
     {
       label: "File",
       submenu: [
-        { label: "Change Library Folder…", accelerator: "CmdOrCtrl+Shift+O", click: () => chooseLibrary() },
+        { label: "Change Document Library…", click: () => chooseLibrary() },
+        { label: "Save Markdown", accelerator: "CmdOrCtrl+S", click: () => mainWindow?.webContents.send("editor:save-requested") },
         { type: "separator" },
         process.platform === "darwin" ? { role: "close" } : { role: "quit" },
       ],
@@ -124,7 +165,13 @@ function installMenu() {
     {
       label: "Edit",
       submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
         { role: "copy" },
+        { role: "paste" },
+        { type: "separator" },
         { role: "selectAll" },
       ],
     },
@@ -140,13 +187,13 @@ function installMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-function protectNavigation(window, readerOrigin) {
+function protectNavigation(window, origin) {
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//i.test(url) && !url.startsWith(readerOrigin)) shell.openExternal(url);
+    if (/^https?:\/\//i.test(url) && !url.startsWith(origin)) shell.openExternal(url);
     return { action: "deny" };
   });
   window.webContents.on("will-navigate", (event, url) => {
-    if (url.startsWith(readerOrigin)) return;
+    if (url.startsWith(origin)) return;
     event.preventDefault();
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
   });
@@ -162,7 +209,7 @@ async function createWindow() {
     show: false,
     backgroundColor: "#fff2f7",
     icon: path.join(__dirname, "..", "build", "icon.png"),
-    title: "Kainnne LumaReader",
+    title: APP_TITLE,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -180,11 +227,38 @@ async function createWindow() {
     pendingSource = null;
   }
   await mainWindow.loadURL(target.href);
-  if (!settings.libraryRoot) setTimeout(() => chooseLibrary({ automatic: true }), 250);
 }
 
 ipcMain.handle("library:get", () => ({ selected: Boolean(settings.libraryRoot), root: settings.libraryRoot }));
 ipcMain.handle("library:choose", () => chooseLibrary());
+ipcMain.handle("preferences:get", () => ({ ...settings.preferences }));
+ipcMain.handle("preferences:set", async (_event, patch) => {
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...settings.preferences };
+  const serialized = JSON.stringify(patch);
+  if (Buffer.byteLength(serialized, "utf8") > 16 * 1024) throw new Error("Preference update is too large");
+  const safePatch = sanitizePreferences(patch);
+  settings.preferences = { ...settings.preferences, ...safePatch };
+  await saveSettings();
+  return { ...settings.preferences };
+});
+ipcMain.handle("document:save", async (event, payload) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) {
+    return { ok: false, code: "INVALID_SENDER", message: "This save request is not allowed." };
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { ok: false, code: "INVALID_SAVE_REQUEST", message: "The save request is invalid." };
+  }
+  try {
+    const document = await readerService.saveMarkdownDocument(payload.path, payload.text, payload.expectedModifiedNs);
+    return { ok: true, document };
+  } catch (error) {
+    return {
+      ok: false,
+      code: error.code || "SAVE_FAILED",
+      message: error.message || "Unable to save this document.",
+    };
+  }
+});
 
 app.on("second-instance", (_event, commandLine) => {
   for (const argument of commandLine) {
@@ -205,7 +279,7 @@ app.on("window-all-closed", () => {
 });
 
 app.whenReady().then(async () => {
-  app.setAppUserModelId("com.kainnne.lumareader");
+  app.setAppUserModelId(APP_ID);
   registerProtocol();
   await loadSettings();
   readerService = new LocalReaderService({
@@ -217,7 +291,7 @@ app.whenReady().then(async () => {
   installMenu();
   await createWindow();
 }).catch((error) => {
-  dialog.showErrorBox("Kainnne LumaReader could not start", error.stack || error.message || String(error));
+  dialog.showErrorBox(`${APP_TITLE} could not start`, error.stack || error.message || String(error));
   app.quit();
 });
 
