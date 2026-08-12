@@ -7,9 +7,9 @@ Kainnne LumaReader uses Electron so the same application code can run on macOS a
 The application has four boundaries:
 
 1. **Electron main process** — owns the window, native folder dialog, persisted settings, menu, and application lifecycle.
-2. **Preload bridge** — exposes only the folder-selection methods needed by the renderer. Node integration remains disabled.
+2. **Preload bridge** — exposes folder selection, preferences, and a restricted Markdown-save method. Node integration remains disabled.
 3. **Loopback document service** — scans and reads the selected library, expands includes, serves local media, and hosts the renderer on a random `127.0.0.1` port.
-4. **Renderer** — renders Markdown, manages reading modes, and owns visual preferences stored in browser local storage.
+4. **Renderer** — selects a document adapter, renders the supported preview type, manages reading modes, and owns visual preferences stored in browser local storage.
 
 ## Library selection
 
@@ -22,19 +22,27 @@ No HTTP route can change the library root. This prevents an unrelated web page f
 The service binds to the loopback interface on an operating-system-assigned port. It supports:
 
 - recursive scanning of the selected root;
-- `.md`, `.mkd`, `.mdx`, and `.markdown` documents;
-- explicit `file://`, `http://`, and `https://` document sources;
+- Markdown (`.md`, `.markdown`, `.mkd`, `.mdx`), plain text (`.txt`), and logs (`.log`);
+- one-off local files chosen through the native file picker without changing the saved library;
 - local relative image, audio, and video paths;
-- bounded document and media sizes;
+- per-format document limits and bounded media sizes;
 - include expansion with depth, loop, and boundary protection;
 - live-refresh metadata;
 - static renderer assets.
 
 Generated folders, hidden folders, application bundles, dependency folders, and version-control internals are excluded from library scanning.
 
+`src/document-types.js` is the canonical extension, MIME, capability, and limit registry. `/api/files` and `/api/types` expose its public records. Text payloads include both the exact source in `text` and the include-expanded reading form in `renderText`. Retired document, archive, and image formats are explicitly rejected.
+
+## File boundary and archive safety
+
+Library roots and requested files are resolved through their real paths. A lexical path check is followed by a real-path boundary check, blocking traversal and symlinks that escape the selected library. Scanning does not follow symlinks. The HTTP listener binds only to `127.0.0.1`, accepts loopback host headers, and serves read-only `GET`/`HEAD` routes.
+
+The only document write path is `document:save` through the context-isolated Electron bridge. The main process accepts it only from the reader window, resolves the requested file against the selected library, permits only Markdown types, enforces the Markdown size limit, and compares the last-known modification timestamp before writing. Plain text, logs, uploads, external paths, and remote sources remain read-only.
+
 ## Renderer safety
 
-The BrowserWindow uses `contextIsolation`, disables Node integration, enables the Chromium sandbox, and prevents navigation away from the reader origin. Ordinary external links open in the system browser.
+The BrowserWindow uses `contextIsolation`, disables Node integration, enables the Chromium sandbox, and prevents navigation away from the reader origin. Production packaging also disables Electron's Run-as-Node, Node options, command-line inspector, and privileged `file://` fuses; it validates the embedded ASAR before loading it. Ordinary external links open in the system browser.
 
 Markdown output is sanitized with an explicit element and attribute allowlist. MDX imports are displayed as code. Unknown JSX elements are unwrapped or removed and are never executed. Mermaid uses strict security mode.
 

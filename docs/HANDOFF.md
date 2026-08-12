@@ -2,9 +2,7 @@
 
 ## Current boundary
 
-Kainnne LumaReader is paused at a source-only handoff milestone. The repository contains the Electron application source, renderer assets, tests, browser-extension source, packaging configuration, and English documentation. It does not contain compiled desktop applications.
-
-The intended final product is a downloadable Markdown reader for macOS and Windows. Producing, signing, testing, and publishing those executables is reserved for a future development session with enough context and time for platform-specific validation.
+Kainnne LumaReader 1.0.0 is the first public desktop release baseline. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS and Windows binaries are published as GitHub Release assets and remain excluded from Git history.
 
 ## Validated baseline
 
@@ -12,14 +10,20 @@ The following behavior was validated locally on macOS during Phase 1:
 
 - Native library-folder selection and persisted folder preference.
 - Recursive discovery of Markdown, MDX, MKD, and Markdown-alias files.
+- Search results automatically expand their ancestor folders without permanently changing the user's collapsed-folder state.
+- CJK bold labels using adjacent `**…**文字` syntax are normalized before CommonMark rendering while code spans and fenced code remain untouched.
 - Local images, media, includes, KaTeX mathematics, Mermaid diagrams, tables, alerts, task lists, and syntax highlighting.
+- Raw Markdown editing for files inside the selected library, with in-place Saved confirmation, explicit exit from editing, `Command+S` / `Ctrl+S`, and external-change conflict protection.
+- Matching custom reading-mode, palette, and language menus ordered after Edit, Source, and Media; Paged includes left/right and up/down navigation with visible previous/next controls.
 - English as the default interface language with eleven interface languages available.
-- Twenty visual palettes with light and dark appearances.
+- Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
+- Palette color is intentionally concentrated in navigation, controls, borders, and accents; the central document, source, and editor surfaces stay neutral for legibility.
 - Collapsed folders by default and a persistent sidebar toggle.
 - Responsive controls in desktop and narrow portrait layouts.
 - Clean application shutdown without a lingering local service.
-- Six automated document-service and path-boundary tests.
-- A locally packaged Apple-silicon macOS application was launched successfully, but that build is deliberately excluded from Git.
+- Automated document-service, editing, format, media, and path-boundary tests.
+- macOS production output is a Universal DMG and ZIP. Direct distribution requires Developer ID signing, Hardened Runtime, Apple notarization, a stapled ticket, Gatekeeper acceptance, and a final launch test.
+- Windows production output is an unsigned x64 Setup and Portable executable. A genuine Windows runner builds them and performs runtime/API smoke tests; SmartScreen disclosure remains visible on the website and release notes.
 
 ## Repository policy
 
@@ -32,18 +36,15 @@ Do not commit any of the following:
 
 The existing `.gitignore` enforces the main build and dependency exclusions.
 
-## Recommended next session
+## Release order
 
-Continue from this order:
-
-1. Clone or pull the repository and run `npm install`.
-2. Run `npm run check` and `npm test`.
-3. Review the existing interface and folder workflow before changing architecture.
-4. Add GitHub Actions for macOS and Windows without publishing release artifacts yet.
-5. Build and test the Windows NSIS and portable targets on a Windows runner.
-6. Rebuild and test the macOS DMG and ZIP targets on macOS.
-7. Decide the signing and notarization policy. The source code is already licensed under MIT.
-8. Publish downloadable executables only after both platforms pass launch, folder-selection, persistence, rendering, and shutdown tests.
+1. Run `npm ci`, `npm run check`, and `npm test`.
+2. Run the Windows build workflow and inspect its smoke-test evidence.
+3. Build macOS with a local Developer ID Application identity and stored notarization credentials.
+4. Verify signatures, Hardened Runtime, entitlements, notarization, staple, Gatekeeper, install, launch, folder reading, editing, and shutdown.
+5. Generate SHA-256 checksums from the final artifacts.
+6. Publish the matching `v1.0.0` tag and GitHub Release assets.
+7. Deploy the website and verify both direct-download buttons from the public site.
 
 ## Product intent
 

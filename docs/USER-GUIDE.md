@@ -2,7 +2,7 @@
 
 ## Choose a library
 
-The first launch opens a native folder picker at the operating system's Documents location. Choose the folder that should act as the root of the Markdown library. Kainnne LumaReader remembers the selection.
+The first launch opens a native folder picker at the Desktop. Choose a main folder that should act as the root of the reading library. Kainnne LumaReader remembers the selection.
 
 To change it later, select **Library** in the sidebar or use **File → Change Library Folder**. The new folder replaces the previous root; it does not copy, move, rename, or edit any document.
 
@@ -16,20 +16,28 @@ macOS may request permission when a selected folder is inside Desktop, Documents
 
 - Expand a folder in the sidebar and select a document.
 - Use **Files** for the library tree and **Outline** for headings in the open document.
-- Use the search field to filter the library by path.
-- Use **File** to preview one local Markdown document without changing the saved library.
-- Paste a `file://`, `http://`, or `https://` Markdown address into the source field.
+- Use the search field to filter by filename or path. Matching results automatically reveal their parent folders; clearing search restores the previous collapsed state.
+- Drag the sidebar edge wider for long filenames, or use the menu button to collapse the sidebar.
+- Use **File** to preview one local supported document without changing the saved library.
 
 ## Reading controls
 
-- **Vertical**, **Horizontal**, and **Paged** change the reading flow.
+- The reading-mode menu provides full-width **Vertical**, **Horizontal**, **Paged · Left / right**, and **Paged · Up / down** layouts.
 - **Source** toggles the raw Markdown view.
 - **Media** opens the media gallery for the current document.
+- **Edit** opens the raw Markdown editor. Save in place with **Command+S** on macOS or **Ctrl+S** on Windows, then exit editing when ready.
 - **A−** and **A+** change reading size.
-- The palette control contains twenty visual palettes.
+- The palette control contains twenty-two visual palettes. Dream Rose is the first-launch default; later choices are remembered.
 - The language selector changes interface labels only.
 - The half-moon button changes light or dark appearance.
-- The persistent arrow or menu button collapses and restores the sidebar.
+- Horizontal and vertical scrollbars are both draggable whenever content overflows.
+- The persistent menu button collapses and restores the sidebar.
+
+## File types
+
+- Markdown is enabled by default: `.md`, `.markdown`, `.mkd`, `.mdx`.
+- Plain text is optional: enable `.txt` and `.log` separately from the **Formats** menu.
+- TXT and LOG remain read-only; Markdown files inside the selected library can be edited.
 
 ## Supported content
 

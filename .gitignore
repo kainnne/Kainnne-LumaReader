@@ -1,11 +1,13 @@
 node_modules/
 dist/
+dist-preview/
 release/
 coverage/
 .DS_Store
 Thumbs.db
 *.log
 *.tmp
+tests/qa-library/
 .env
 .env.*
 !.env.example
