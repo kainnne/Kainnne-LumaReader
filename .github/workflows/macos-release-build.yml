@@ -1,0 +1,89 @@
+name: macOS signed release build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-sign-notarize-and-smoke-test:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify release secrets are configured
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for variable in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [[ -z "${!variable}" ]]; then
+              echo "Required release secret is missing: $variable" >&2
+              exit 1
+            fi
+          done
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check and test source
+        run: |
+          npm run check
+          npm test
+
+      - name: Build, sign, and notarize macOS universal packages
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run dist:mac
+
+      - name: Verify signature, notarization ticket, and architectures
+        run: |
+          APP_PATH="dist/mac-universal/Kainnne LumaReader.app"
+          EXECUTABLE="$APP_PATH/Contents/MacOS/Kainnne LumaReader"
+          test -d "$APP_PATH"
+          test -f "dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg"
+          test -f "dist/Kainnne-LumaReader-1.0.0-macOS-universal.zip"
+          codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+          codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -F "Authority=Developer ID Application"
+          spctl --assess --type execute --verbose=4 "$APP_PATH"
+          xcrun stapler validate "$APP_PATH"
+          ARCHITECTURES="$(lipo -archs "$EXECUTABLE")"
+          [[ "$ARCHITECTURES" == *arm64* ]]
+          [[ "$ARCHITECTURES" == *x86_64* ]]
+          echo "Verified universal architectures: $ARCHITECTURES"
+
+      - name: Smoke-test signed and notarized application
+        run: node scripts/macos-smoke.js "dist/mac-universal/Kainnne LumaReader.app/Contents/MacOS/Kainnne LumaReader"
+
+      - name: Record macOS checksums
+        working-directory: dist
+        run: |
+          shasum -a 256 \
+            Kainnne-LumaReader-1.0.0-macOS-universal.dmg \
+            Kainnne-LumaReader-1.0.0-macOS-universal.zip \
+            > macos-sha256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kainnne-LumaReader-1.0.0-macOS-universal-signed-notarized
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg
+            dist/Kainnne-LumaReader-1.0.0-macOS-universal.zip
+            dist/macos-smoke-results.json
+            dist/macos-sha256.txt

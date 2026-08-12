@@ -12,13 +12,15 @@ This checklist is the evidence gate for public desktop releases. A checkbox must
 
 ## macOS direct distribution
 
-- [ ] A valid `Developer ID Application` identity and private key exist in the local Keychain.
+- [ ] A valid `Developer ID Application` certificate and private key are stored only in the release operator's Keychain and protected GitHub repository secrets.
+- [ ] The `macOS signed release build` job runs on `macos-15` from the same reviewed commit used for the Windows artifact.
 - [ ] The build is Universal (`arm64` and `x86_64`) and uses Hardened Runtime with production entitlements.
 - [ ] All nested executable code passes strict `codesign` verification.
 - [ ] Apple notarization returns `Accepted`; its log has been reviewed.
-- [ ] The notarization ticket is stapled and validates on the DMG.
+- [ ] The notarization ticket is stapled and validates on the `.app` packaged inside the final DMG.
 - [ ] `spctl` accepts the app as `Developer ID` source.
-- [ ] A final copied app launches, selects a folder, reads and edits Markdown, persists preferences, and quits without a lingering process.
+- [ ] CI launches the packaged app, scans and opens Markdown through its loopback API, and quits without a lingering process.
+- [ ] A final app copied from the downloaded DMG launches, selects a folder, reads and edits Markdown, persists preferences, and quits without a lingering process.
 
 ## Windows x64
 

@@ -50,31 +50,31 @@ Do not commit `dist/`, `.dmg`, `.exe`, `.zip`, or portable builds into the Git r
 
 ## Apple Developer Program and macOS validation
 
-The project owner intends to join the Apple Developer Program. LumaReader is distributed outside the Mac App Store through GitHub Releases, so future agents must help prepare, sign, notarize, staple, and verify every public macOS build.
+The project owner enrolled in the Apple Developer Program for this release. LumaReader is distributed outside the Mac App Store through GitHub Releases, so every public macOS build must be signed, notarized, stapled, and verified.
 
 ### Required Apple setup
 
-- Use a **Developer ID Application** certificate to sign the `.app` and `.dmg` distributed outside the Mac App Store.
+- Use a **Developer ID Application** certificate to sign the `.app` distributed inside the DMG outside the Mac App Store.
 - Use a **Developer ID Installer** certificate only if a signed `.pkg` installer is added later.
 - Enable Hardened Runtime and a secure timestamp.
 - Do not ship a distribution build with `com.apple.security.get-task-allow` enabled.
 - Use `notarytool`; do not use the retired `altool` workflow.
 
-The certificate, private key, Apple Account credentials, app-specific password, App Store Connect API key, and keychain password must remain outside the repository. Never commit or print them in logs, documentation, release notes, or chat. A future agent may use credentials already configured in the local Keychain or CI secret store, but must stop and ask the owner to complete account-level setup when they are unavailable.
+The certificate, private key, Apple Account credentials, app-specific password, App Store Connect API key, and keychain password must remain outside the repository. Never commit or print them in logs, documentation, release notes, or chat. The `macOS signed release build` workflow reads only `MAC_CSC_LINK`, `MAC_CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` from GitHub repository secrets. A future agent may use credentials already configured in the local Keychain or CI secret store, but must stop and ask the owner to complete account-level setup when they are unavailable.
 
 ### Agent responsibilities
 
 For every macOS release, the agent must:
 
 1. Confirm that the Apple Developer Program membership is active.
-2. Confirm that a valid `Developer ID Application` identity is installed and belongs to the correct Team ID.
-3. Build the Universal macOS target using the version from `package.json`.
+2. Confirm that a valid `Developer ID Application` identity belongs to the correct Team ID and its protected CI secrets are configured.
+3. Run the Universal macOS target on the pinned `macos-15` GitHub-hosted runner using the version from `package.json`.
 4. Verify that the app and all nested executable code are signed with the expected identity.
 5. Confirm Hardened Runtime, secure timestamp, and production entitlements.
 6. Submit the final distribution artifact to Apple with `notarytool` and wait for an `Accepted` result.
 7. Retrieve and review the notarization log. Warnings must not be ignored without recording why they are safe.
-8. Staple the notarization ticket to the distributed `.dmg` or package.
-9. Validate the staple and run Gatekeeper assessment locally.
+8. Confirm electron-builder staples the notarization ticket to the `.app` before creating the distributed DMG.
+9. Validate the app staple and run Gatekeeper assessment in CI, then repeat Gatekeeper and launch checks after downloading the DMG.
 10. Test installation and first launch on a clean macOS user account or clean test machine.
 11. Generate the checksum only after signing and notarization are complete.
 12. Upload exactly the verified artifact to GitHub Releases and test the public download again.
@@ -83,20 +83,18 @@ An agent must not describe a macOS artifact as signed, notarized, or release-rea
 
 ### Minimum verification commands
 
-Replace the example paths and identity names with the real release values:
+The workflow performs notarization through electron-builder. Use these commands on the generated app for independent verification:
 
 ```bash
 security find-identity -v -p codesigning
 codesign -vvv --deep --strict "dist/mac-universal/Kainnne LumaReader.app"
 codesign -d --verbose=4 "dist/mac-universal/Kainnne LumaReader.app"
 codesign -d --entitlements :- "dist/mac-universal/Kainnne LumaReader.app"
-xcrun notarytool submit "dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg" --keychain-profile "LUMAREADER_NOTARY" --wait
-xcrun stapler staple "dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg"
-xcrun stapler validate "dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg"
+xcrun stapler validate "dist/mac-universal/Kainnne LumaReader.app"
 spctl --assess --type execute --verbose=4 "dist/mac-universal/Kainnne LumaReader.app"
 ```
 
-Store notarization credentials in a named Keychain profile such as `LUMAREADER_NOTARY`. The profile name may be documented; its password or private key may not.
+For local diagnostic submissions, notarization credentials may instead be stored in a named Keychain profile such as `LUMAREADER_NOTARY`. The profile name may be documented; its password or private key may not.
 
 ### macOS release acceptance
 
