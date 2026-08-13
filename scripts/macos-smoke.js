@@ -1,6 +1,6 @@
 "use strict";
 
-const { spawn } = require("node:child_process");
+const { execFileSync, spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const net = require("node:net");
 const os = require("node:os");
@@ -9,11 +9,32 @@ const path = require("node:path");
 const EXPECTED_VERSION = process.env.EXPECTED_VERSION || "1.0.0";
 const APP_EXECUTABLE = process.argv[2];
 
-if (process.platform !== "darwin") {
-  throw new Error("The macOS release smoke test must run on macOS.");
+function appBundleForExecutable(executable) {
+  const appPath = path.dirname(path.dirname(path.dirname(path.resolve(executable))));
+  if (path.extname(appPath).toLowerCase() !== ".app") {
+    throw new Error(`The smoke-test executable is not inside a macOS app bundle: ${executable}`);
+  }
+  return appPath;
 }
-if (!APP_EXECUTABLE) {
-  throw new Error("Usage: node scripts/macos-smoke.js <path-to-app-executable>");
+
+function verifyCodeSignature(executable, verify = execFileSync) {
+  const appPath = appBundleForExecutable(executable);
+  try {
+    verify("/usr/bin/codesign", ["--verify", "--deep", "--strict", "--verbose=2", appPath], {
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+  } catch (error) {
+    const detail = [error?.stdout, error?.stderr]
+      .filter(Boolean)
+      .map((value) => String(value).trim())
+      .filter(Boolean)
+      .join("\n");
+    throw new Error(
+      `Refusing to launch a macOS package with an invalid code signature: ${appPath}${detail ? `\n${detail}` : ""}`,
+    );
+  }
+  return appPath;
 }
 
 function reservePort() {
@@ -65,8 +86,15 @@ async function stopApp(child) {
 }
 
 async function main() {
+  if (process.platform !== "darwin") {
+    throw new Error("The macOS release smoke test must run on macOS.");
+  }
+  if (!APP_EXECUTABLE) {
+    throw new Error("Usage: node scripts/macos-smoke.js <path-to-app-executable>");
+  }
   const executable = path.resolve(APP_EXECUTABLE);
   await fs.access(executable);
+  verifyCodeSignature(executable);
   const library = await fs.mkdtemp(path.join(os.tmpdir(), "lumareader-macos-smoke-"));
   const smokeText = "# macOS release smoke test\n\nPackaged application API check.\n";
   await fs.writeFile(path.join(library, "smoke.md"), smokeText, "utf8");
@@ -116,7 +144,11 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error.stack || error.message || error}\n`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    process.stderr.write(`${error.stack || error.message || error}\n`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { appBundleForExecutable, verifyCodeSignature };

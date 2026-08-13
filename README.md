@@ -19,6 +19,7 @@ Version 1.0.0 is the first public desktop release. The same local-first Electron
 - KaTeX mathematics and Mermaid diagrams, including flowcharts and Gantt charts.
 - Syntax highlighting, raw source preview, document outline, media preview, and live refresh.
 - In-place raw Markdown editing with a compact toolbar action and native `Command+S` / `Ctrl+S` save. Saving confirms in place; the reader returns only when the user exits editing.
+- Create a new `.md` in the current document folder from the sidebar. LumaReader confirms the destination, never overwrites an existing file, then opens the new document directly in the editor.
 - Matching custom menus for reading mode, palette, and interface language; Vertical remains the default, while Paged supports both left/right and up/down navigation.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
 - Every palette colors the application frame and accents while keeping the central reading paper neutral white in light mode and neutral charcoal in dark mode for clear text contrast.
@@ -27,7 +28,7 @@ Version 1.0.0 is the first public desktop release. The same local-first Electron
 
 ## Privacy model
 
-The desktop app starts an internal HTTP service on a random loopback port. It binds only to `127.0.0.1`, accepts no remote connections, and exposes no mutating HTTP endpoint. Folder selection and Markdown saves use restricted Electron IPC. Saves are limited to Markdown files inside the selected library and reject stale versions instead of silently overwriting external changes. Settings are stored in the application-specific user-data directory.
+The desktop app starts an internal HTTP service on a random loopback port. It binds only to `127.0.0.1`, accepts no remote connections, and exposes no mutating HTTP endpoint. Folder selection and Markdown create/save actions use restricted Electron IPC. New files are created exclusively inside the selected library without overwriting, while saves reject stale versions instead of silently replacing external changes. Settings are stored in the application-specific user-data directory.
 
 ## First launch
 

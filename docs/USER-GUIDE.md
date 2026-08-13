@@ -19,6 +19,7 @@ macOS may request permission when a selected folder is inside Desktop, Documents
 - Use the search field to filter by filename or path. Matching results automatically reveal their parent folders; clearing search restores the previous collapsed state.
 - Drag the sidebar edge wider for long filenames, or use the menu button to collapse the sidebar.
 - Use **File** to preview one local supported document without changing the saved library.
+- Use **New md.** to create a blank `.md` beside the document you are currently reading. Confirm the displayed folder and name; the new document opens directly in the editor. If no library document is open, it is created at the library root. Existing files are never overwritten.
 
 ## Reading controls
 

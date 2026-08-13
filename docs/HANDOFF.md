@@ -14,6 +14,7 @@ The following behavior was validated locally on macOS during Phase 1:
 - CJK bold labels using adjacent `**…**文字` syntax are normalized before CommonMark rendering while code spans and fenced code remain untouched.
 - Local images, media, includes, KaTeX mathematics, Mermaid diagrams, tables, alerts, task lists, and syntax highlighting.
 - Raw Markdown editing for files inside the selected library, with in-place Saved confirmation, explicit exit from editing, `Command+S` / `Ctrl+S`, and external-change conflict protection.
+- New Markdown creation in the current document folder, with an explicit name/destination confirmation, no-overwrite behavior, and immediate transition into editing.
 - Matching custom reading-mode, palette, and language menus ordered after Edit, Source, and Media; Paged includes left/right and up/down navigation with visible previous/next controls.
 - English as the default interface language with eleven interface languages available.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
@@ -47,6 +48,8 @@ The existing `.gitignore` enforces the main build and dependency exclusions.
 7. Deploy the website and verify both direct-download buttons from the public site.
 
 The release Mac currently runs macOS 26.5.2 (25F84), where local package rehearsals reproduced an operating-system regression that synthesizes `com.apple.provenance` / Finder metadata during signing and makes `codesign` reject Electron bundles. Do not weaken signing or entitlements to bypass it. The target acceptance build therefore runs on GitHub's isolated `macos-15` runner; the resulting notarized artifact is downloaded back to the release Mac for final install and UI verification.
+
+The four local crash reports from 2026-08-12 23:42–23:45 came from failed `/private/tmp` signing-rehearsal bundles launched by Codex, not from a user document. Two were explicitly terminated by macOS with `CODESIGNING / Invalid Page`; the other two trapped while reading modified Electron fuses. `scripts/macos-smoke.js` now performs strict deep signature verification before spawning a packaged app, so an incomplete rehearsal bundle is rejected without launching or creating another crash report.
 
 ## Product intent
 

@@ -259,6 +259,24 @@ ipcMain.handle("document:save", async (event, payload) => {
     };
   }
 });
+ipcMain.handle("document:create", async (event, payload) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) {
+    return { ok: false, code: "INVALID_SENDER", message: "This create request is not allowed." };
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { ok: false, code: "INVALID_CREATE_REQUEST", message: "The create request is invalid." };
+  }
+  try {
+    const document = await readerService.createMarkdownDocument(payload.directory, payload.name);
+    return { ok: true, document };
+  } catch (error) {
+    return {
+      ok: false,
+      code: error.code || "CREATE_FAILED",
+      message: error.message || "Unable to create this document.",
+    };
+  }
+});
 
 app.on("second-instance", (_event, commandLine) => {
   for (const argument of commandLine) {

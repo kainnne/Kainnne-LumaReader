@@ -92,6 +92,22 @@ function isInside(parent, candidate) {
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
+function markdownFileName(rawName) {
+  const input = String(rawName || "").normalize("NFC").trim();
+  if (!input || input.includes("\0") || /[<>:"/\\|?*\u0000-\u001f]/.test(input)) {
+    throw new HttpError("Enter a valid Markdown file name", 400, "INVALID_DOCUMENT_NAME");
+  }
+  const fileName = input.toLowerCase().endsWith(".md") ? input : `${input}.md`;
+  const stem = fileName.slice(0, -3);
+  if (!stem || stem === "." || stem === ".." || /[. ]$/.test(stem) || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(stem)) {
+    throw new HttpError("Enter a valid Markdown file name", 400, "INVALID_DOCUMENT_NAME");
+  }
+  if (Buffer.byteLength(fileName, "utf8") > 240) {
+    throw new HttpError("The Markdown file name is too long", 400, "DOCUMENT_NAME_TOO_LONG");
+  }
+  return fileName;
+}
+
 function isDocument(filePath) {
   return isSupportedDocument(filePath);
 }
@@ -784,6 +800,48 @@ class LocalReaderService {
     return localPayload(filePath, "project", this.libraryRoot, publicPath, (target, targetType, targetStat) => this.preflightBinary(target, targetType, targetStat));
   }
 
+  async createMarkdownDocument(rawDirectory, rawName) {
+    if (!this.libraryRoot) throw new HttpError("Choose a library folder first", 400, "LIBRARY_NOT_SELECTED");
+    const requestedDirectory = String(rawDirectory || "").replace(/\\/g, "/").replace(/^\/+/, "");
+    if (requestedDirectory.includes("\0")) {
+      throw new HttpError("The destination folder is invalid", 400, "INVALID_DESTINATION_FOLDER");
+    }
+    const candidateDirectory = path.resolve(this.libraryRoot, requestedDirectory || ".");
+    if (!isInside(this.libraryRoot, candidateDirectory)) {
+      throw new HttpError("The destination folder is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
+    }
+    let directory;
+    try {
+      directory = await fsp.realpath(candidateDirectory);
+      const stat = await fsp.stat(directory);
+      if (!stat.isDirectory()) throw new Error("not a directory");
+    } catch {
+      throw new HttpError("The destination folder is unavailable", 404, "DESTINATION_NOT_FOUND");
+    }
+    if (!isInside(this.libraryRoot, directory)) {
+      throw new HttpError("The destination folder is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
+    }
+
+    const fileName = markdownFileName(rawName);
+    const filePath = path.join(directory, fileName);
+    if (!isInside(this.libraryRoot, filePath)) {
+      throw new HttpError("The new document is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
+    }
+    try {
+      await fsp.writeFile(filePath, "", { encoding: "utf8", flag: "wx" });
+    } catch (error) {
+      if (error.code === "EEXIST") {
+        throw new HttpError("A document with this name already exists in the current folder", 409, "DOCUMENT_ALREADY_EXISTS");
+      }
+      if (["EACCES", "EPERM", "EROFS"].includes(error.code)) {
+        throw new HttpError("LumaReader does not have permission to create a document in this folder", 403, "DESTINATION_NOT_WRITABLE");
+      }
+      throw error;
+    }
+    const publicPath = path.relative(this.libraryRoot, filePath).split(path.sep).join("/");
+    return localPayload(filePath, "project", this.libraryRoot, publicPath, (target, targetType, targetStat) => this.preflightBinary(target, targetType, targetStat));
+  }
+
   resolveMedia(rawPath, fromSource) {
     const { filePath: sourceFile, sourceType } = this.sourceToLocalPath(fromSource);
     const requested = cleanMediaReference(rawPath);
@@ -978,6 +1036,7 @@ module.exports = {
   DOCUMENT_EXTENSIONS,
   HttpError,
   LocalReaderService,
+  markdownFileName,
   inspectXlsxArchive,
   parseRange,
   scanDocuments,
