@@ -1,6 +1,9 @@
 const editions = {
   en: {
-    "download-note": "Free and open source · Version 1.0.0",
+    "download-note": "Windows available now · Free and open source · Version 1.0.0",
+    "macos-action": "COMING SOON",
+    "macos-status": "Apple pending",
+    "macos-notice": "The macOS download will open after Apple activates the developer membership and the Universal build passes signing and notarization.",
     "windows-notice": "The Windows build is unsigned. Microsoft Defender SmartScreen may show an “unrecognized app” notice because the publisher is not verified. Download only from this official site or GitHub Releases.",
     "overview-title": "A calmer way to live with Markdown.",
     "overview-lead": "LumaReader gives an ordinary folder the feel of a considered reading app: clear hierarchy, comfortable typography, and powerful rendering without an account or a complicated setup.",
@@ -23,7 +26,10 @@ const editions = {
     "feature-6-body": "Your library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide."
   },
   zh: {
-    "download-note": "免費開源 · 版本 1.0.0",
+    "download-note": "Windows 現已開放 · 免費開源 · 版本 1.0.0",
+    "macos-action": "即將開放",
+    "macos-status": "等待 Apple",
+    "macos-notice": "Apple 啟用開發者會員資格，且 Universal 版本完成簽章與公證後，才會開放 macOS 下載。",
     "windows-notice": "Windows 版本目前未簽章，因此第一次開啟時可能出現 SmartScreen 的「無法辨識」提醒。請只從 LumaReader 官方網站或 GitHub Releases 下載；若系統顯示明確的威脅名稱，請停止執行並回報。",
     "overview-title": "把普通資料夾，變成真正想打開的閱讀空間。",
     "overview-lead": "LumaReader 不要求你改變原本的整理方式。選好資料夾，就能在清楚的目錄、舒服的排版與安靜的介面裡閱讀；功能放在需要的位置，文件仍然是畫面的主角。",

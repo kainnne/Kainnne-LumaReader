@@ -34,13 +34,13 @@
         <p class="tagline">Your local Markdown library, made for reading.</p>
 
         <div class="download-actions" aria-label="Desktop downloads">
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-macOS-universal.dmg" data-download="macOS" aria-describedby="download-note">
+          <div class="download-button is-pending" role="status" aria-describedby="macos-notice">
             <span class="button-copy">
-              <small>DOWNLOAD FOR</small>
+              <small data-copy="macos-action">COMING SOON</small>
               <strong>macOS</strong>
             </span>
-            <span class="button-status">Universal</span>
-          </a>
+            <span class="button-status" data-copy="macos-status">Apple pending</span>
+          </div>
           <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-Windows-x64-Setup.exe" data-download="Windows" aria-describedby="download-note">
             <span class="button-copy">
               <small>DOWNLOAD FOR</small>
@@ -51,7 +51,11 @@
         </div>
 
         <p class="download-note" id="download-note" data-copy="download-note">
-          Free and open source · Version 1.0.0
+          Windows available now · Free and open source · Version 1.0.0
+        </p>
+
+        <p class="macos-notice" id="macos-notice" data-copy="macos-notice">
+          The macOS download will open after Apple activates the developer membership and the Universal build passes signing and notarization.
         </p>
 
         <p class="windows-notice" data-copy="windows-notice">
