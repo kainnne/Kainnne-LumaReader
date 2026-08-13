@@ -1182,7 +1182,7 @@ body.loading .live-dot { background: var(--accent); animation: luma-pulse 1s eas
 
 .library-controls {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 9px;
 }
@@ -1204,6 +1204,8 @@ body.loading .live-dot { background: var(--accent); animation: luma-pulse 1s eas
   cursor: pointer;
 }
 .compact-button:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.compact-button:disabled { opacity: .48; cursor: not-allowed; box-shadow: none; }
+.new-markdown-button:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); }
 .library-root {
   grid-column: 1 / -1;
   min-width: 0;
@@ -1953,6 +1955,76 @@ body.scanning-library .live-dot { background: var(--accent); animation: luma-pul
 
 @media (prefers-reduced-motion: reduce) {
   .dropdown-chevron { transition: none; }
+}
+
+.new-markdown-dialog {
+  width: min(470px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 28px 90px rgba(22, 14, 20, .3);
+}
+.new-markdown-dialog::backdrop { background: rgba(25, 17, 23, .48); backdrop-filter: blur(5px); }
+.new-markdown-dialog form { display: grid; gap: 18px; padding: 24px; }
+.new-markdown-header { display: flex; align-items: flex-start; gap: 13px; }
+.new-markdown-symbol {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 19px;
+  font-weight: 800;
+}
+.new-markdown-header h2 { margin: 0; font-size: 20px; line-height: 1.25; }
+.new-markdown-header p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.new-markdown-field { display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 750; }
+.new-markdown-input-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 94%, var(--accent-soft));
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.new-markdown-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+.new-markdown-input-wrap input {
+  min-width: 0;
+  height: 42px;
+  padding: 0 2px 0 12px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+.new-markdown-input-wrap > span { padding: 0 12px 0 6px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.new-markdown-destination { display: grid; gap: 5px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--code); }
+.new-markdown-destination > span { color: var(--muted); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+.new-markdown-destination strong { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.new-markdown-confirmation { min-height: 18px; margin: -5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.new-markdown-error { margin: -8px 0 0; color: #b83252; font-size: 12px; line-height: 1.45; }
+.new-markdown-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }
+.new-markdown-actions .compact-button { min-width: 86px; }
+.new-markdown-actions .primary-button { border-color: var(--accent-strong); background: var(--accent-strong); color: #fff; }
+.new-markdown-actions .primary-button:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+@media (max-width: 520px) {
+  .new-markdown-dialog { width: calc(100vw - 20px); }
+  .new-markdown-dialog form { gap: 15px; padding: 18px; }
+  .new-markdown-header p { font-size: 11px; }
 }
 
 /* Paged reading can advance across columns or down viewport-sized pages. */

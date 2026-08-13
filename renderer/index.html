@@ -28,6 +28,9 @@
         <button id="choose-file" class="compact-button" type="button" data-i18n-title="chooseFile" title="Choose local document">
           <span aria-hidden="true">＋</span><span data-i18n="fileButton">File</span>
         </button>
+        <button id="new-markdown" class="compact-button new-markdown-button" type="button" data-i18n-title="newMarkdown" title="New Markdown" disabled>
+          <span aria-hidden="true">✎</span><span data-i18n="newMarkdownButton">New md.</span>
+        </button>
         <input id="file-picker" type="file" accept=".md,.markdown,.mkd,.mdx,.txt,.log" hidden />
         <div id="library-root" class="library-root" data-i18n="noLibraryShort">No folder selected</div>
       </div>
@@ -181,6 +184,34 @@
         <img id="image-viewer-image" class="image-viewer-image" alt="" />
       </div>
       <p id="image-viewer-caption" class="image-viewer-caption"></p>
+    </dialog>
+    <dialog id="new-markdown-dialog" class="new-markdown-dialog" aria-labelledby="new-markdown-title" aria-describedby="new-markdown-copy">
+      <form id="new-markdown-form" method="dialog">
+        <header class="new-markdown-header">
+          <span class="new-markdown-symbol" aria-hidden="true">✎</span>
+          <div>
+            <h2 id="new-markdown-title">Create Markdown</h2>
+            <p id="new-markdown-copy">Add a new Markdown document without leaving your reading flow.</p>
+          </div>
+        </header>
+        <label class="new-markdown-field" for="new-markdown-name">
+          <span id="new-markdown-name-label">Document name</span>
+          <span class="new-markdown-input-wrap">
+            <input id="new-markdown-name" name="name" type="text" maxlength="120" autocomplete="off" spellcheck="false" required />
+            <span id="new-markdown-suffix" aria-hidden="true">.md</span>
+          </span>
+        </label>
+        <div class="new-markdown-destination">
+          <span id="new-markdown-destination-label">Current folder</span>
+          <strong id="new-markdown-destination"></strong>
+        </div>
+        <p id="new-markdown-confirmation" class="new-markdown-confirmation" aria-live="polite"></p>
+        <p id="new-markdown-error" class="new-markdown-error" role="alert" hidden></p>
+        <footer class="new-markdown-actions">
+          <button id="new-markdown-cancel" class="compact-button" value="cancel" type="button">Cancel</button>
+          <button id="new-markdown-create" class="compact-button primary-button" value="create" type="submit">Create</button>
+        </footer>
+      </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <div id="toolbar-tooltip" class="toolbar-tooltip" role="tooltip" hidden></div>

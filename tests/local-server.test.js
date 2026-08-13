@@ -8,7 +8,7 @@ const path = require("node:path");
 const { Writable } = require("node:stream");
 const { finished } = require("node:stream/promises");
 const { pathToFileURL } = require("node:url");
-const { DOCUMENT_EXTENSIONS, LocalReaderService, scanDocuments } = require("../src/local-server");
+const { DOCUMENT_EXTENSIONS, LocalReaderService, markdownFileName, scanDocuments } = require("../src/local-server");
 const { BINARY_DOCUMENT_EXTENSIONS, EXPLICITLY_UNSUPPORTED_EXTENSIONS, getDocumentType } = require("../src/document-types");
 
 const repositoryRoot = path.resolve(__dirname, "..");
@@ -127,6 +127,42 @@ test("saves Markdown inside the selected library and returns the refreshed paylo
   assert.equal(after.kind, "markdown");
   assert.equal(after.text, "# After\n\nSaved locally.\n");
   assert.ok(after.modifiedNs >= before.modifiedNs);
+});
+
+test("creates a new Markdown document in the current library folder without overwriting", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, "notes"));
+  const createService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
+
+  const created = await createService.createMarkdownDocument("notes", "Meeting notes");
+  assert.equal(created.path, "notes/Meeting notes.md");
+  assert.equal(created.kind, "markdown");
+  assert.equal(fs.readFileSync(path.join(root, created.path), "utf8"), "");
+  const createdAtRoot = await createService.createMarkdownDocument("", "Root note.md");
+  assert.equal(createdAtRoot.path, "Root note.md");
+  assert.equal(fs.readFileSync(path.join(root, createdAtRoot.path), "utf8"), "");
+  await assert.rejects(
+    () => createService.createMarkdownDocument("notes", "Meeting notes.md"),
+    (error) => error.code === "DOCUMENT_ALREADY_EXISTS",
+  );
+});
+
+test("validates new Markdown names and keeps creation inside the selected library", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-guard-"));
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-outside-"));
+  t.after(() => { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); });
+  fs.symlinkSync(outside, path.join(root, "escape"));
+  const createService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
+
+  assert.equal(markdownFileName("新筆記"), "新筆記.md");
+  assert.equal(markdownFileName("already.md"), "already.md");
+  for (const invalid of ["", "../escape", "bad:name", "CON", ".md", "trailing."]) {
+    assert.throws(() => markdownFileName(invalid), (error) => error.code === "INVALID_DOCUMENT_NAME");
+  }
+  await assert.rejects(() => createService.createMarkdownDocument("../", "outside"), /outside the selected library/i);
+  await assert.rejects(() => createService.createMarkdownDocument("escape", "outside"), /outside the selected library/i);
+  assert.equal(fs.readdirSync(outside).length, 0);
 });
 
 test("keeps plain text read-only and refuses stale Markdown saves", async (t) => {

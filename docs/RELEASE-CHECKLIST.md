@@ -8,7 +8,7 @@ This checklist is the evidence gate for public desktop releases. A checkbox must
 - [ ] `npm ci`, `npm run check`, and `npm test` pass from a clean checkout.
 - [ ] Only `.md`, `.markdown`, `.mkd`, `.mdx`, `.txt`, and `.log` are exposed; TXT and LOG default to disabled.
 - [ ] First launch defaults to English, Dream Rose, light appearance, and full-width Vertical reading.
-- [ ] Folder selection, search ancestor expansion, reading modes, edit/save/exit, palette persistence, and normal shutdown are tested.
+- [ ] Folder selection, search ancestor expansion, reading modes, New md. destination/no-overwrite behavior, edit/save/exit, palette persistence, and normal shutdown are tested.
 
 ## macOS direct distribution
 

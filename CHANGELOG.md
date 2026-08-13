@@ -14,6 +14,7 @@ First public release of Kainnne LumaReader.
 
 ### Editing and preferences
 
+- Create a new `.md` in the current document folder, confirm its destination, and enter editing immediately without risking an overwrite.
 - In-place raw Markdown editing with an explicit Edit action and `Command+S` / `Ctrl+S`.
 - Saving confirms in place and keeps editing active until the user exits; stale-file conflict protection prevents silent overwrite.
 - Twenty-two palettes, neutral reading paper, light and dark appearances, eleven interface languages, persisted preferences, and a first-launch guide.

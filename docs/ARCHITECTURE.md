@@ -7,7 +7,7 @@ Kainnne LumaReader uses Electron so the same application code can run on macOS a
 The application has four boundaries:
 
 1. **Electron main process** — owns the window, native folder dialog, persisted settings, menu, and application lifecycle.
-2. **Preload bridge** — exposes folder selection, preferences, and a restricted Markdown-save method. Node integration remains disabled.
+2. **Preload bridge** — exposes folder selection, preferences, and restricted Markdown create/save methods. Node integration remains disabled.
 3. **Loopback document service** — scans and reads the selected library, expands includes, serves local media, and hosts the renderer on a random `127.0.0.1` port.
 4. **Renderer** — selects a document adapter, renders the supported preview type, manages reading modes, and owns visual preferences stored in browser local storage.
 
@@ -38,7 +38,7 @@ Generated folders, hidden folders, application bundles, dependency folders, and 
 
 Library roots and requested files are resolved through their real paths. A lexical path check is followed by a real-path boundary check, blocking traversal and symlinks that escape the selected library. Scanning does not follow symlinks. The HTTP listener binds only to `127.0.0.1`, accepts loopback host headers, and serves read-only `GET`/`HEAD` routes.
 
-The only document write path is `document:save` through the context-isolated Electron bridge. The main process accepts it only from the reader window, resolves the requested file against the selected library, permits only Markdown types, enforces the Markdown size limit, and compares the last-known modification timestamp before writing. Plain text, logs, uploads, external paths, and remote sources remain read-only.
+Document writes exist only through the context-isolated Electron bridge. `document:create` validates a simple Markdown filename, resolves an existing destination folder inside the selected library through its real path, and uses exclusive creation so it can never replace an existing file. `document:save` accepts only Markdown inside the library, enforces the Markdown size limit, and compares the last-known modification timestamp before writing. Both requests must originate from the reader window. Plain text, logs, uploads, external paths, and remote sources remain read-only.
 
 ## Renderer safety
 
