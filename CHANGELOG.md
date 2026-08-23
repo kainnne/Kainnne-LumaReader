@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 — 2026-08-12
+## 1.0.0 — 2026-08-23
 
 First public release of Kainnne LumaReader.
 
@@ -14,9 +14,11 @@ First public release of Kainnne LumaReader.
 
 ### Editing and preferences
 
-- Create a new `.md` in the current document folder, confirm its destination, and enter editing immediately without risking an overwrite.
+- Create a new `.md` by choosing its destination folder first, confirm its name and location, refresh the library immediately, and enter editing without risking an overwrite.
 - In-place raw Markdown editing with an explicit Edit action and `Command+S` / `Ctrl+S`.
 - Saving confirms in place and keeps editing active until the user exits; stale-file conflict protection prevents silent overwrite.
+- Optional live Markdown comparison preview with a draggable divider, source-led block-aware synchronized scrolling, and one scrollbar at the far right.
+- Reader, source, and editor text share the same size setting and `Command` / `Ctrl` with `+` and `-` shortcuts.
 - Twenty-two palettes, neutral reading paper, light and dark appearances, eleven interface languages, persisted preferences, and a first-launch guide.
 - Dream Rose with the light appearance is the first-launch default.
 

@@ -96,8 +96,11 @@ async function main() {
   await fs.access(executable);
   verifyCodeSignature(executable);
   const library = await fs.mkdtemp(path.join(os.tmpdir(), "lumareader-macos-smoke-"));
-  const smokeText = "# macOS release smoke test\n\nPackaged application API check.\n";
+  const smokeText = "# macOS release smoke test\n\nPackaged application API check.\n\n![Portable image](assets/portable%20image.png)\n";
+  const imageBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   await fs.writeFile(path.join(library, "smoke.md"), smokeText, "utf8");
+  await fs.mkdir(path.join(library, "assets"), { recursive: true });
+  await fs.writeFile(path.join(library, "assets", "portable image.png"), imageBytes);
   const port = await reservePort();
   const origin = `http://127.0.0.1:${port}`;
   const startedAt = Date.now();
@@ -122,6 +125,12 @@ async function main() {
     if (document.kind !== "markdown" || !document.text?.includes("macOS release smoke test")) {
       throw new Error("The packaged app did not open the Markdown smoke document.");
     }
+    const mediaQuery = new URLSearchParams({ path: "assets/portable%20image.png", from: "smoke.md" });
+    const mediaResponse = await fetch(`${origin}/api/media?${mediaQuery}`, { signal: AbortSignal.timeout(5_000) });
+    const packagedImage = Buffer.from(await mediaResponse.arrayBuffer());
+    if (!mediaResponse.ok || mediaResponse.headers.get("content-type") !== "image/png" || !packagedImage.equals(imageBytes)) {
+      throw new Error("The packaged app did not serve a portable relative Markdown image.");
+    }
 
     const result = {
       label: "Packaged macOS universal application",
@@ -130,6 +139,7 @@ async function main() {
       librarySelected: health.selected,
       markdownScanned: true,
       markdownOpened: true,
+      relativeImageOpened: true,
       elapsedSeconds: Number(((Date.now() - startedAt) / 1_000).toFixed(2)),
     };
     await fs.mkdir(path.resolve("dist"), { recursive: true });

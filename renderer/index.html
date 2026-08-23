@@ -78,7 +78,7 @@
       <div id="sidebar-resizer" class="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize document sidebar" data-i18n-aria="resizeSidebar" tabindex="0"></div>
     </aside>
 
-    <button id="sidebar-toggle" class="sidebar-toggle icon-button" type="button" data-i18n-title="collapseSidebar" title="Collapse sidebar" aria-label="Collapse sidebar">☰</button>
+    <button id="sidebar-toggle" class="sidebar-toggle icon-button" type="button" data-i18n-title="collapseSidebar" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
 
     <main id="reader-shell" class="reader-shell" data-mode="vertical" data-view="rendered">
       <header class="reader-bar">
@@ -89,6 +89,10 @@
         <div class="reader-actions" data-i18n-aria="readerSettings">
           <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
           <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
+          <label id="editor-preview-control" class="editor-preview-control" hidden>
+            <input id="editor-preview-toggle" type="checkbox" />
+            <span data-i18n="comparisonPreview">Preview</span>
+          </label>
           <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
           <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
           <div id="reading-mode-control" class="toolbar-dropdown">
@@ -155,6 +159,7 @@
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
         <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="off" hidden></textarea>
+        <div id="editor-preview-resizer" class="editor-preview-resizer" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" data-i18n-aria="resizeEditorPreview" aria-valuemin="25" aria-valuemax="75" aria-valuenow="50" tabindex="0" hidden><span aria-hidden="true"></span></div>
       </div>
       <nav id="paged-navigation" class="paged-navigation" aria-label="Page navigation" hidden>
         <button id="page-previous" class="page-turn-button" type="button" aria-label="Previous page">‹</button>
@@ -202,7 +207,7 @@
           </span>
         </label>
         <div class="new-markdown-destination">
-          <span id="new-markdown-destination-label">Current folder</span>
+          <span id="new-markdown-destination-label">Selected folder</span>
           <strong id="new-markdown-destination"></strong>
         </div>
         <p id="new-markdown-confirmation" class="new-markdown-confirmation" aria-live="polite"></p>

@@ -19,11 +19,13 @@ Version 1.0.0 is the first public desktop release. The same local-first Electron
 - KaTeX mathematics and Mermaid diagrams, including flowcharts and Gantt charts.
 - Syntax highlighting, raw source preview, document outline, media preview, and live refresh.
 - In-place raw Markdown editing with a compact toolbar action and native `Command+S` / `Ctrl+S` save. Saving confirms in place; the reader returns only when the user exits editing.
-- Create a new `.md` in the current document folder from the sidebar. LumaReader confirms the destination, never overwrites an existing file, then opens the new document directly in the editor.
+- Optional live comparison preview while editing, with a draggable split, source-led synchronized scrolling, and one shared scrollbar at the far right.
+- Create a new `.md` by choosing its destination folder first. LumaReader confirms the name and destination, never overwrites an existing file, refreshes the library immediately, then opens the new document directly in the editor.
 - Matching custom menus for reading mode, palette, and interface language; Vertical remains the default, while Paged supports both left/right and up/down navigation.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
 - Every palette colors the application frame and accents while keeping the central reading paper neutral white in light mode and neutral charcoal in dark mode for clear text contrast.
 - Eleven interface languages. Document content is never translated automatically.
+- Reader text, Markdown source, and editor text share the same size control through the toolbar or `Command` / `Ctrl` with `+` and `-`.
 - Compact responsive controls and a persistent sidebar toggle.
 
 ## Privacy model

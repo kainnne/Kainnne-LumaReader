@@ -14,7 +14,9 @@ The following behavior was validated locally on macOS during Phase 1:
 - CJK bold labels using adjacent `**…**文字` syntax are normalized before CommonMark rendering while code spans and fenced code remain untouched.
 - Local images, media, includes, KaTeX mathematics, Mermaid diagrams, tables, alerts, task lists, and syntax highlighting.
 - Raw Markdown editing for files inside the selected library, with in-place Saved confirmation, explicit exit from editing, `Command+S` / `Ctrl+S`, and external-change conflict protection.
-- New Markdown creation in the current document folder, with an explicit name/destination confirmation, no-overwrite behavior, and immediate transition into editing.
+- Optional live comparison preview while editing, with a draggable split, source-led block-aware synchronized scrolling, and a single visible scrollbar at the far right.
+- New Markdown creation begins with a native destination-folder picker, followed by an explicit name/destination confirmation, no-overwrite behavior, immediate library refresh, and transition into editing. Choosing a destination outside the current library intentionally makes that folder the new library root.
+- Reader, source, and editor text use the same size preference and `Command` / `Ctrl` with `+` and `-` shortcuts.
 - Matching custom reading-mode, palette, and language menus ordered after Edit, Source, and Media; Paged includes left/right and up/down navigation with visible previous/next controls.
 - English as the default interface language with eleven interface languages available.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.

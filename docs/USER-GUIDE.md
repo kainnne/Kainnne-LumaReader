@@ -19,7 +19,7 @@ macOS may request permission when a selected folder is inside Desktop, Documents
 - Use the search field to filter by filename or path. Matching results automatically reveal their parent folders; clearing search restores the previous collapsed state.
 - Drag the sidebar edge wider for long filenames, or use the menu button to collapse the sidebar.
 - Use **File** to preview one local supported document without changing the saved library.
-- Use **New md.** to create a blank `.md` beside the document you are currently reading. Confirm the displayed folder and name; the new document opens directly in the editor. If no library document is open, it is created at the library root. Existing files are never overwritten.
+- Use **New md.** to choose a destination folder, enter a filename, and confirm the full destination before creation. The library refreshes immediately and the new document opens directly in the editor. Choosing a folder outside the current library makes the selected folder the new library root. Existing files are never overwritten.
 
 ## Reading controls
 
@@ -27,7 +27,8 @@ macOS may request permission when a selected folder is inside Desktop, Documents
 - **Source** toggles the raw Markdown view.
 - **Media** opens the media gallery for the current document.
 - **Edit** opens the raw Markdown editor. Save in place with **Command+S** on macOS or **Ctrl+S** on Windows, then exit editing when ready.
-- **A−** and **A+** change reading size.
+- **Preview** in the editing toolbar opens a live rendered comparison. Drag the thin divider to resize the source and preview. Scrolling either pane keeps the rendered preview aligned to the Markdown source; the shared scrollbar is shown at the far right.
+- **A−** and **A+** change reading, source, and editor text size. The keyboard shortcuts are **Command− / Command+** on macOS and **Ctrl− / Ctrl+** on Windows.
 - The palette control contains twenty-two visual palettes. Dream Rose is the first-launch default; later choices are remembered.
 - The language selector changes interface labels only.
 - The half-moon button changes light or dark appearance.

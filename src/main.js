@@ -4,13 +4,18 @@ const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron")
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
+const crypto = require("node:crypto");
+const packageMetadata = require("../package.json");
 const { LocalReaderService } = require("./local-server");
 
-const PROTOCOL = "kainnne-lumareader";
-const APP_ID = "com.kainnne.lumareader";
-const APP_TITLE = "Kainnne LumaReader";
+const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
+const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
+const APP_ID = PREVIEW_BUILD ? "com.kainnne.lumareader.preview" : "com.kainnne.lumareader";
+const APP_TITLE = PREVIEW_BUILD ? "Kainnne LumaReader Preview" : "Kainnne LumaReader";
 const PREFERENCE_KEYS = new Set([
   "appMode",
+  "editorPreview",
+  "editorSplitRatio",
   "fontSize",
   "formatSelections",
   "language",
@@ -40,6 +45,8 @@ let settings = { libraryRoot: null, preferences: {} };
 let shutdownStarted = false;
 let readerOrigin = null;
 let pendingSource = null;
+const pendingCreateDestinations = new Map();
+const CREATE_DESTINATION_TTL_MS = 10 * 60 * 1000;
 
 function sourceFromProtocol(value) {
   try {
@@ -93,6 +100,12 @@ function validDirectory(candidate) {
   } catch {
     return null;
   }
+}
+
+function isInsideDirectory(parent, candidate) {
+  if (!parent || !candidate) return false;
+  const relative = path.relative(parent, candidate);
+  return relative === "" || (!path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`));
 }
 
 function isPreferenceValue(value) {
@@ -150,6 +163,47 @@ async function chooseLibrary({ automatic = false } = {}) {
   return payload;
 }
 
+async function chooseDocumentDirectory({ directory = "" } = {}) {
+  const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
+  const currentRoot = readerService.getLibraryRoot();
+  let defaultPath = currentRoot || app.getPath("desktop");
+  if (currentRoot && typeof directory === "string") {
+    const candidate = path.resolve(currentRoot, directory.replace(/\\/g, "/"));
+    if (isInsideDirectory(currentRoot, candidate) && validDirectory(candidate)) defaultPath = candidate;
+  }
+  const result = await dialog.showOpenDialog(window, {
+    title: "Choose where to create the Markdown document",
+    message: "Choose a folder first. If it is outside the current library, LumaReader will use it as the new library so the document appears in the sidebar.",
+    defaultPath,
+    buttonLabel: "Choose Folder",
+    properties: ["openDirectory", "createDirectory"],
+  });
+  if (result.canceled || !result.filePaths[0]) {
+    return { selected: false, canceled: true, root: currentRoot, directory: "", displayPath: "", libraryChanged: false };
+  }
+
+  const selectedDirectory = fs.realpathSync(path.resolve(result.filePaths[0]));
+  let root = currentRoot;
+  let relativeDirectory = "";
+  if (currentRoot && isInsideDirectory(currentRoot, selectedDirectory)) {
+    relativeDirectory = path.relative(currentRoot, selectedDirectory).split(path.sep).join("/");
+  } else {
+    root = selectedDirectory;
+  }
+  pendingCreateDestinations.clear();
+  const destinationToken = crypto.randomUUID();
+  pendingCreateDestinations.set(destinationToken, { directory: selectedDirectory, createdAt: Date.now() });
+  return {
+    selected: true,
+    canceled: false,
+    root,
+    directory: relativeDirectory,
+    displayPath: selectedDirectory,
+    libraryChanged: currentRoot !== root,
+    destinationToken,
+  };
+}
+
 function installMenu() {
   const template = [
     ...(process.platform === "darwin" ? [{ role: "appMenu" }] : []),
@@ -178,9 +232,9 @@ function installMenu() {
     {
       label: "View",
       submenu: [
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { role: "resetZoom" },
+        { label: "Larger Reader Text", accelerator: "CmdOrCtrl+Plus", click: () => mainWindow?.webContents.send("reader:font-size-requested", 1) },
+        { label: "Smaller Reader Text", accelerator: "CmdOrCtrl+-", click: () => mainWindow?.webContents.send("reader:font-size-requested", -1) },
+        { label: "Reset Reader Text", accelerator: "CmdOrCtrl+0", click: () => mainWindow?.webContents.send("reader:font-size-requested", 0) },
       ],
     },
   ];
@@ -231,6 +285,17 @@ async function createWindow() {
 
 ipcMain.handle("library:get", () => ({ selected: Boolean(settings.libraryRoot), root: settings.libraryRoot }));
 ipcMain.handle("library:choose", () => chooseLibrary());
+ipcMain.handle("document:choose-directory", async (event, payload) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) {
+    return { selected: false, canceled: true, code: "INVALID_SENDER" };
+  }
+  return chooseDocumentDirectory(payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {});
+});
+ipcMain.handle("document:cancel-create", (event, destinationToken) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) return false;
+  if (typeof destinationToken === "string") pendingCreateDestinations.delete(destinationToken);
+  return true;
+});
 ipcMain.handle("preferences:get", () => ({ ...settings.preferences }));
 ipcMain.handle("preferences:set", async (_event, patch) => {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...settings.preferences };
@@ -266,10 +331,30 @@ ipcMain.handle("document:create", async (event, payload) => {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return { ok: false, code: "INVALID_CREATE_REQUEST", message: "The create request is invalid." };
   }
+  const destination = pendingCreateDestinations.get(payload.destinationToken);
+  if (!destination || Date.now() - destination.createdAt > CREATE_DESTINATION_TTL_MS) {
+    if (typeof payload.destinationToken === "string") pendingCreateDestinations.delete(payload.destinationToken);
+    return { ok: false, code: "DESTINATION_SELECTION_EXPIRED", message: "Choose the destination folder again." };
+  }
+  const previousRoot = readerService.getLibraryRoot();
+  const destinationInsideLibrary = previousRoot && isInsideDirectory(previousRoot, destination.directory);
+  const nextRoot = destinationInsideLibrary ? previousRoot : destination.directory;
+  const relativeDirectory = destinationInsideLibrary ? path.relative(previousRoot, destination.directory).split(path.sep).join("/") : "";
+  let switchedLibrary = false;
   try {
-    const document = await readerService.createMarkdownDocument(payload.directory, payload.name);
-    return { ok: true, document };
+    if (nextRoot !== previousRoot) {
+      readerService.setLibraryRoot(nextRoot);
+      switchedLibrary = true;
+    }
+    const document = await readerService.createMarkdownDocument(relativeDirectory, payload.name);
+    if (switchedLibrary) {
+      settings.libraryRoot = readerService.getLibraryRoot();
+      try { await saveSettings(); } catch (error) { console.warn("Unable to persist the new library root", error); }
+    }
+    pendingCreateDestinations.delete(payload.destinationToken);
+    return { ok: true, document, root: readerService.getLibraryRoot(), libraryChanged: switchedLibrary };
   } catch (error) {
+    if (switchedLibrary) readerService.setLibraryRoot(previousRoot);
     return {
       ok: false,
       code: error.code || "CREATE_FAILED",

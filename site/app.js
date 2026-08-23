@@ -1,9 +1,9 @@
 const editions = {
   en: {
-    "download-note": "Windows available now · Free and open source · Version 1.0.0",
-    "macos-action": "COMING SOON",
-    "macos-status": "Apple pending",
-    "macos-notice": "The macOS download will open after Apple activates the developer membership and the Universal build passes signing and notarization.",
+    "download-note": "Free and open source · Version 1.0.0 · macOS and Windows",
+    "macos-action": "DOWNLOAD FOR",
+    "macos-status": "Universal",
+    "macos-notice": "The Universal macOS build supports Apple silicon and Intel Macs. It is signed with Developer ID and notarized by Apple for direct distribution.",
     "windows-notice": "The Windows build is unsigned. Microsoft Defender SmartScreen may show an “unrecognized app” notice because the publisher is not verified. Download only from this official site or GitHub Releases.",
     "overview-title": "A calmer way to live with Markdown.",
     "overview-lead": "LumaReader gives an ordinary folder the feel of a considered reading app: clear hierarchy, comfortable typography, and powerful rendering without an account or a complicated setup.",
@@ -21,15 +21,15 @@ const editions = {
     "feature-4-title": "Rich Markdown, without extra setup.",
     "feature-4-body": "Render tables, task lists, alerts, highlighted code, KaTeX mathematics, Mermaid diagrams, footnotes, emoji, abbreviations, superscript, subscript, and reusable local includes.",
     "feature-5-title": "Create, read, edit, and save in one place.",
-    "feature-5-body": "Create a new .md beside the document you are reading, confirm its destination, and start writing immediately. Switch between rendered Markdown, source, and local media; save with Command+S or Ctrl+S without leaving the editor, with overwrite and external-change protection built in.",
+    "feature-5-body": "Choose any destination folder for a new .md, confirm its name and location, and start writing immediately. Edit beside an optional live preview with a draggable split and synchronized scrolling; resize source and editor text with Command/Ctrl + or −, then save without leaving the editor.",
     "feature-6-title": "Local-first from start to finish.",
     "feature-6-body": "Your library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide."
   },
   zh: {
-    "download-note": "Windows 現已開放 · 免費開源 · 版本 1.0.0",
-    "macos-action": "即將開放",
-    "macos-status": "等待 Apple",
-    "macos-notice": "Apple 啟用開發者會員資格，且 Universal 版本完成簽章與公證後，才會開放 macOS 下載。",
+    "download-note": "免費開源 · 版本 1.0.0 · 支援 macOS 與 Windows",
+    "macos-action": "下載版本",
+    "macos-status": "Universal",
+    "macos-notice": "macOS Universal 版本同時支援 Apple 晶片與 Intel Mac，並已完成 Developer ID 簽章與 Apple 公證，可供網站直接下載。",
     "windows-notice": "Windows 版本目前未簽章，因此第一次開啟時可能出現 SmartScreen 的「無法辨識」提醒。請只從 LumaReader 官方網站或 GitHub Releases 下載；若系統顯示明確的威脅名稱，請停止執行並回報。",
     "overview-title": "把普通資料夾，變成真正想打開的閱讀空間。",
     "overview-lead": "LumaReader 不要求你改變原本的整理方式。選好資料夾，就能在清楚的目錄、舒服的排版與安靜的介面裡閱讀；功能放在需要的位置，文件仍然是畫面的主角。",
@@ -47,7 +47,7 @@ const editions = {
     "feature-4-title": "內容再豐富，也能整理成好讀的頁面。",
     "feature-4-body": "表格、待辦清單、提示區塊、程式碼上色、KaTeX 數學公式、Mermaid 圖表、註腳、Emoji、縮寫、上下標與本機內容引用都能整理成好讀頁面。",
     "feature-5-title": "新增、閱讀、編輯與儲存都在同一個地方。",
-    "feature-5-body": "閱讀途中可直接在當前資料夾新增 .md，確認名稱與位置後立刻開始編輯。也能切換渲染結果、原文與本機媒體；按 Command+S 或 Ctrl+S 會留在編輯畫面完成儲存，同名檔案與外部變更都不會被靜默覆寫。",
+    "feature-5-body": "新增 .md 時可先選擇任意目的資料夾，再確認名稱與位置並立刻開始編輯。編輯時可開啟即時對照預覽、拖曳調整兩邊寬度並同步捲動；原文與編輯字級也能用 Command／Ctrl 搭配 + 或 − 調整，儲存後仍留在編輯畫面。",
     "feature-6-title": "文件留在電腦，選擇權也留在你手上。",
     "feature-6-body": "不必建立帳號，也不會上傳或自動翻譯內容。LumaReader 提供 11 種介面語言、亮暗模式與 22 組配色，閱讀紙張維持清楚的中性色；偏好會被保存，第一次開啟也有簡短導覽。"
   }
