@@ -157,9 +157,24 @@ h1 {
   font-weight: 600;
 }
 
+.local-first-callout {
+  width: min(620px, 100%);
+  margin: 18px 0 0;
+  padding: 12px 17px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.48);
+  box-shadow: 0 12px 30px rgba(103, 59, 94, 0.08), inset 0 1px rgba(255, 255, 255, 0.7);
+  color: #654657;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.65;
+  text-wrap: balance;
+}
+
 .download-actions {
   width: min(650px, 100%);
-  margin-top: 38px;
+  margin-top: 24px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
