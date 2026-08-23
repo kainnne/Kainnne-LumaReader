@@ -139,6 +139,8 @@ test("creates a new Markdown document in the current library folder without over
   assert.equal(created.path, "notes/Meeting notes.md");
   assert.equal(created.kind, "markdown");
   assert.equal(fs.readFileSync(path.join(root, created.path), "utf8"), "");
+  const refreshedPaths = (await scanDocuments(root)).map((file) => file.path);
+  assert.ok(refreshedPaths.includes(created.path), "a newly created document is visible on the next sidebar scan");
   const createdAtRoot = await createService.createMarkdownDocument("", "Root note.md");
   assert.equal(createdAtRoot.path, "Root note.md");
   assert.equal(fs.readFileSync(path.join(root, createdAtRoot.path), "utf8"), "");
@@ -273,6 +275,27 @@ test("keeps relative images local and rejects non-media assets", async (t) => {
   const response = await dispatch(mediaService, `/api/media?${query}`);
   assert.equal(response.statusCode, 415);
   assert.equal(JSON.parse(response.body().toString("utf8")).code, "UNSUPPORTED_MEDIA_TYPE");
+});
+
+test("keeps relative images portable across computers and Unicode folder names", async (t) => {
+  const originalRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-portable-media-original-"));
+  const movedRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-portable-media-moved-"));
+  t.after(() => { fs.rmSync(originalRoot, { recursive: true, force: true }); fs.rmSync(movedRoot, { recursive: true, force: true }); });
+  const relativeDocument = "文件/閱讀筆記.md";
+  const relativeImage = "文件/圖片/示例 圖片.png";
+  const imageBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  fs.mkdirSync(path.join(originalRoot, "文件", "圖片"), { recursive: true });
+  fs.writeFileSync(path.join(originalRoot, relativeDocument), "![示例](圖片/示例%20圖片.png)");
+  fs.writeFileSync(path.join(originalRoot, relativeImage), imageBytes);
+  fs.cpSync(path.join(originalRoot, "文件"), path.join(movedRoot, "文件"), { recursive: true });
+
+  const movedService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: movedRoot });
+  assert.equal(movedService.resolveMedia("圖片/示例%20圖片.png", relativeDocument), fs.realpathSync(path.join(movedRoot, relativeImage)));
+  const query = new URLSearchParams({ path: "圖片/示例%20圖片.png", from: relativeDocument });
+  const response = await dispatch(movedService, `/api/media?${query}`);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers["content-type"], "image/png");
+  assert.deepEqual(response.body(), imageBytes);
 });
 
 test("enforces the per-format preview limit", async (t) => {

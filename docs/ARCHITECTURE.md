@@ -38,7 +38,7 @@ Generated folders, hidden folders, application bundles, dependency folders, and 
 
 Library roots and requested files are resolved through their real paths. A lexical path check is followed by a real-path boundary check, blocking traversal and symlinks that escape the selected library. Scanning does not follow symlinks. The HTTP listener binds only to `127.0.0.1`, accepts loopback host headers, and serves read-only `GET`/`HEAD` routes.
 
-Document writes exist only through the context-isolated Electron bridge. `document:create` validates a simple Markdown filename, resolves an existing destination folder inside the selected library through its real path, and uses exclusive creation so it can never replace an existing file. `document:save` accepts only Markdown inside the library, enforces the Markdown size limit, and compares the last-known modification timestamp before writing. Both requests must originate from the reader window. Plain text, logs, uploads, external paths, and remote sources remain read-only.
+Document writes exist only through the context-isolated Electron bridge. New-document creation first uses a native directory picker and stores the verified destination behind a short-lived, single-use token. `document:create` accepts that token plus a simple Markdown filename and uses exclusive creation so it can never replace an existing file. If the chosen destination is outside the current library, the destination becomes the new library root before the new file is revealed. `document:save` accepts only Markdown inside the library, enforces the Markdown size limit, and compares the last-known modification timestamp before writing. Both requests must originate from the reader window. Plain text, logs, uploads, external paths, and remote sources remain read-only.
 
 ## Renderer safety
 
@@ -48,4 +48,4 @@ Markdown output is sanitized with an explicit element and attribute allowlist. M
 
 ## Persistence
 
-The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, and desktop sidebar state are stored by the renderer. Users can therefore change the library without losing visual preferences.
+The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, desktop sidebar state, editing-preview visibility, and editor split ratio are stored by the renderer. Users can therefore change the library without losing visual preferences.
