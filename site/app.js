@@ -1,5 +1,6 @@
 const editions = {
   en: {
+    "local-first-callout": "Local-first by design. Your documents stay on this computer—no account, cloud upload, analytics, or document telemetry.",
     "download-note": "Free and open source · Version 1.0.0 · macOS and Windows",
     "macos-action": "DOWNLOAD FOR",
     "macos-status": "Universal",
@@ -26,6 +27,7 @@ const editions = {
     "feature-6-body": "Your library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide."
   },
   zh: {
+    "local-first-callout": "本機優先設計。文件留在這台電腦：不需帳號、不上傳雲端，也不蒐集使用分析或文件內容。",
     "download-note": "免費開源 · 版本 1.0.0 · 支援 macOS 與 Windows",
     "macos-action": "下載版本",
     "macos-status": "Universal",
