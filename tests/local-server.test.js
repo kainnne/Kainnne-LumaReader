@@ -155,14 +155,9 @@ test("validates new Markdown names and keeps creation inside the selected librar
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-outside-"));
   const escapeLink = path.join(root, "escape");
   t.after(() => {
-    // Remove the directory link before recursive cleanup. Windows implements
-    // directory symlinks as junctions and can terminate the Node test process
-    // while recursively removing a tree that still contains the junction.
-    fs.rmSync(escapeLink, { force: true });
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(outside, { recursive: true, force: true });
   });
-  fs.symlinkSync(outside, escapeLink, process.platform === "win32" ? "junction" : "dir");
   const createService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
 
   assert.equal(markdownFileName("新筆記"), "新筆記.md");
@@ -171,7 +166,14 @@ test("validates new Markdown names and keeps creation inside the selected librar
     assert.throws(() => markdownFileName(invalid), (error) => error.code === "INVALID_DOCUMENT_NAME");
   }
   await assert.rejects(() => createService.createMarkdownDocument("../", "outside"), /outside the selected library/i);
-  await assert.rejects(() => createService.createMarkdownDocument("escape", "outside"), /outside the selected library/i);
+  // Node can terminate with 0xC0000409 after a Windows directory junction is
+  // created and removed, even when every assertion has passed. File-link
+  // containment remains covered below on Windows; keep this directory-link
+  // case on platforms where the fixture is safe for the test runner itself.
+  if (process.platform !== "win32") {
+    fs.symlinkSync(outside, escapeLink, "dir");
+    await assert.rejects(() => createService.createMarkdownDocument("escape", "outside"), /outside the selected library/i);
+  }
   assert.equal(fs.readdirSync(outside).length, 0);
 });
 
