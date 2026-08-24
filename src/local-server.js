@@ -802,12 +802,16 @@ class LocalReaderService {
 
   async createMarkdownDocument(rawDirectory, rawName) {
     if (!this.libraryRoot) throw new HttpError("Choose a library folder first", 400, "LIBRARY_NOT_SELECTED");
+    // Use one realpath implementation for both sides of the containment check.
+    // On Windows runners, sync and promise-based realpath calls can otherwise
+    // return equivalent paths with different namespace representations.
+    const realLibraryRoot = await fsp.realpath(this.libraryRoot);
     const requestedDirectory = String(rawDirectory || "").replace(/\\/g, "/").replace(/^\/+/, "");
     if (requestedDirectory.includes("\0")) {
       throw new HttpError("The destination folder is invalid", 400, "INVALID_DESTINATION_FOLDER");
     }
-    const candidateDirectory = path.resolve(this.libraryRoot, requestedDirectory || ".");
-    if (!isInside(this.libraryRoot, candidateDirectory)) {
+    const candidateDirectory = path.resolve(realLibraryRoot, requestedDirectory || ".");
+    if (!isInside(realLibraryRoot, candidateDirectory)) {
       throw new HttpError("The destination folder is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
     }
     let directory;
@@ -818,13 +822,13 @@ class LocalReaderService {
     } catch {
       throw new HttpError("The destination folder is unavailable", 404, "DESTINATION_NOT_FOUND");
     }
-    if (!isInside(this.libraryRoot, directory)) {
+    if (!isInside(realLibraryRoot, directory)) {
       throw new HttpError("The destination folder is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
     }
 
     const fileName = markdownFileName(rawName);
     const filePath = path.join(directory, fileName);
-    if (!isInside(this.libraryRoot, filePath)) {
+    if (!isInside(realLibraryRoot, filePath)) {
       throw new HttpError("The new document is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
     }
     try {
@@ -838,8 +842,8 @@ class LocalReaderService {
       }
       throw error;
     }
-    const publicPath = path.relative(this.libraryRoot, filePath).split(path.sep).join("/");
-    return localPayload(filePath, "project", this.libraryRoot, publicPath, (target, targetType, targetStat) => this.preflightBinary(target, targetType, targetStat));
+    const publicPath = path.relative(realLibraryRoot, filePath).split(path.sep).join("/");
+    return localPayload(filePath, "project", realLibraryRoot, publicPath, (target, targetType, targetStat) => this.preflightBinary(target, targetType, targetStat));
   }
 
   resolveMedia(rawPath, fromSource) {
