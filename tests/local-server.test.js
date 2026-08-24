@@ -155,9 +155,13 @@ test("validates new Markdown names and keeps creation inside the selected librar
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-outside-"));
   const escapeLink = path.join(root, "escape");
   t.after(() => {
+    // Remove the directory link before recursive cleanup. Windows implements
+    // directory symlinks as junctions, so it must not remain in the tree.
+    fs.rmSync(escapeLink, { force: true });
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(outside, { recursive: true, force: true });
   });
+  fs.symlinkSync(outside, escapeLink, process.platform === "win32" ? "junction" : "dir");
   const createService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
 
   assert.equal(markdownFileName("新筆記"), "新筆記.md");
@@ -166,14 +170,7 @@ test("validates new Markdown names and keeps creation inside the selected librar
     assert.throws(() => markdownFileName(invalid), (error) => error.code === "INVALID_DOCUMENT_NAME");
   }
   await assert.rejects(() => createService.createMarkdownDocument("../", "outside"), /outside the selected library/i);
-  // Node can terminate with 0xC0000409 after a Windows directory junction is
-  // created and removed, even when every assertion has passed. File-link
-  // containment remains covered below on Windows; keep this directory-link
-  // case on platforms where the fixture is safe for the test runner itself.
-  if (process.platform !== "win32") {
-    fs.symlinkSync(outside, escapeLink, "dir");
-    await assert.rejects(() => createService.createMarkdownDocument("escape", "outside"), /outside the selected library/i);
-  }
+  await assert.rejects(() => createService.createMarkdownDocument("escape", "outside"), /outside the selected library/i);
   assert.equal(fs.readdirSync(outside).length, 0);
 });
 
@@ -204,16 +201,11 @@ test("blocks Markdown saves through traversal and out-of-library symlinks", asyn
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-edit-outside-"));
   t.after(() => { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); });
   fs.writeFileSync(path.join(outside, "outside.md"), "outside");
+  fs.symlinkSync(path.join(outside, "outside.md"), path.join(root, "escape.md"));
   const editingService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
 
   await assert.rejects(() => editingService.saveMarkdownDocument("../outside.md", "changed"), /outside the selected library/i);
-  // Windows' Node test process can fail-fast during teardown after a symlink
-  // fixture is removed. POSIX runners retain the symlink coverage; Windows
-  // still exercises the shared containment logic through traversal attempts.
-  if (process.platform !== "win32") {
-    fs.symlinkSync(path.join(outside, "outside.md"), path.join(root, "escape.md"));
-    await assert.rejects(() => editingService.saveMarkdownDocument("escape.md", "changed"), /outside the selected library/i);
-  }
+  await assert.rejects(() => editingService.saveMarkdownDocument("escape.md", "changed"), /outside the selected library/i);
   assert.equal(fs.readFileSync(path.join(outside, "outside.md"), "utf8"), "outside");
 });
 
@@ -249,13 +241,10 @@ test("blocks traversal and symlinks outside the selected library", (t) => {
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-outside-"));
   t.after(() => { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); });
   fs.writeFileSync(path.join(outside, "outside.md"), "outside");
+  fs.symlinkSync(path.join(outside, "outside.md"), path.join(root, "escape.md"));
   const secureService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
   assert.throws(() => secureService.resolveProjectDocument("../outside.md"), /outside the selected library/i);
-  // See the Windows symlink-fixture note in the save-containment test above.
-  if (process.platform !== "win32") {
-    fs.symlinkSync(path.join(outside, "outside.md"), path.join(root, "escape.md"));
-    assert.throws(() => secureService.resolveProjectDocument("escape.md"), /outside the selected library/i);
-  }
+  assert.throws(() => secureService.resolveProjectDocument("escape.md"), /outside the selected library/i);
 });
 
 test("resolves website-root images through the nearest project public folder", async (t) => {
@@ -305,7 +294,12 @@ test("keeps relative images portable across computers and Unicode folder names",
   fs.mkdirSync(path.join(originalRoot, "文件", "圖片"), { recursive: true });
   fs.writeFileSync(path.join(originalRoot, relativeDocument), "![示例](圖片/示例%20圖片.png)");
   fs.writeFileSync(path.join(originalRoot, relativeImage), imageBytes);
-  fs.cpSync(path.join(originalRoot, "文件"), path.join(movedRoot, "文件"), { recursive: true });
+  // Node 22 can fail-fast on Windows when fs.cpSync recursively copies Unicode
+  // folder names. Copy the two portable fixtures explicitly so the test keeps
+  // validating the reader instead of exercising that Node runtime regression.
+  fs.mkdirSync(path.join(movedRoot, "文件", "圖片"), { recursive: true });
+  fs.copyFileSync(path.join(originalRoot, relativeDocument), path.join(movedRoot, relativeDocument));
+  fs.copyFileSync(path.join(originalRoot, relativeImage), path.join(movedRoot, relativeImage));
 
   const movedService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: movedRoot });
   assert.equal(movedService.resolveMedia("圖片/示例%20圖片.png", relativeDocument), fs.realpathSync(path.join(movedRoot, relativeImage)));
