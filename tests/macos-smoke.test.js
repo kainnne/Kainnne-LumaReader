@@ -6,8 +6,9 @@ const { appBundleForExecutable, verifyCodeSignature } = require("../scripts/maco
 
 const APP = "/private/tmp/Luma Test.app";
 const EXECUTABLE = `${APP}/Contents/MacOS/Luma Test`;
+const macTest = process.platform === "darwin" ? test : test.skip;
 
-test("resolves the containing app bundle from its executable", () => {
+macTest("resolves the containing app bundle from its executable", () => {
   assert.equal(appBundleForExecutable(EXECUTABLE), APP);
   assert.throws(
     () => appBundleForExecutable("/private/tmp/Luma Test"),
@@ -15,7 +16,7 @@ test("resolves the containing app bundle from its executable", () => {
   );
 });
 
-test("performs strict deep signature verification before launch", () => {
+macTest("performs strict deep signature verification before launch", () => {
   let invocation;
   const appPath = verifyCodeSignature(EXECUTABLE, (...args) => { invocation = args; });
   assert.equal(appPath, APP);
@@ -26,7 +27,7 @@ test("performs strict deep signature verification before launch", () => {
   ]);
 });
 
-test("rejects an invalid package without launching it", () => {
+macTest("rejects an invalid package without launching it", () => {
   assert.throws(
     () => verifyCodeSignature(EXECUTABLE, () => {
       const error = new Error("codesign failed");
