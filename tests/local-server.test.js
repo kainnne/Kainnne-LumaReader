@@ -153,8 +153,16 @@ test("creates a new Markdown document in the current library folder without over
 test("validates new Markdown names and keeps creation inside the selected library", async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-guard-"));
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-create-outside-"));
-  t.after(() => { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); });
-  fs.symlinkSync(outside, path.join(root, "escape"));
+  const escapeLink = path.join(root, "escape");
+  t.after(() => {
+    // Remove the directory link before recursive cleanup. Windows implements
+    // directory symlinks as junctions and can terminate the Node test process
+    // while recursively removing a tree that still contains the junction.
+    fs.rmSync(escapeLink, { force: true });
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  });
+  fs.symlinkSync(outside, escapeLink, process.platform === "win32" ? "junction" : "dir");
   const createService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
 
   assert.equal(markdownFileName("新筆記"), "新筆記.md");
