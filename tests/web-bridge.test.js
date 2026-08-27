@@ -4,12 +4,12 @@ const path = require("node:path");
 const test = require("node:test");
 const vm = require("node:vm");
 
-function loadWebBridge(hash = "") {
+function loadWebBridge(hash = "", remoteFetch = async () => new Response("Not found", { status: 404 })) {
   const storage = new Map();
   const location = { href: `https://example.test/web/${hash}`, origin: "https://example.test", pathname: "/web/", hash };
   const window = {
     addEventListener() {},
-    fetch: async () => new Response("Not found", { status: 404 }),
+    fetch: remoteFetch,
   };
   const context = vm.createContext({
     Blob,
@@ -99,6 +99,29 @@ test("web share links carry the current Markdown into a new reader", async () =>
   assert.equal(document.text, "# 給朋友看的內容\n\nHello!\n");
 });
 
+test("web sharing prefers the temporary Cloudflare short link", async () => {
+  const window = loadWebBridge("", async (url, options) => {
+    assert.equal(url, "https://lumareader-share.chaos60649.workers.dev/api/shares");
+    assert.equal(options.method, "POST");
+    const body = JSON.parse(options.body);
+    assert.match(body.target, /^https:\/\/example\.test\/web\/#share=/);
+    assert.equal(body.title, "Release Notes");
+    assert.equal(body.description, "A concise summary for the preview.");
+    return new Response(JSON.stringify({
+      ok: true,
+      url: "https://lumareader-share.chaos60649.workers.dev/s/Ab3xK9pq",
+      expiresAt: "2026-09-26T00:00:00.000Z",
+    }), { status: 201, headers: { "Content-Type": "application/json" } });
+  });
+  const shared = await window.lumaWeb.createShareUrl({
+    name: "Release Notes.md",
+    text: "# Release Notes\n\nA concise summary for the preview.\n",
+  });
+
+  assert.equal(shared.shortened, true);
+  assert.equal(shared.url, "https://lumareader-share.chaos60649.workers.dev/s/Ab3xK9pq");
+});
+
 test("the default web example is written in English", async () => {
   const window = loadWebBridge();
   await window.lumaWeb.ready;
@@ -108,4 +131,16 @@ test("the default web example is written in English", async () => {
   assert.match(document.text, /^# LumaReader Web\n/);
   assert.match(document.text, /## Read your way/);
   assert.doesNotMatch(document.text, /[\u3400-\u9fff]/);
+});
+
+test("sharing the unchanged built-in example reuses the permanent Web address", async () => {
+  const window = loadWebBridge();
+  await window.lumaWeb.ready;
+  const response = await window.fetch(`/api/file?path=${encodeURIComponent("LumaReader Web.md")}`);
+  const document = await response.json();
+  const shared = await window.lumaWeb.createShareUrl({ name: document.name, text: document.text });
+
+  assert.equal(shared.ok, true);
+  assert.equal(shared.canonical, true);
+  assert.equal(shared.url, "https://example.test/web/");
 });

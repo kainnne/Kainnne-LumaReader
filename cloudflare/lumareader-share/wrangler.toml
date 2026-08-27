@@ -1,0 +1,11 @@
+name = "lumareader-share"
+main = "src/index.mjs"
+compatibility_date = "2026-08-27"
+workers_dev = true
+preview_urls = false
+
+# The production namespace is created and bound as SHARE_LINKS in Cloudflare.
+# Add its id here before deploying with Wrangler from a local shell.
+[[kv_namespaces]]
+binding = "SHARE_LINKS"
+id = "1b6fc48b87ba47a2bdc9a93a1437b037"

@@ -6,6 +6,7 @@
   const MAX_SESSION_DOCUMENTS = 3;
   const MAX_SHARE_TEXT_BYTES = 256 * 1024;
   const MAX_SHARE_URL_LENGTH = 100000;
+  const SHARE_SERVICE_URL = "https://lumareader-share.chaos60649.workers.dev";
   const documents = new Map();
   const assets = new Map();
   const objectUrls = new Set();
@@ -145,10 +146,57 @@ Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
     const safeText = String(text || "");
     if (!MARKDOWN_EXTENSIONS.includes(extensionOf(safeName))) return { ok: false, code: "SHARE_MARKDOWN_ONLY" };
     if (new TextEncoder().encode(safeText).byteLength > MAX_SHARE_TEXT_BYTES) return { ok: false, code: "SHARE_TOO_LARGE" };
+    if (safeName === "LumaReader Web.md" && safeText === sample) {
+      return { ok: true, url: `${location.origin}${location.pathname}`, name: safeName, canonical: true };
+    }
     const encoded = await encodeSharePayload({ version: 1, name: safeName, text: safeText });
     const url = `${location.origin}${location.pathname}#share=${encoded}`;
     if (url.length > MAX_SHARE_URL_LENGTH) return { ok: false, code: "SHARE_TOO_LARGE" };
-    return { ok: true, url, name: safeName };
+    const metadata = shareMetadata(safeName, safeText);
+    try {
+      const response = await withTimeout(originalFetch(`${SHARE_SERVICE_URL}/api/shares`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: url, ...metadata }),
+      }), 5000);
+      if (response.ok) {
+        const share = await response.json();
+        if (share?.ok && typeof share.url === "string") {
+          return { ok: true, url: share.url, name: safeName, shortened: true, expiresAt: share.expiresAt || "" };
+        }
+      }
+    } catch (error) {
+      console.warn("Unable to create a short LumaReader share link", error);
+    }
+    return { ok: true, url, name: safeName, shortened: false };
+  }
+
+  function withTimeout(promise, milliseconds) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("Share service timed out")), milliseconds);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  function shareMetadata(name, text) {
+    const plainName = String(name || "Shared Markdown.md").replace(/\.(?:md|markdown|mkd|mdx)$/i, "");
+    const lines = String(text || "").split(/\r?\n/).map((line) => line.trim());
+    const heading = lines.find((line) => /^#\s+\S/.test(line));
+    const title = cleanMarkdownText(heading ? heading.replace(/^#\s+/, "") : plainName).slice(0, 120) || "Shared Markdown";
+    const descriptionLine = lines.find((line) => line && !/^(?:#{1,6}\s|```|~~~|[-*_]{3,}|\||>\s*\[!|!\[)/.test(line));
+    const description = cleanMarkdownText(descriptionLine || "Open this Markdown document in LumaReader Web.").slice(0, 220);
+    return { title, description };
+  }
+
+  function cleanMarkdownText(value) {
+    return String(value || "")
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/[`*_~]/g, "")
+      .replace(/^>\s*/, "")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   async function importSharedDocument() {

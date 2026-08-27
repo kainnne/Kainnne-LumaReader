@@ -10,15 +10,16 @@ LumaReader Web is the static, account-free browser edition served from `/web/`. 
 - Opened content stays in memory for the current tab. Reloading or closing the tab clears it.
 - Each file row has a remove action. Removal requires confirmation and does not delete the original local file.
 - No document content is uploaded during ordinary reading or editing.
-- Folder-library import, cloud persistence, document download, and PDF export are desktop-only.
+- Folder-library import, durable cloud libraries, document download, and PDF export are desktop-only.
 - The rest of the reading and editing interface should stay aligned with the desktop renderer.
-- **Share this Markdown** creates a compressed `#share=` URL fragment containing the current Markdown name and text. The fragment is decoded locally and is not sent to the static host.
+- **Share this Markdown** compresses the current Markdown into a reader URL, then asks the LumaReader share Worker for an eight-character short link. The Worker retains the target, title, and excerpt in KV for 30 days so link-preview crawlers can receive document-specific Open Graph metadata.
+- Sharing the unchanged built-in `LumaReader Web.md` sample always returns `/web/` and never writes a KV entry. If the short-link service is unavailable, the browser falls back to the complete `#share=` URL so sharing still works.
 
 ## Implementation
 
-`site/web/index.html` loads `web-bridge.js` before the shared renderer scripts. The bridge stores documents in a `Map`, exposes file records through intercepted same-origin `/api/` requests, and implements the small `window.lumaDesktop` surface used for preferences, create, and save operations. The host remains a static GitHub Pages deployment; no document database or upload API is involved.
+`site/web/index.html` loads `web-bridge.js` before the shared renderer scripts. The bridge stores documents in a `Map`, exposes file records through intercepted same-origin `/api/` requests, and implements the small `window.lumaDesktop` surface used for preferences, create, and save operations. The main site remains a static GitHub Pages deployment. Temporary share records are the only server-side document state and live in the separately deployed Cloudflare Worker and KV namespace under `cloudflare/lumareader-share/`.
 
-The Web entry page publishes generic Open Graph and Twitter Card metadata so a Markdown share URL can display LumaReader branding in link previews. Because GitHub Pages is static and the current document lives in the URL fragment, crawlers receive the generic Web metadata rather than document-specific title or excerpt metadata.
+The Web entry page publishes generic Open Graph and Twitter Card metadata. Short share pages are rendered by the Worker before redirecting into `/web/#share=…`, so social crawlers receive the shared document title, excerpt, and LumaReader image. The long fallback URL continues to receive the generic Web metadata because URL fragments are not sent to GitHub Pages.
 
 The first sample document does not count toward the three-document limit and is removed when a user document is added. Additional files trigger the capacity dialog, which lists the current session documents so the user can remove one before continuing the import.
 
@@ -34,4 +35,5 @@ Interface preferences use local storage. Document names, paths, and content do n
 4. Enter editing and confirm the preview is open by default, the split is draggable, synchronized scrolling works, and **Show bottom** appears only when needed.
 5. Reload the page and confirm user documents and edits are gone while visual preferences may remain.
 6. Confirm PDF export and document-download controls are absent and the desktop call to action reaches `/#download`.
-7. Share the current Markdown, open the generated link in a clean tab, and confirm the same filename and content render without a server upload.
+7. Share the current Markdown, confirm the dialog shows a short `workers.dev/s/…` link, then open it in a clean tab and confirm the same filename and content render.
+8. Share the unchanged built-in sample and confirm the result is the permanent `/web/` URL with no new KV record.
