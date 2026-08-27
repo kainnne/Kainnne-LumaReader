@@ -18,6 +18,8 @@ LumaReader Web is the static, account-free browser edition served from `/web/`. 
 
 `site/web/index.html` loads `web-bridge.js` before the shared renderer scripts. The bridge stores documents in a `Map`, exposes file records through intercepted same-origin `/api/` requests, and implements the small `window.lumaDesktop` surface used for preferences, create, and save operations. The host remains a static GitHub Pages deployment; no document database or upload API is involved.
 
+The Web entry page publishes generic Open Graph and Twitter Card metadata so a Markdown share URL can display LumaReader branding in link previews. Because GitHub Pages is static and the current document lives in the URL fragment, crawlers receive the generic Web metadata rather than document-specific title or excerpt metadata.
+
 The first sample document does not count toward the three-document limit and is removed when a user document is added. Additional files trigger the capacity dialog, which lists the current session documents so the user can remove one before continuing the import.
 
 If `showOpenFilePicker` returns a writable file handle, the bridge requests write permission when saving and can update the original local file. Browsers without that capability keep edits only in the session. The app must not offer a fallback document download, because durable output is intentionally reserved for the desktop edition.
