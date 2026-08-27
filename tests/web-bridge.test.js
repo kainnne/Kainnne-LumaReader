@@ -4,19 +4,26 @@ const path = require("node:path");
 const test = require("node:test");
 const vm = require("node:vm");
 
-function loadWebBridge() {
+function loadWebBridge(hash = "") {
   const storage = new Map();
-  const location = { href: "https://example.test/web/", origin: "https://example.test", pathname: "/web/" };
+  const location = { href: `https://example.test/web/${hash}`, origin: "https://example.test", pathname: "/web/", hash };
   const window = {
     addEventListener() {},
     fetch: async () => new Response("Not found", { status: 404 }),
   };
   const context = vm.createContext({
     Blob,
+    CompressionStream,
+    DecompressionStream,
     Request,
     Response,
     TextEncoder,
+    TextDecoder,
+    Uint8Array,
     URL,
+    URLSearchParams,
+    atob,
+    btoa,
     clearTimeout,
     console,
     location,
@@ -71,4 +78,23 @@ test("web save remains in the session instead of downloading a copy", async () =
   assert.equal(result.sessionOnly, true);
   assert.equal(result.downloaded, undefined);
   assert.equal(result.document.text, "# Revised\n");
+});
+
+test("web share links carry the current Markdown into a new reader", async () => {
+  const sourceWindow = loadWebBridge();
+  await sourceWindow.lumaWeb.ready;
+  const shared = await sourceWindow.lumaWeb.createShareUrl({ name: "分享測試.md", text: "# 給朋友看的內容\n\nHello!\n" });
+
+  assert.equal(shared.ok, true);
+  assert.match(shared.url, /^https:\/\/example\.test\/web\/#share=/);
+
+  const targetWindow = loadWebBridge(new URL(shared.url).hash);
+  const ready = await targetWindow.lumaWeb.ready;
+  assert.equal(ready.imported, true);
+  assert.equal(targetWindow.lumaWeb.sessionInfo().count, 1);
+
+  const response = await targetWindow.fetch(`/api/file?path=${encodeURIComponent("分享測試.md")}`);
+  const document = await response.json();
+  assert.equal(document.name, "分享測試.md");
+  assert.equal(document.text, "# 給朋友看的內容\n\nHello!\n");
 });

@@ -6,11 +6,13 @@ LumaReader Web is the static, account-free browser edition served from `/web/`. 
 
 - A browser tab may hold at most three user documents at one time.
 - Markdown, MDX, plain text, and log files are accepted through the local file picker.
+- Markdown and plain-text files can also be dragged directly onto the reader; the drop path reuses the same import and capacity checks.
 - Opened content stays in memory for the current tab. Reloading or closing the tab clears it.
 - Each file row has a remove action. Removal requires confirmation and does not delete the original local file.
 - No document content is uploaded during ordinary reading or editing.
 - Folder-library import, cloud persistence, document download, and PDF export are desktop-only.
 - The rest of the reading and editing interface should stay aligned with the desktop renderer.
+- **Share this Markdown** creates a compressed `#share=` URL fragment containing the current Markdown name and text. The fragment is decoded locally and is not sent to the static host.
 
 ## Implementation
 
@@ -30,3 +32,4 @@ Interface preferences use local storage. Document names, paths, and content do n
 4. Enter editing and confirm the preview is open by default, the split is draggable, synchronized scrolling works, and **Show bottom** appears only when needed.
 5. Reload the page and confirm user documents and edits are gone while visual preferences may remain.
 6. Confirm PDF export and document-download controls are absent and the desktop call to action reaches `/#download`.
+7. Share the current Markdown, open the generated link in a clean tab, and confirm the same filename and content render without a server upload.

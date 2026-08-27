@@ -46,11 +46,11 @@
     it:{newMarkdown:"Nuovo Markdown",newMarkdownButton:"Nuovo MD",createMarkdownTitle:"Crea Markdown",createMarkdownCopy:"Aggiungi un documento Markdown senza interrompere la lettura.",documentName:"Nome documento",currentFolder:"Cartella attuale",createMarkdownQuestion:"Creare “{name}” in “{folder}”?",cancel:"Annulla",create:"Crea",documentCreated:"Markdown creato",createFailed:"Impossibile creare il documento.",nameRequired:"Inserisci un nome.",libraryRequired:"Scegli prima una cartella della libreria.",documentExists:"Esiste già un documento con questo nome."}
   };
   const selectedFolderLabels = {en:"Selected folder","zh-Hant":"選擇的資料夾","zh-Hans":"选择的文件夹",ja:"選択したフォルダ",ko:"선택한 폴더",es:"Carpeta seleccionada",fr:"Dossier sélectionné",de:"Ausgewählter Ordner","pt-BR":"Pasta selecionada",ru:"Выбранная папка",it:"Cartella selezionata"};
-  const webSessionLabels = {en:"Browser session","zh-Hant":"瀏覽器工作階段","zh-Hans":"浏览器会话",ja:"ブラウザーセッション",ko:"브라우저 세션",es:"Sesión del navegador",fr:"Session du navigateur",de:"Browser-Sitzung","pt-BR":"Sessão do navegador",ru:"Сеанс браузера",it:"Sessione del browser"};
+  const webSessionLabels = Object.fromEntries(Object.keys(translations).map((locale)=>[locale,"LumaReader Web"]));
   const webSessionTranslations = {
-    en:{sessionCapacity:"{count} / {limit} · Cleared when this tab closes",removeDocument:"Remove from this session",removeTitle:"Remove this document?",removeCopy:"This only removes “{name}” from the current browser session. Your original local file is not deleted.",removeConfirm:"Remove",removeCancel:"Cancel",removed:"Removed from this session",limitTitle:"This session is full",limitCopy:"LumaReader Web keeps up to {limit} documents at a time. Remove one below to make room and continue.",limitDismiss:"Not now",sessionSaved:"Saved for this session",desktopPrompt:"Need to manage more documents?",desktopAction:"Get LumaReader Desktop →"},
-    "zh-Hant":{sessionCapacity:"{count} / {limit} · 關閉分頁後清除",removeDocument:"從本次工作階段移除",removeTitle:"要移除這份文件嗎？",removeCopy:"只會將「{name}」移出目前的瀏覽器工作階段，不會刪除你電腦裡的原始檔案。",removeConfirm:"移除",removeCancel:"取消",removed:"已從本次工作階段移除",limitTitle:"這個工作階段已滿",limitCopy:"LumaReader Web 同時最多保留 {limit} 份文件。請先移除下列其中一份，空出位置後即可繼續。",limitDismiss:"暫時不要",sessionSaved:"已儲存於本次工作階段",desktopPrompt:"需要長期管理更多文件？",desktopAction:"下載 LumaReader 桌面版 →"},
-    "zh-Hans":{sessionCapacity:"{count} / {limit} · 关闭标签页后清除",removeDocument:"从本次会话移除",removeTitle:"要移除此文档吗？",removeCopy:"只会将“{name}”移出当前浏览器会话，不会删除电脑中的原始文件。",removeConfirm:"移除",removeCancel:"取消",removed:"已从本次会话移除",limitTitle:"此会话已满",limitCopy:"LumaReader Web 同时最多保留 {limit} 份文档。请先移除其中一份，腾出空间后即可继续。",limitDismiss:"暂时不要",sessionSaved:"已保存于本次会话",desktopPrompt:"需要长期管理更多文档？",desktopAction:"下载 LumaReader 桌面版 →"},
+    en:{removeDocument:"Remove from LumaReader Web",removeTitle:"Remove this document?",removeCopy:"This removes “{name}” from LumaReader Web. Your original local file is not deleted.",removeConfirm:"Remove",removeCancel:"Cancel",removed:"Document removed",limitTitle:"Three documents are already open",limitCopy:"LumaReader Web can keep up to {limit} documents at a time. Remove one below to make room and continue.",limitDismiss:"Not now",sessionSaved:"Saved",desktopPrompt:"Need to manage more documents?",desktopAction:"Get LumaReader Desktop →",shareMarkdown:"Share this Markdown",shareCopied:"Markdown share link copied",shareOpened:"Markdown is ready to share",shareUnavailable:"Open a Markdown document before sharing.",shareTooLarge:"This Markdown is too large for a share link.",shareFailed:"Unable to create the share link.",shareInvalid:"This Markdown share link could not be opened.",shareDialogTitle:"Share this Markdown",shareDialogCopy:"This link includes the current document so other people can open it in LumaReader.",shareLinkLabel:"Markdown share link",shareCopy:"Copy share link",shareClose:"Close",dropTitle:"Drop to open Markdown",dropCopy:"You can add up to three documents.",dropUnsupported:"Drop a Markdown or plain-text document."},
+    "zh-Hant":{removeDocument:"從 LumaReader Web 移除",removeTitle:"要移除這份文件嗎？",removeCopy:"只會將「{name}」從 LumaReader Web 移除，不會刪除你電腦裡的原始檔案。",removeConfirm:"移除",removeCancel:"取消",removed:"文件已移除",limitTitle:"已開啟 3 份文件",limitCopy:"LumaReader Web 同時最多保留 {limit} 份文件。請先移除下列其中一份，空出位置後即可繼續。",limitDismiss:"暫時不要",sessionSaved:"已儲存",desktopPrompt:"需要長期管理更多文件？",desktopAction:"下載 LumaReader 桌面版 →",shareMarkdown:"分享這份 Markdown",shareCopied:"Markdown 分享連結已複製",shareOpened:"已準備分享這份 Markdown",shareUnavailable:"請先開啟一份 Markdown 再分享。",shareTooLarge:"這份 Markdown 太大，無法放進分享連結。",shareFailed:"目前無法建立分享連結。",shareInvalid:"無法開啟這個 Markdown 分享連結。",shareDialogTitle:"分享這份 Markdown",shareDialogCopy:"這個連結包含目前的文件內容，收到連結的人可以直接用 LumaReader 開啟。",shareLinkLabel:"Markdown 分享連結",shareCopy:"複製分享連結",shareClose:"關閉",dropTitle:"放開以開啟 Markdown",dropCopy:"一次最多加入 3 份文件。",dropUnsupported:"請拖入 Markdown 或純文字文件。"},
+    "zh-Hans":{removeDocument:"从 LumaReader Web 移除",removeTitle:"要移除此文档吗？",removeCopy:"只会将“{name}”从 LumaReader Web 移除，不会删除电脑中的原始文件。",removeConfirm:"移除",removeCancel:"取消",removed:"文档已移除",limitTitle:"已打开 3 份文档",limitCopy:"LumaReader Web 同时最多保留 {limit} 份文档。请先移除其中一份，腾出空间后即可继续。",limitDismiss:"暂时不要",sessionSaved:"已保存",desktopPrompt:"需要长期管理更多文档？",desktopAction:"下载 LumaReader 桌面版 →",shareMarkdown:"分享这份 Markdown",shareCopied:"Markdown 分享链接已复制",shareOpened:"已准备分享这份 Markdown",shareUnavailable:"请先打开一份 Markdown 再分享。",shareTooLarge:"这份 Markdown 太大，无法放进分享链接。",shareFailed:"目前无法创建分享链接。",shareInvalid:"无法打开这个 Markdown 分享链接。",shareDialogTitle:"分享这份 Markdown",shareDialogCopy:"这个链接包含当前文档内容，收到链接的人可以直接用 LumaReader 打开。",shareLinkLabel:"Markdown 分享链接",shareCopy:"复制分享链接",shareClose:"关闭",dropTitle:"松开以打开 Markdown",dropCopy:"一次最多加入 3 份文档。",dropUnsupported:"请拖入 Markdown 或纯文本文档。"},
     ja:{sessionCapacity:"{count} / {limit} · タブを閉じると消去",removeDocument:"このセッションから削除",removeTitle:"この文書を削除しますか？",removeCopy:"現在のブラウザーセッションからのみ削除され、ローカルの元ファイルは削除されません。",removeConfirm:"削除",removeCancel:"キャンセル",removed:"セッションから削除しました",limitTitle:"セッションが上限です",limitCopy:"同時に保持できる文書は {limit} 件までです。待機中の文書を開くには、1 件削除してください。",limitDismiss:"後で",sessionSaved:"このセッションに保存しました"},
     ko:{sessionCapacity:"{count} / {limit} · 탭을 닫으면 삭제",removeDocument:"이 세션에서 제거",removeTitle:"이 문서를 제거할까요?",removeCopy:"현재 브라우저 세션에서만 제거되며 원본 로컬 파일은 삭제되지 않습니다.",removeConfirm:"제거",removeCancel:"취소",removed:"세션에서 제거했습니다",limitTitle:"세션이 가득 찼습니다",limitCopy:"동시에 최대 {limit}개 문서를 보관합니다. 대기 중인 문서를 열려면 하나를 제거하세요.",limitDismiss:"나중에",sessionSaved:"이 세션에 저장됨"},
     es:{sessionCapacity:"{count} / {limit} · Se borra al cerrar la pestaña",removeDocument:"Quitar de esta sesión",removeTitle:"¿Quitar este documento?",removeCopy:"Solo se quitará de la sesión actual. El archivo local original no se eliminará.",removeConfirm:"Quitar",removeCancel:"Cancelar",removed:"Quitado de esta sesión",limitTitle:"La sesión está llena",limitCopy:"Se pueden conservar hasta {limit} documentos. Quita uno para abrir el documento pendiente.",limitDismiss:"Ahora no",sessionSaved:"Guardado en esta sesión"},
@@ -117,9 +117,9 @@
   };
 
   const toolbarTooltips = {
-    en:{readingMode:"Choose reading mode",source:"View original Markdown",edit:"Edit Markdown source",save:"Save changes · Shortcut: ⌘S / Ctrl+S",saved:"Saved",exitEdit:"Exit editing",discardEdits:"Discard unsaved changes",media:"Open media preview",exportPdf:"Export the current document as PDF",fontDown:"Smaller text · Shortcut: ⌘− / Ctrl−",fontUp:"Larger text · Shortcut: ⌘+ / Ctrl+",palette:"Choose a palette",language:"Choose interface language",theme:"Light / dark mode"},
-    "zh-Hant":{readingMode:"選擇閱讀模式",source:"檢視 Markdown 原文",edit:"編輯 Markdown 原文",save:"儲存修改 · 快捷鍵：⌘S / Ctrl+S",saved:"已儲存",exitEdit:"退出編輯",discardEdits:"放棄未儲存修改",media:"開啟媒體預覽",exportPdf:"將目前文件匯出為 PDF",fontDown:"縮小文字 · 快捷鍵：⌘− / Ctrl−",fontUp:"放大文字 · 快捷鍵：⌘+ / Ctrl+",palette:"選擇色系",language:"選擇介面語言",theme:"亮色／暗色模式"},
-    "zh-Hans":{readingMode:"选择阅读模式",source:"查看 Markdown 原文",edit:"编辑 Markdown 原文",save:"保存修改 · 快捷键：⌘S / Ctrl+S",saved:"已保存",exitEdit:"退出编辑",discardEdits:"放弃未保存修改",media:"打开媒体预览",fontDown:"缩小文字 · 快捷键：⌘− / Ctrl−",fontUp:"放大文字 · 快捷键：⌘+ / Ctrl+",palette:"选择配色",language:"选择界面语言",theme:"浅色／深色模式"}
+    en:{readingMode:"Choose reading mode",source:"View original Markdown",edit:"Edit Markdown source",save:"Save changes · Shortcut: ⌘S / Ctrl+S",saved:"Saved",exitEdit:"Exit editing",discardEdits:"Discard unsaved changes",media:"Open media preview",shareMarkdown:"Share this Markdown with a link",exportPdf:"Export the current document as PDF",fontDown:"Smaller text · Shortcut: ⌘− / Ctrl−",fontUp:"Larger text · Shortcut: ⌘+ / Ctrl+",palette:"Choose a palette",language:"Choose interface language",theme:"Light / dark mode"},
+    "zh-Hant":{readingMode:"選擇閱讀模式",source:"檢視 Markdown 原文",edit:"編輯 Markdown 原文",save:"儲存修改 · 快捷鍵：⌘S / Ctrl+S",saved:"已儲存",exitEdit:"退出編輯",discardEdits:"放棄未儲存修改",media:"開啟媒體預覽",shareMarkdown:"用連結分享這份 Markdown",exportPdf:"將目前文件匯出為 PDF",fontDown:"縮小文字 · 快捷鍵：⌘− / Ctrl−",fontUp:"放大文字 · 快捷鍵：⌘+ / Ctrl+",palette:"選擇色系",language:"選擇介面語言",theme:"亮色／暗色模式"},
+    "zh-Hans":{readingMode:"选择阅读模式",source:"查看 Markdown 原文",edit:"编辑 Markdown 原文",save:"保存修改 · 快捷键：⌘S / Ctrl+S",saved:"已保存",exitEdit:"退出编辑",discardEdits:"放弃未保存修改",media:"打开媒体预览",shareMarkdown:"用链接分享这份 Markdown",fontDown:"缩小文字 · 快捷键：⌘− / Ctrl−",fontUp:"放大文字 · 快捷键：⌘+ / Ctrl+",palette:"选择配色",language:"选择界面语言",theme:"浅色／深色模式"}
   };
 
   const palettes = [
@@ -176,7 +176,7 @@
   const newMarkdownButtonEl = $("#new-markdown"), newMarkdownDialogEl = $("#new-markdown-dialog"), newMarkdownFormEl = $("#new-markdown-form"), newMarkdownNameEl = $("#new-markdown-name");
   const newMarkdownSuffixEl = $("#new-markdown-suffix"), newMarkdownDestinationEl = $("#new-markdown-destination"), newMarkdownConfirmationEl = $("#new-markdown-confirmation"), newMarkdownErrorEl = $("#new-markdown-error"), newMarkdownCreateEl = $("#new-markdown-create");
   const editorPreviewControlEl = $("#editor-preview-control"), editorPreviewToggleEl = $("#editor-preview-toggle"), editorPreviewResizerEl = $("#editor-preview-resizer"), editorPreviewEndEl = $("#editor-preview-end");
-  const sessionCapacityEl = $("#session-capacity"), sessionDialogEl = $("#session-dialog"), sessionDialogTitleEl = $("#session-dialog-title"), sessionDialogCopyEl = $("#session-dialog-copy"), sessionDialogFilesEl = $("#session-dialog-files"), sessionDialogConfirmEl = $("#session-dialog-confirm"), sessionDialogCancelEl = $("#session-dialog-cancel"), sessionDesktopLinkEl = $("#session-desktop-link");
+  const shareButtonEl = $("#share-document"), dropOverlayEl = $("#drop-overlay"), shareDialogEl = $("#share-dialog"), shareLinkOutputEl = $("#share-link-output"), sessionDialogEl = $("#session-dialog"), sessionDialogTitleEl = $("#session-dialog-title"), sessionDialogCopyEl = $("#session-dialog-copy"), sessionDialogFilesEl = $("#session-dialog-files"), sessionDialogConfirmEl = $("#session-dialog-confirm"), sessionDialogCancelEl = $("#session-dialog-cancel"), sessionDesktopLinkEl = $("#session-desktop-link");
 
   document.body.append(readingModeMenuEl,paletteMenuEl,languageMenuEl);
 
@@ -259,12 +259,7 @@
 
   function folderName(value){return String(value||"").split(/[\\/]/).filter(Boolean).pop()||t("noLibraryShort");}
   function updateCreateAvailability(){newMarkdownButtonEl.disabled=state.creatingDocument||state.choosingCreateDirectory||!window.lumaDesktop?.chooseCreateDirectory||!window.lumaDesktop?.createDocument;}
-  function updateSessionCapacity(){
-    if(!sessionCapacityEl)return;sessionCapacityEl.hidden=!window.lumaWeb;if(!window.lumaWeb)return;
-    const count=state.files.filter((file)=>!file.webSample).length,limit=window.lumaWeb.maxSessionDocuments||3;
-    sessionCapacityEl.textContent=formatTemplate("sessionCapacity",{count,limit});
-  }
-  function updateLibraryDisplay(){const label=window.lumaWeb?(webSessionLabels[state.language]||webSessionLabels.en):(state.libraryRoot?folderName(state.libraryRoot):t("noLibraryShort"));libraryRootEl.textContent=label;libraryRootEl.title=label;updateSessionCapacity();updateCreateAvailability();}
+  function updateLibraryDisplay(){const label=window.lumaWeb?(webSessionLabels[state.language]||webSessionLabels.en):(state.libraryRoot?folderName(state.libraryRoot):t("noLibraryShort"));if(libraryRootEl){libraryRootEl.textContent=label;libraryRootEl.title=label;}updateCreateAvailability();}
   function formatTemplate(key,values={}){return Object.entries(values).reduce((copy,[name,value])=>copy.replaceAll(`{${name}}`,String(value)),t(key));}
   function currentDirectoryPath(){if(state.sourceType!=="project"||!state.currentPath)return"";const parts=state.currentPath.split("/");parts.pop();return parts.join("/");}
   function currentDirectoryLabel(directory=state.createDirectory){if(window.lumaWeb)return webSessionLabels[state.language]||webSessionLabels.en;if(state.createDirectoryPath)return state.createDirectoryPath;const root=folderName(state.libraryRoot);return directory?`${root} / ${directory}`:root;}
@@ -325,10 +320,10 @@
   function disposeActiveAdapter(){state.activeAdapter?.dispose?.();state.activeAdapter=null;contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");document.body.removeAttribute("data-document-kind");}
   function renderLibraryPrompt(){
     contentEl.replaceChildren();contentEl.classList.remove("library-scanning-active");
-    const button=document.createElement("button");button.type="button";button.className="root-folder-prompt";button.setAttribute("aria-label",t("changeLibrary"));
-    const icon=document.createElement("span");icon.className="root-folder-prompt-icon";icon.setAttribute("aria-hidden","true");icon.textContent="▰";
-    const heading=document.createElement("strong");heading.textContent=t(state.libraryRoot?"noSupportedFiles":"noLibrary");
-    const copy=document.createElement("span");copy.textContent=t(state.libraryRoot?"chooseAnotherRoot":"rootFolderHint");
+    const button=document.createElement("button");button.type="button";button.className="root-folder-prompt";button.setAttribute("aria-label",t(window.lumaWeb?"chooseFile":"changeLibrary"));
+    const icon=document.createElement("span");icon.className="root-folder-prompt-icon";icon.setAttribute("aria-hidden","true");icon.textContent=window.lumaWeb?"↓":"▰";
+    const heading=document.createElement("strong");heading.textContent=window.lumaWeb?t("dropTitle"):t(state.libraryRoot?"noSupportedFiles":"noLibrary");
+    const copy=document.createElement("span");copy.textContent=window.lumaWeb?t("dropCopy"):t(state.libraryRoot?"chooseAnotherRoot":"rootFolderHint");
     button.append(icon,heading,copy);contentEl.classList.add("library-prompt-active");contentEl.appendChild(button);
   }
   function scanCopy(key,seconds){return t(key).replace("{seconds}",String(seconds));}
@@ -405,6 +400,8 @@
     cancelButton.setAttribute("aria-label",t(exitKey));
     const sourceButton=$("#source-view");
     sourceButton.setAttribute("aria-disabled",state.editing?"true":"false");
+    shareButtonEl.hidden=!state.currentPath||!isMarkdown(state.currentPath);
+    shareButtonEl.disabled=state.saving;
     document.body.classList.toggle("editing-document",state.editing);
     updateEditorPreviewLayout();
     updateToolbarTooltips();
@@ -430,6 +427,23 @@
       showToast(t(result.sessionOnly?"sessionSaved":"saved"));
     }catch(error){showToast(error?.message||t("saveFailed"));}
     finally{state.saving=false;updateEditorControls();}
+  }
+
+  function openShareDialog(url){shareLinkOutputEl.value=url;if(!shareDialogEl.open)shareDialogEl.showModal();requestAnimationFrame(()=>$("#share-link-copy").focus());}
+  function closeShareDialog(){if(shareDialogEl.open)shareDialogEl.close();shareLinkOutputEl.value="";shareButtonEl.focus();}
+  async function shareCurrentMarkdown(){
+    if(!state.currentPath||!isMarkdown(state.currentPath)||!window.lumaWeb?.createShareUrl){showToast(t("shareUnavailable"));return;}
+    const text=state.editing?sourceEditorEl.value:state.rawText;
+    try{
+      const result=await window.lumaWeb.createShareUrl({name:state.currentName||state.currentPath.split("/").pop(),text});
+      if(!result?.ok){showToast(t(result?.code==="SHARE_TOO_LARGE"?"shareTooLarge":"shareFailed"));return;}
+      openShareDialog(result.url);
+    }catch(error){console.warn("Unable to share Markdown",error);showToast(t("shareFailed"));}
+  }
+  async function copyShareLink(){
+    const url=shareLinkOutputEl.value;if(!url)return;
+    try{await navigator.clipboard.writeText(url);closeShareDialog();showToast(t("shareCopied"));}
+    catch(error){console.warn("Unable to copy share link",error);shareLinkOutputEl.focus();shareLinkOutputEl.select();showToast(t("shareFailed"));}
   }
 
   async function sourceFromPayload(data){
@@ -638,6 +652,18 @@
       await consumeWebImportResult(result);
     }catch(error){showToast(error?.message||t("loadError"));}
   }
+  let fileDragDepth=0;
+  function dragContainsFiles(event){return Array.from(event.dataTransfer?.types||[]).includes("Files");}
+  function showDropOverlay(){dropOverlayEl.hidden=false;}
+  function hideDropOverlay(){fileDragDepth=0;dropOverlayEl.hidden=true;}
+  function handleFileDragEnter(event){if(!dragContainsFiles(event))return;event.preventDefault();fileDragDepth+=1;showDropOverlay();}
+  function handleFileDragOver(event){if(!dragContainsFiles(event))return;event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";showDropOverlay();}
+  function handleFileDragLeave(event){if(!dragContainsFiles(event))return;event.preventDefault();fileDragDepth=Math.max(0,fileDragDepth-1);if(!fileDragDepth)hideDropOverlay();}
+  async function handleFileDrop(event){
+    if(!dragContainsFiles(event))return;event.preventDefault();const files=event.dataTransfer?.files;hideDropOverlay();
+    if(!files?.length)return;const hasDocument=Array.from(files).some((file)=>SUPPORTED_EXTENSION_SET.has(extensionOf(file.name)));
+    if(!hasDocument){showToast(t("dropUnsupported"));return;}await openUploadedFile(files);
+  }
   async function changeLibrary(){if(blockWhileEditing())return;if(!window.lumaDesktop?.chooseLibrary){showToast(t("folderSelectionUnavailable"));return;}try{await window.lumaDesktop.chooseLibrary();}catch(error){cancelDocumentRequest();showToast(error.message||t("loadError"));}}
 
   function startLiveRefresh(){stopLiveRefresh();if(state.editing||!["project","external"].includes(state.sourceType)||!state.currentSource)return;state.liveTimer=setInterval(async()=>{if(state.editing||state.saving)return;try{const response=await fetch(`/api/meta?source=${encodeURIComponent(state.currentSource)}`,{cache:"no-store"});if(!response.ok)return;const data=await response.json();if(data.modifiedNs&&state.modifiedNs&&data.modifiedNs!==state.modifiedNs){if(state.sourceType==="project")await openProjectFile(state.currentSource,{preserve:true});else await openSource(state.currentSource,{preserve:true});showToast(t("refreshed"));}}catch{}},1500);}
@@ -691,7 +717,9 @@
   $("#change-library")?.addEventListener("click",changeLibrary);
   newMarkdownButtonEl.addEventListener("click",openNewMarkdownDialog);newMarkdownNameEl.addEventListener("input",()=>{showNewMarkdownError("");updateNewMarkdownDialog();});newMarkdownFormEl.addEventListener("submit",createMarkdownDocument);$("#new-markdown-cancel").addEventListener("click",closeNewMarkdownDialog);newMarkdownDialogEl.addEventListener("cancel",(event)=>{event.preventDefault();if(state.creatingDocument)return;closeNewMarkdownDialog();});
   sessionDialogCancelEl.addEventListener("click",()=>{state.pendingWebFiles=[];closeSessionDialog();});sessionDialogConfirmEl.addEventListener("click",()=>{if(state.sessionDialogPath)removeWebDocument(state.sessionDialogPath);});sessionDialogEl.addEventListener("cancel",(event)=>{event.preventDefault();state.pendingWebFiles=[];closeSessionDialog();});
+  shareButtonEl.addEventListener("click",shareCurrentMarkdown);$("#share-link-copy").addEventListener("click",copyShareLink);$("#share-dialog-close").addEventListener("click",closeShareDialog);shareDialogEl.addEventListener("cancel",(event)=>{event.preventDefault();closeShareDialog();});
   $("#choose-file").addEventListener("click",chooseWebFiles);$("#file-picker").addEventListener("change",async(event)=>{await openUploadedFile(event.target.files);event.target.value="";});
+  window.addEventListener("dragenter",handleFileDragEnter);window.addEventListener("dragover",handleFileDragOver);window.addEventListener("dragleave",handleFileDragLeave);window.addEventListener("drop",handleFileDrop);
   $("#font-down").addEventListener("click",()=>adjustFontSize(-1));$("#font-up").addEventListener("click",()=>adjustFontSize(1));
   pagePreviousEl.addEventListener("click",()=>moveReading(-1));pageNextEl.addEventListener("click",()=>moveReading(1));
   $("#source-view").addEventListener("click",()=>{if(blockWhileEditing())return;setView(state.view==="source"?"rendered":"source");});
@@ -730,6 +758,6 @@
   document.addEventListener("keydown",(event)=>{const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(newMarkdownDialogEl.open&&event.key==="Escape"){event.preventDefault();closeNewMarkdownDialog();return;}if(command&&!event.shiftKey&&key==="s"){event.preventDefault();if(state.editing)saveEditing();return;}if(!window.lumaDesktop?.isDesktop&&command&&!event.altKey&&(["-","_","+","=","0"].includes(key))){event.preventDefault();event.stopPropagation();adjustFontSize(key==="0"?0:(["-","_"].includes(key)?-1:1));return;}if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(event.key==="Escape"){closeToolbarMenus();closeMediaPanel();closeSidebarOnNarrow();}});
   window.addEventListener("beforeunload",(event)=>{if(!state.editing||!state.editorDirty)return;event.preventDefault();event.returnValue="";});
 
-  async function initialize(){const localTheme=localStorage.getItem("lumareader-theme");document.documentElement.classList.toggle("dark",localTheme==="dark");const saved=await hydratePreferences();if(Number(saved.readerDefaultsVersion||0)<2){state.language="en";state.palette="dream-rose";document.documentElement.classList.remove("dark");localStorage.setItem("lumareader-language","en");localStorage.setItem("lumareader-theme","light");localStorage.setItem("lumareader-palette","dream-rose");persistPreferences({language:"en",theme:"light",palette:"dream-rose"});}if(Number(saved.readerDefaultsVersion||0)<3){state.mode="vertical";localStorage.setItem("lumareader-mode","vertical");persistPreferences({readingMode:"vertical",readerDefaultsVersion:3});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();});window.lumaDesktop?.onFontSizeRequested?.((change)=>adjustFontSize(Number(change)));window.lumaDesktop?.onLibraryChanged(async(payload)=>{const refreshId=++state.libraryRefreshId;state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();try{await loadFiles({showProgress:true});if(refreshId!==state.libraryRefreshId)return;const first=state.files.find(currentFormatIsEnabled);if(first)await openProjectFile(first.path);else showEmptyLibrary();showToast(t("libraryChanged"));}catch(error){if(refreshId!==state.libraryRefreshId)return;showEmptyLibrary();showToast(error.message||t("loadError"));}});await loadFiles({showProgress:true});const params=new URLSearchParams(location.search),requested=params.get("source")||params.get("url")||params.get("file");if(requested){if(state.files.some((file)=>file.path===requested))await openProjectFile(requested);else await openSource(requested);return;}const preferred=state.files.find((file)=>file.path.endsWith("docs/story-review/00-閱讀順序與驗收範圍.md")&&currentFormatIsEnabled(file))||state.files.find(currentFormatIsEnabled);if(preferred)await openProjectFile(preferred.path);else showEmptyLibrary();}
+  async function initialize(){const webReady=await window.lumaWeb?.ready;const localTheme=localStorage.getItem("lumareader-theme");document.documentElement.classList.toggle("dark",localTheme==="dark");const saved=await hydratePreferences();if(Number(saved.readerDefaultsVersion||0)<2){state.language="en";state.palette="dream-rose";document.documentElement.classList.remove("dark");localStorage.setItem("lumareader-language","en");localStorage.setItem("lumareader-theme","light");localStorage.setItem("lumareader-palette","dream-rose");persistPreferences({language:"en",theme:"light",palette:"dream-rose"});}if(Number(saved.readerDefaultsVersion||0)<3){state.mode="vertical";localStorage.setItem("lumareader-mode","vertical");persistPreferences({readingMode:"vertical",readerDefaultsVersion:3});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();});window.lumaDesktop?.onFontSizeRequested?.((change)=>adjustFontSize(Number(change)));window.lumaDesktop?.onLibraryChanged(async(payload)=>{const refreshId=++state.libraryRefreshId;state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();try{await loadFiles({showProgress:true});if(refreshId!==state.libraryRefreshId)return;const first=state.files.find(currentFormatIsEnabled);if(first)await openProjectFile(first.path);else showEmptyLibrary();showToast(t("libraryChanged"));}catch(error){if(refreshId!==state.libraryRefreshId)return;showEmptyLibrary();showToast(error.message||t("loadError"));}});await loadFiles({showProgress:true});const params=new URLSearchParams(location.search),requested=params.get("source")||params.get("url")||params.get("file");if(requested){if(state.files.some((file)=>file.path===requested))await openProjectFile(requested);else await openSource(requested);return;}const preferred=state.files.find((file)=>file.path.endsWith("docs/story-review/00-閱讀順序與驗收範圍.md")&&currentFormatIsEnabled(file))||state.files.find(currentFormatIsEnabled);if(preferred)await openProjectFile(preferred.path);else showEmptyLibrary();if(webReady?.error)showToast(t("shareInvalid"));}
   initialize().catch((error)=>{setLoading(false);contentEl.innerHTML=`<p class="error">${escapeHtml(error.message||error)}</p>`;});
 })();

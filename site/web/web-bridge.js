@@ -4,6 +4,8 @@
   const TEXT_EXTENSIONS = [".md", ".markdown", ".mkd", ".mdx", ".txt", ".log"];
   const MARKDOWN_EXTENSIONS = [".md", ".markdown", ".mkd", ".mdx"];
   const MAX_SESSION_DOCUMENTS = 3;
+  const MAX_SHARE_TEXT_BYTES = 256 * 1024;
+  const MAX_SHARE_URL_LENGTH = 100000;
   const documents = new Map();
   const assets = new Map();
   const objectUrls = new Set();
@@ -12,10 +14,10 @@
 
   const sample = `# LumaReader Web
 
-正式網頁版保留桌面版的閱讀與編輯體驗。一次最多開啟三份 Markdown 或純文字文件；檔案只存在目前的瀏覽器工作階段。
+正式網頁版保留桌面版的閱讀與編輯體驗。可直接開啟、拖曳或分享 Markdown 文件，一次最多保留三份。
 
 > [!NOTE]
-> 網頁版不提供資料夾匯入、下載與 PDF 匯出。需要長期保存或匯出時，請使用桌面版。
+> 文件由瀏覽器直接讀取，不會上傳。網頁版不提供資料夾匯入、下載與 PDF 匯出；需要長期保存或匯出時，請使用桌面版。
 
 ## 閱讀與導覽
 
@@ -30,9 +32,10 @@
 
 | 功能 | 網頁版 |
 | --- | --- |
-| 開啟多份文件 | 最多三份，關閉分頁後清除 |
+| 開啟多份文件 | 最多三份，可逐一移除 |
 | 新增 Markdown | 支援 |
-| 儲存修改 | 本次工作階段；瀏覽器允許時可直接寫回原檔 |
+| 儲存修改 | 瀏覽器允許時可直接寫回原檔 |
+| 分享 Markdown | 產生包含目前文件內容的分享連結 |
 | 下載與匯出 | 請使用 LumaReader 桌面版 |
 
 ### 進階 Markdown
@@ -77,6 +80,89 @@ flowchart LR
     if (MARKDOWN_EXTENSIONS.includes(extension)) return { kind: "markdown", mime: "text/markdown", capabilities: { paged: true, source: true, media: true } };
     if (extension === ".txt") return { kind: "text", mime: "text/plain", capabilities: { paged: true, source: true, wrap: true } };
     return { kind: "log", mime: "text/plain", capabilities: { paged: true, source: true, wrap: true } };
+  }
+
+  function bytesToBase64Url(bytes) {
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/g, "");
+  }
+
+  function base64UrlToBytes(value) {
+    const normalized = String(value || "").replaceAll("-", "+").replaceAll("_", "/");
+    const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  }
+
+  async function streamBytes(bytes, StreamType, maxBytes = Infinity) {
+    const reader = new Blob([bytes]).stream().pipeThrough(new StreamType("gzip")).getReader();
+    const chunks = [];
+    let total = 0;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("Shared document is too large");
+      }
+      chunks.push(value);
+    }
+    const output = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      output.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return output;
+  }
+
+  async function encodeSharePayload(payload) {
+    const source = new TextEncoder().encode(JSON.stringify(payload));
+    if (typeof CompressionStream === "function") {
+      return `g.${bytesToBase64Url(await streamBytes(source, CompressionStream))}`;
+    }
+    return `j.${bytesToBase64Url(source)}`;
+  }
+
+  async function decodeSharePayload(value) {
+    if (String(value || "").length > MAX_SHARE_URL_LENGTH) throw new Error("Shared document is too large");
+    const [format, encoded] = String(value || "").split(".", 2);
+    if (!encoded || !["g", "j"].includes(format)) throw new Error("Invalid shared document");
+    let bytes = base64UrlToBytes(encoded);
+    if (format === "g") {
+      if (typeof DecompressionStream !== "function") throw new Error("Shared document compression is not supported by this browser");
+      bytes = await streamBytes(bytes, DecompressionStream, MAX_SHARE_TEXT_BYTES * 1.25);
+    }
+    if (bytes.byteLength > MAX_SHARE_TEXT_BYTES * 1.25) throw new Error("Shared document is too large");
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  async function createShareUrl({ name, text }) {
+    const safeName = String(name || "Shared Markdown.md").replace(/[\\/]/g, "-");
+    const safeText = String(text || "");
+    if (!MARKDOWN_EXTENSIONS.includes(extensionOf(safeName))) return { ok: false, code: "SHARE_MARKDOWN_ONLY" };
+    if (new TextEncoder().encode(safeText).byteLength > MAX_SHARE_TEXT_BYTES) return { ok: false, code: "SHARE_TOO_LARGE" };
+    const encoded = await encodeSharePayload({ version: 1, name: safeName, text: safeText });
+    const url = `${location.origin}${location.pathname}#share=${encoded}`;
+    if (url.length > MAX_SHARE_URL_LENGTH) return { ok: false, code: "SHARE_TOO_LARGE" };
+    return { ok: true, url, name: safeName };
+  }
+
+  async function importSharedDocument() {
+    const encoded = new URLSearchParams(String(location.hash || "").replace(/^#/, "")).get("share");
+    if (!encoded) return { imported: false };
+    try {
+      const shared = await decodeSharePayload(encoded);
+      if (shared?.version !== 1 || typeof shared.name !== "string" || typeof shared.text !== "string") throw new Error("Invalid shared document");
+      const document = addDocument({ name: shared.name, text: shared.text });
+      if (!document) throw new Error("Unable to open shared document");
+      return { imported: true, path: document.path };
+    } catch (error) {
+      return { imported: false, error: error?.message || "Unable to open shared document" };
+    }
   }
 
   function sessionDocuments() {
@@ -197,7 +283,7 @@ flowchart LR
 
   async function saveDocument({ path, text }) {
     const document = documents.get(path);
-    if (!document) return { ok: false, message: "Document is not available in this browser session." };
+    if (!document) return { ok: false, message: "Document is not available in LumaReader Web." };
     document.text = String(text || "");
     document.modifiedNs = String(Date.now() * 1000000);
     if (document.handle) {
@@ -233,7 +319,7 @@ flowchart LR
     if (requestUrl.origin !== location.origin || !requestUrl.pathname.startsWith("/api/")) return originalFetch(input, init);
     if (requestUrl.pathname === "/api/files") {
       const types = TEXT_EXTENSIONS.map((extension) => ({ extension, ext: extension, ...documentType(extension), binary: false }));
-      return json({ root: "Browser session", files: [...documents.values()].map(fileRecord), types });
+      return json({ root: "LumaReader Web", files: [...documents.values()].map(fileRecord), types });
     }
     if (requestUrl.pathname === "/api/file") {
       const document = documents.get(requestUrl.searchParams.get("path") || "");
@@ -250,7 +336,7 @@ flowchart LR
         if (!response.ok) return json({ error: `Unable to open source (${response.status})` }, response.status);
         const name = decodeURIComponent(new URL(source).pathname.split("/").pop() || "Remote.md");
         const document = addDocument({ name, text: await response.text() });
-        return document ? json(payload(document)) : json({ error: "Browser session document limit reached", code: "SESSION_DOCUMENT_LIMIT" }, 409);
+        return document ? json(payload(document)) : json({ error: "LumaReader Web document limit reached", code: "SESSION_DOCUMENT_LIMIT" }, 409);
       } catch (error) {
         return json({ error: error?.message || "Unable to open source" }, 400);
       }
@@ -267,9 +353,12 @@ flowchart LR
     const browserLanguage = navigator.language || "en";
     localStorage.setItem("lumareader-language", browserLanguage.startsWith("zh") ? "zh-Hant" : browserLanguage);
   }
-  addDocument({ name: "LumaReader Web.md", text: sample, path: "LumaReader Web.md", sample: true });
+  const ready = importSharedDocument().then((result) => {
+    if (!result.imported) addDocument({ name: "LumaReader Web.md", text: sample, path: "LumaReader Web.md", sample: true });
+    return result;
+  });
 
-  window.lumaWeb = { chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
+  window.lumaWeb = { chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
   window.lumaDesktop = {
     isDesktop: false,
     platform: "web",
@@ -279,7 +368,7 @@ flowchart LR
       localStorage.setItem(preferencesKey, JSON.stringify(next));
       return next;
     },
-    chooseCreateDirectory: async () => ({ selected: true, canceled: false, directory: "", displayPath: "Browser session", root: "Browser session", destinationToken: "web-session" }),
+    chooseCreateDirectory: async () => ({ selected: true, canceled: false, directory: "", displayPath: "LumaReader Web", root: "LumaReader Web", destinationToken: "web-session" }),
     cancelCreateDocument: async () => ({ ok: true }),
     createDocument: async ({ name }) => {
       let normalized = String(name || "").trim();
@@ -288,8 +377,8 @@ flowchart LR
       if (!normalized || normalized === ".md") return { ok: false, message: "Enter a document name." };
       if (documents.has(normalized)) return { ok: false, code: "DOCUMENT_ALREADY_EXISTS" };
       const document = addDocument({ name: normalized, text: `# ${normalized.replace(/\.md$/i, "")}\n\n` });
-      if (!document) return { ok: false, code: "SESSION_DOCUMENT_LIMIT", message: "Browser session document limit reached." };
-      return { ok: true, root: "Browser session", document: payload(document) };
+      if (!document) return { ok: false, code: "SESSION_DOCUMENT_LIMIT", message: "LumaReader Web document limit reached." };
+      return { ok: true, root: "LumaReader Web", document: payload(document) };
     },
     saveDocument,
     onSaveRequested: () => () => {},

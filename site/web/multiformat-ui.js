@@ -18,7 +18,7 @@
       close: "Close format selector",
       footnote: "Markdown types are selected by default. Enable .txt or .log when needed.",
       steps: [
-        ["Open your documents", "Choose one or more Markdown or text files. They stay in this browser session."],
+        ["Open your documents", "Choose files or drag Markdown directly onto the reader. You can keep up to three documents open."],
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
         ["Read your way", "Use vertical, horizontal, or paged reading. Both scroll directions remain available when the content needs them."],
         ["Light or dark", "LumaReader starts bright with Dream Rose. Use this button whenever you want to switch between light and dark reading."],
@@ -36,7 +36,7 @@
       close: "關閉格式選單",
       footnote: "預設選取 Markdown 類型；需要時再啟用 .txt 或 .log。",
       steps: [
-        ["開啟文件", "一次選取一份或多份 Markdown／純文字檔案；內容只會留在目前的瀏覽器工作階段。"],
+        ["開啟文件", "選擇檔案，或直接將 Markdown 拖曳到閱讀器；一次最多可開啟 3 份文件。"],
         ["選擇檔案格式", "Markdown 預設開啟；需要時才將 .txt 或 .log 加入清單。"],
         ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；內容需要時仍可橫向與縱向捲動。"],
         ["亮色或暗色", "LumaReader 預設使用明亮的夢幻粉櫻；需要時可隨時使用這個按鈕切換亮色與暗色閱讀。"],

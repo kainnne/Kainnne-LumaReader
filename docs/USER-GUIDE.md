@@ -59,7 +59,9 @@ Includes cannot escape the selected library when reading a library document.
 
 ## Use LumaReader Web
 
-Open [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/) and select **Open** to choose Markdown or plain-text files. The web edition can hold at most three documents in one tab. Use the **×** beside a document name and confirm removal before opening another file.
+Open [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/) and select **Files** to choose Markdown or plain-text files, or drag the files directly onto the reader. The web edition can hold at most three documents at a time. Use the **×** beside a document name and confirm removal before opening another file.
+
+Select **Share this Markdown** to share the open Markdown document. LumaReader shows a compact dialog with the generated link and an explicit **Copy share link** action. The link contains the current Markdown name and content in its URL fragment, allowing the recipient to open the same document in LumaReader Web without a cloud upload. Anyone who receives the full link can read that document.
 
 The web edition keeps document content only in the current browser tab. Reloading or closing the tab clears every opened or newly created document. Editing, live preview, synchronized scrolling, reading modes, palettes, source view, media, outline, theme, and interface language remain available. A browser that grants a writable file handle may allow **Save** to update the selected original file; otherwise, the edit remains in the current session.
 

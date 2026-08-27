@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=web-3" />
+  <link rel="stylesheet" href="styles.css?v=web-4" />
 </head>
 <body>
   <div id="app" class="app">
@@ -31,8 +31,6 @@
           <span aria-hidden="true">✎</span><span data-i18n="newMarkdownButton">New md.</span>
         </button>
         <input id="file-picker" type="file" accept=".md,.markdown,.mkd,.mdx,.txt,.log,image/*,audio/*,video/*" multiple hidden />
-        <div id="library-root" class="library-root">Browser session</div>
-        <div id="session-capacity" class="session-capacity" aria-live="polite">0 / 3 · Cleared when this tab closes</div>
       </div>
 
       <div class="sidebar-tools">
@@ -93,6 +91,7 @@
             <input id="editor-preview-toggle" type="checkbox" />
             <span data-i18n="comparisonPreview">Preview</span>
           </label>
+          <button id="share-document" class="icon-button labeled-button share-document-button" data-tooltip-key="shareMarkdown" type="button" data-i18n-title="shareMarkdown" title="Share this Markdown" aria-label="Share this Markdown" hidden><span class="share-button-icon" aria-hidden="true">↗</span><span data-i18n="shareMarkdown">Share Markdown</span></button>
           <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
           <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
           <button id="export-pdf" class="icon-button labeled-button export-pdf-button" data-tooltip-key="exportPdf" type="button" data-i18n-title="exportPdf" title="Export PDF" aria-label="Export PDF" hidden><span class="pdf-button-icon" aria-hidden="true">PDF</span><span data-i18n="exportPdf">Export PDF</span></button>
@@ -154,8 +153,8 @@
         <article id="content" class="content prose">
           <button class="root-folder-prompt" type="button">
             <span class="root-folder-prompt-icon" aria-hidden="true">▰</span>
-            <strong>Open Markdown files to begin.</strong>
-            <span>Files stay in this browser session.</span>
+            <strong>Drop Markdown here to begin.</strong>
+            <span>Or use Files to choose a document.</span>
           </button>
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
@@ -168,7 +167,6 @@
         <span id="page-number" class="page-number" aria-live="polite"></span>
         <button id="page-next" class="page-turn-button" type="button" aria-label="Next page">›</button>
       </nav>
-      <div id="live-status" class="live-status" aria-live="polite"><span class="live-dot"></span><span data-i18n="live">Live</span></div>
     </main>
 
     <aside id="media-panel" class="media-panel" aria-hidden="true">
@@ -226,7 +224,7 @@
           <span id="session-dialog-symbol" class="session-dialog-symbol" aria-hidden="true">×</span>
           <div>
             <h2 id="session-dialog-title">Remove this document?</h2>
-            <p id="session-dialog-copy">This only removes it from the current browser session. Your original local file is not deleted.</p>
+            <p id="session-dialog-copy">This removes it from LumaReader Web. Your original local file is not deleted.</p>
           </div>
         </header>
         <div id="session-dialog-files" class="session-dialog-files" hidden></div>
@@ -237,16 +235,42 @@
         </footer>
       </form>
     </dialog>
+    <dialog id="share-dialog" class="share-dialog" aria-labelledby="share-dialog-title" aria-describedby="share-dialog-copy">
+      <form method="dialog">
+        <header class="share-dialog-header">
+          <span class="share-dialog-symbol" aria-hidden="true">↗</span>
+          <div>
+            <h2 id="share-dialog-title" data-i18n="shareDialogTitle">Share this Markdown</h2>
+            <p id="share-dialog-copy" data-i18n="shareDialogCopy">This link includes the current document so other people can open it in LumaReader.</p>
+          </div>
+        </header>
+        <label class="share-link-field" for="share-link-output">
+          <span data-i18n="shareLinkLabel">Markdown share link</span>
+          <input id="share-link-output" type="text" readonly spellcheck="false" />
+        </label>
+        <footer class="share-dialog-actions">
+          <button id="share-dialog-close" class="compact-button" value="cancel" type="button" data-i18n="shareClose">Close</button>
+          <button id="share-link-copy" class="compact-button primary-button" value="copy" type="button" data-i18n="shareCopy">Copy share link</button>
+        </footer>
+      </form>
+    </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <div id="toolbar-tooltip" class="toolbar-tooltip" role="tooltip" hidden></div>
+    <div id="drop-overlay" class="drop-overlay" role="status" aria-live="polite" hidden>
+      <div class="drop-overlay-card">
+        <span class="drop-overlay-icon" aria-hidden="true">↓</span>
+        <strong data-i18n="dropTitle">Drop to open Markdown</strong>
+        <span data-i18n="dropCopy">You can add up to three documents.</span>
+      </div>
+    </div>
 
     <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-copy" hidden>
       <div class="onboarding-spotlight" aria-hidden="true"></div>
       <section class="onboarding-card">
         <div id="onboarding-progress" class="onboarding-progress" aria-label="Tour progress"></div>
         <p id="onboarding-kicker" class="onboarding-kicker">Step 1 of 4</p>
-        <h2 id="onboarding-title">Choose your library</h2>
-        <p id="onboarding-copy">Start with a folder. LumaReader keeps your files on this device.</p>
+        <h2 id="onboarding-title">Open your documents</h2>
+        <p id="onboarding-copy">Choose files or drag Markdown directly onto the reader. You can keep up to three documents open.</p>
         <div class="onboarding-actions">
           <button id="onboarding-skip" class="onboarding-skip" type="button">Skip tour</button>
           <button id="onboarding-next" class="onboarding-next" type="button">Next</button>
@@ -260,12 +284,12 @@
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=web-3"></script>
+  <script src="web-bridge.js?v=web-4"></script>
   <script src="reader-utils.js?v=web-2"></script>
   <script src="adapters/core.js?v=web-2"></script>
   <script src="adapters/plain-text.js?v=web-2"></script>
   <script src="adapters/index.js?v=web-2"></script>
-  <script src="app.js?v=web-3"></script>
-  <script src="multiformat-ui.js?v=web-2"></script>
+  <script src="app.js?v=web-4"></script>
+  <script src="multiformat-ui.js?v=web-4"></script>
 </body>
 </html>

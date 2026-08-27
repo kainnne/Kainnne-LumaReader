@@ -33,7 +33,7 @@ Version 1.0.2 is the current desktop release. The same local-first Electron code
 
 ## Web edition
 
-The web edition reuses the complete reader interface without requiring an account. It can open or create up to three Markdown or plain-text documents in one tab, remove individual documents, and edit with the same preview and synchronized scrolling controls. Document content stays in browser memory and is cleared when the tab reloads or closes; no document upload, cloud persistence, file download, folder library, or PDF export is provided. When the browser grants a writable file handle, saving can update the original local file directly.
+The web edition reuses the complete reader interface without requiring an account. It can open, drag in, or create up to three Markdown or plain-text documents, remove individual documents, and edit with the same preview and synchronized scrolling controls. A decorated **Share this Markdown** action creates a compressed URL fragment containing the current Markdown so another person can open the same document without a cloud upload. Document content otherwise stays in browser memory; no cloud persistence, file download, folder library, or PDF export is provided. When the browser grants a writable file handle, saving can update the original local file directly.
 
 Implementation boundaries and manual acceptance checks are documented in [Web Edition](docs/WEB-EDITION.md).
 
