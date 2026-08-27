@@ -249,12 +249,20 @@ h1 {
   50% { color: #6d3ca0; transform: translateY(-2px); }
 }
 
-.github-button {
-  min-height: 48px;
+.hero-links {
+  width: min(520px, 100%);
   margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hero-button {
+  min-height: 48px;
   padding: 0 20px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   border: 1px solid var(--glass-line);
   border-radius: 999px;
@@ -266,7 +274,7 @@ h1 {
   transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
 }
 
-.github-button:is(:hover, :active) {
+.hero-button:is(:hover, :active) {
   transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.62);
   box-shadow: 0 15px 35px rgba(103, 59, 94, 0.15), inset 0 1px rgba(255, 255, 255, 0.66);
@@ -571,6 +579,7 @@ footer {
   .app-icon { width: 96px; height: 96px; border-radius: 23px; }
   .download-actions { grid-template-columns: 1fr; }
   .platform-notices { grid-template-columns: 1fr; }
+  .hero-links { grid-template-columns: 1fr; }
   .download-button { min-height: 84px; border-radius: 23px; }
   .solution,
   .release { padding: 30px 20px; border-radius: 26px; }
