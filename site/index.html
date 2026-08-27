@@ -10,10 +10,10 @@
     <link rel="apple-touch-icon" href="./icon.png" />
     <meta
       name="description"
-      content="Kainnne LumaReader — a calm, local-first Markdown desktop reader for macOS and Windows."
+      content="Kainnne LumaReader — a local-first Markdown desktop reader with rich rendering, editing, and multiple reading modes."
     />
     <meta property="og:title" content="Kainnne LumaReader" />
-    <meta property="og:description" content="A calm, local-first Markdown desktop reader for macOS and Windows." />
+    <meta property="og:description" content="A local-first Markdown desktop reader with rich rendering, editing, and multiple reading modes." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://lumareader.kainnne.com/" />
     <meta property="og:image" content="https://lumareader.kainnne.com/icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:image:alt" content="LumaReader application icon" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Kainnne LumaReader" />
-    <meta name="twitter:description" content="A calm, local-first Markdown desktop reader for macOS and Windows." />
+    <meta name="twitter:description" content="A local-first Markdown desktop reader with rich rendering, editing, and multiple reading modes." />
     <meta name="twitter:image" content="https://lumareader.kainnne.com/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -52,10 +52,6 @@
         <img class="app-icon" src="./icon.png" alt="LumaReader application icon" />
         <p class="type" data-copy="type">MARKDOWN DESKTOP READER</p>
         <h1 id="page-title">LumaReader</h1>
-        <p class="tagline" data-copy="tagline">Your local Markdown library, made for reading.</p>
-        <p class="local-first-callout" data-copy="local-first-callout">
-          Local-first by design. Your documents stay on this computer—no account, cloud upload, analytics, or document telemetry.
-        </p>
 
         <div class="download-actions" aria-label="Desktop downloads">
           <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg" data-download="macOS" aria-describedby="macos-notice">
@@ -81,7 +77,7 @@
         <div class="platform-notices" aria-label="Download notes">
           <p class="platform-notice macos-notice" id="macos-notice">
             <strong data-copy="macos-notice-title">macOS · Signed and notarized</strong>
-            <span data-copy="macos-notice">Developed for macOS and signed with Developer ID, then notarized by Apple. You can download and open it with confidence.</span>
+            <span data-copy="macos-notice">The macOS build is signed with Developer ID and notarized by Apple.</span>
           </p>
           <p class="platform-notice windows-notice" id="windows-notice">
             <strong data-copy="windows-notice-title">Windows · Unsigned</strong>
@@ -94,11 +90,37 @@
         </a>
       </section>
 
+      <section class="solution" aria-labelledby="solution-title">
+        <div class="solution-heading">
+          <p class="section-label" data-copy="solution-label">WHAT IT SOLVES</p>
+          <h2 id="solution-title" data-copy="solution-title">Markdown reading, local processing, and a designed interface.</h2>
+          <p data-copy="solution-lead">LumaReader turns files in an ordinary folder into rendered documents while keeping reading, search, and editing on your computer.</p>
+        </div>
+        <ul class="solution-grid">
+          <li>
+            <strong data-copy="solution-1-title">Markdown presentation</strong>
+            <p data-copy="solution-1-body">Headings, tables, code, mathematics, and diagrams are rendered as a complete reading layout instead of raw markup.</p>
+          </li>
+          <li>
+            <strong data-copy="solution-2-title">Runs locally</strong>
+            <p data-copy="solution-2-body">Choose a folder on your computer. Scanning, search, reading, preview, and editing run on the device.</p>
+          </li>
+          <li>
+            <strong data-copy="solution-3-title">Documents stay private</strong>
+            <p data-copy="solution-3-body">No account or document upload. LumaReader does not collect usage analytics, document content, or document telemetry.</p>
+          </li>
+          <li>
+            <strong data-copy="solution-4-title">Reading interface</strong>
+            <p data-copy="solution-4-body">Clear typography, three reading modes, light and dark appearances, and 22 palettes provide practical layout choices.</p>
+          </li>
+        </ul>
+      </section>
+
       <section class="release" aria-labelledby="release-title">
         <div class="release-heading">
           <div>
-            <p class="section-label" data-copy="release-label">LATEST UPDATE · VERSION 1.0.1</p>
-            <h2 id="release-title" data-copy="release-title">A smoother finish for editing.</h2>
+            <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
+            <h2 id="release-title" data-copy="release-title">Version 1.0.1 update details</h2>
           </div>
           <time datetime="2026-08-27" data-copy="release-date">August 27, 2026</time>
         </div>
@@ -126,10 +148,10 @@
 
       <section class="overview" aria-labelledby="overview-title">
         <div class="overview-heading">
-          <p class="section-label" data-copy="overview-label">WHAT IT DOES</p>
-          <h2 id="overview-title" data-copy="overview-title">A calmer way to live with Markdown.</h2>
+          <p class="section-label" data-copy="overview-label">DETAILED FEATURES</p>
+          <h2 id="overview-title" data-copy="overview-title">LumaReader feature details</h2>
           <p class="overview-lead" data-copy="overview-lead">
-            LumaReader gives an ordinary folder the feel of a considered reading app: clear hierarchy, comfortable typography, and powerful rendering without an account or a complicated setup.
+            Supported formats, folder navigation, reading modes, rendering, editing, and interface settings are listed below.
           </p>
         </div>
 
@@ -137,7 +159,7 @@
           <li>
             <span class="feature-number">01</span>
             <div>
-              <strong data-copy="feature-1-title">Focused support for Markdown and text.</strong>
+              <strong data-copy="feature-1-title">Supported Markdown and text formats</strong>
               <ul class="format-list" aria-label="Supported formats">
                 <li><span data-copy="format-documents-label">Markdown · on by default</span><span data-copy="format-documents-value">.md, .markdown, .mkd, .mdx</span></li>
                 <li><span data-copy="format-data-label">Plain text · opt in</span><span data-copy="format-data-value">.txt, .log</span></li>
@@ -148,35 +170,35 @@
           <li>
             <span class="feature-number">02</span>
             <div>
-              <strong data-copy="feature-2-title">A folder becomes a navigable reading library.</strong>
+              <strong data-copy="feature-2-title">Folder library, search, and sidebar navigation</strong>
               <p data-copy="feature-2-body">Choose one root folder and scan its nested files with a visible elapsed-time counter. Search opens every parent folder needed to reveal a match, then restores your previous folder state when cleared; the sidebar can be widened for long names or collapsed for focus.</p>
             </div>
           </li>
           <li>
             <span class="feature-number">03</span>
             <div>
-              <strong data-copy="feature-3-title">Three reading modes, with room to breathe.</strong>
+              <strong data-copy="feature-3-title">Vertical, horizontal, and paged reading modes</strong>
               <p data-copy="feature-3-body">Use a full-width vertical page, horizontal reading, or paged navigation with left/right or up/down page turns. Both axes have draggable scrollbars, and text-size or layout changes keep you close to the same reading position.</p>
             </div>
           </li>
           <li>
             <span class="feature-number">04</span>
             <div>
-              <strong data-copy="feature-4-title">Rich Markdown, without extra setup.</strong>
+              <strong data-copy="feature-4-title">Extended Markdown rendering</strong>
               <p data-copy="feature-4-body">Render tables, task lists, alerts, highlighted code, KaTeX mathematics, Mermaid diagrams, footnotes, emoji, abbreviations, superscript, subscript, and reusable local includes.</p>
             </div>
           </li>
           <li>
             <span class="feature-number">05</span>
             <div>
-              <strong data-copy="feature-5-title">Create, read, edit, and save in one place.</strong>
+              <strong data-copy="feature-5-title">Create, edit, preview, and save Markdown</strong>
               <p data-copy="feature-5-body">Choose any destination folder for a new .md, confirm its name and location, and start writing immediately. Edit beside an optional live preview with a draggable split and synchronized scrolling; resize source and editor text with Command/Ctrl + or −, then save without leaving the editor.</p>
             </div>
           </li>
           <li>
             <span class="feature-number">06</span>
             <div>
-              <strong data-copy="feature-6-title">Local-first from start to finish.</strong>
+              <strong data-copy="feature-6-title">Local documents and interface settings</strong>
               <p data-copy="feature-6-body">Your library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide.</p>
             </div>
           </li>
