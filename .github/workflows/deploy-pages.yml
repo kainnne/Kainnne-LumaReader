@@ -2,6 +2,12 @@ name: Deploy GitHub Pages
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "build/icon.png"
+      - ".github/workflows/deploy-pages.yml"
   release:
     types: [published]
 

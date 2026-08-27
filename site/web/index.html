@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-Hant" data-palette="dream-rose">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fff2f7" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+    <link rel="icon" type="image/png" href="../icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./vendor/marked.umd.js" defer></script>
+    <script src="./app.js" defer></script>
+    <title>LumaReader Web Beta</title>
+  </head>
+  <body>
+    <div class="web-app">
+      <aside id="sidebar" class="sidebar">
+        <div class="brand-row">
+          <a href="../" aria-label="回到 LumaReader 官網"><img src="../icon.png" alt="" /><strong>LumaReader</strong></a>
+          <span>WEB BETA</span>
+        </div>
+
+        <button id="open-file" class="primary-action" type="button"><span aria-hidden="true">＋</span><span>開啟 Markdown</span></button>
+        <input id="file-picker" type="file" accept=".md,.markdown,.mkd,.mdx,.txt" hidden />
+
+        <div class="sidebar-section">
+          <span class="sidebar-label">本次閱讀</span>
+          <button id="current-file" class="file-item is-active" type="button">
+            <span aria-hidden="true">◇</span>
+            <span id="sidebar-file-name">LumaReader Web.md</span>
+          </button>
+        </div>
+
+        <div class="privacy-note">
+          <span aria-hidden="true">◌</span>
+          <p><strong>目前內容只在這個瀏覽器分頁。</strong><br />關閉後不會保留，也不會上傳。</p>
+        </div>
+      </aside>
+
+      <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="開啟檔案側欄">☰</button>
+
+      <main class="reader-shell">
+        <header class="reader-toolbar">
+          <div class="document-heading">
+            <strong id="file-name">LumaReader Web.md</strong>
+            <span id="file-status">網頁版範例·可直接編輯</span>
+          </div>
+
+          <div class="toolbar-actions" aria-label="閱讀與文件工具">
+            <button id="edit-view" type="button"><span aria-hidden="true">✎</span><span>編輯</span></button>
+            <button id="source-view" type="button"><span aria-hidden="true">⌘</span><span>原文</span></button>
+            <label class="select-control">
+              <span aria-hidden="true">↕</span>
+              <select id="reading-mode" aria-label="閱讀模式">
+                <option value="vertical">直式</option>
+                <option value="horizontal">橫式</option>
+              </select>
+            </label>
+            <label class="select-control palette-control">
+              <span class="palette-dot" aria-hidden="true"></span>
+              <select id="palette" aria-label="色系">
+                <option value="dream-rose">夢幻粉櫻</option>
+                <option value="lavender">薰衣草霧</option>
+                <option value="mint">薄荷玻璃</option>
+                <option value="studio">商務純白</option>
+              </select>
+            </label>
+            <button id="font-down" type="button" aria-label="縮小文字">A−</button>
+            <button id="font-up" type="button" aria-label="放大文字">A＋</button>
+            <button id="theme" type="button" aria-label="切換深色模式">◐</button>
+            <button id="share" class="share-button" type="button"><span aria-hidden="true">↗</span><span>分享</span></button>
+            <button id="export-pdf" class="pdf-button" type="button"><span class="pdf-icon" aria-hidden="true">PDF</span><span>匯出 PDF</span></button>
+          </div>
+        </header>
+
+        <div class="progress-track" aria-hidden="true"><span id="progress"></span></div>
+
+        <div id="document-stage" class="document-stage">
+          <textarea id="editor" class="editor" aria-label="Markdown 編輯器" spellcheck="false" hidden></textarea>
+          <article id="content" class="content prose"></article>
+          <pre id="source" class="source" hidden><code></code></pre>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="pdf-dialog" class="web-dialog" aria-labelledby="pdf-dialog-title">
+      <form method="dialog">
+        <button class="dialog-close" value="close" aria-label="關閉">×</button>
+        <span class="dialog-symbol pdf-symbol" aria-hidden="true">PDF</span>
+        <h2 id="pdf-dialog-title">PDF 匯出在桌面版</h2>
+        <p>桌面版會等待圖片與字體完成，再匯出完整閱讀版面。</p>
+        <div class="dialog-actions">
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg">下載 macOS 版</a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-Windows-x64-Setup.exe">下載 Windows 版</a>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="share-dialog" class="web-dialog" aria-labelledby="share-dialog-title">
+      <form method="dialog">
+        <button class="dialog-close" value="close" aria-label="關閉">×</button>
+        <span class="dialog-symbol share-symbol" aria-hidden="true">↗</span>
+        <h2 id="share-dialog-title">可分享連結即將開放</h2>
+        <p>下一版會將文件發布為網址，並在到期後自動刪除。</p>
+        <button class="dialog-dismiss" value="close">我知道了</button>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

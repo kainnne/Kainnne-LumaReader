@@ -144,7 +144,7 @@
     sidebarCollapsed:localStorage.getItem("lumareader-sidebar-collapsed")==="true",sidebarWidth:Number(localStorage.getItem("lumareader-sidebar-width")||320),
     enabledExtensions:new Set(MARKDOWN_EXTENSIONS), typeCatalog:new Map(), documentKind:"markdown", activeAdapter:null,
     documentRequestId:0, documentAbortController:null, libraryRefreshId:0,libraryScanId:0,libraryScanTimer:null,libraryScanStartedAt:0,
-    imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")==="true",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],
+    imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")!=="false",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],
     creatingDocument:false,choosingCreateDirectory:false,createDirectory:"",createDirectoryPath:"",createDestinationToken:""
   };
 
