@@ -14,33 +14,33 @@
 
   const sample = `# LumaReader Web
 
-正式網頁版保留桌面版的閱讀與編輯體驗。可直接開啟、拖曳或分享 Markdown 文件，一次最多保留三份。
+Turn a Markdown file into a calm, focused reading space—right in your browser.
 
 > [!NOTE]
-> 文件由瀏覽器直接讀取，不會上傳。網頁版不提供資料夾匯入、下載與 PDF 匯出；需要長期保存或匯出時，請使用桌面版。
+> Documents you open are read directly by your browser and are not uploaded. For folder libraries, downloads, and PDF export, use LumaReader Desktop.
 
-## 閱讀與導覽
+## Read your way
 
-- [x] 直式、橫式、左右翻頁、上下翻頁
-- [x] 文件搜尋、檔案格式篩選、標題大綱
-- [x] 22 組配色、深色模式、11 種介面語言
-- [x] 原文、媒體預覽與圖片檢視器
+- [x] Vertical, horizontal, and paged reading modes
+- [x] Document search, format filters, and a live outline
+- [x] 22 color palettes, dark mode, and 11 interface languages
+- [x] Source view, media preview, and an image viewer
 
-## 編輯功能
+## Edit with context
 
-按下「編輯」會直接開啟即時預覽。左右欄位可以拖曳調整，並保留同步捲動與「顯示最底部」按鈕。
+Select **Edit** to open the source and rendered preview together. Resize the two panes, keep their scrolling synchronized, and use **Show bottom** when an elaborate layout makes the end of the preview difficult to reach.
 
-| 功能 | 網頁版 |
+| Feature | Web edition |
 | --- | --- |
-| 開啟多份文件 | 最多三份，可逐一移除 |
-| 新增 Markdown | 支援 |
-| 儲存修改 | 瀏覽器允許時可直接寫回原檔 |
-| 分享 Markdown | 產生包含目前文件內容的分享連結 |
-| 下載與匯出 | 請使用 LumaReader 桌面版 |
+| Open documents | Up to three at a time |
+| Create Markdown | Supported |
+| Save changes | Writes back when the browser grants permission |
+| Share Markdown | Creates a link containing the current document |
+| Download and export | Available in LumaReader Desktop |
 
-### 進階 Markdown
+### Rich Markdown
 
-數學公式：$E = mc^2$
+Mathematics: $E = mc^2$
 
 \`\`\`js
 const edition = "LumaReader Web";
@@ -49,16 +49,16 @@ const parity = true;
 
 \`\`\`mermaid
 flowchart LR
-  A[開啟文件] --> B[閱讀]
-  B --> C[編輯與即時預覽]
+  A[Open a document] --> B[Read]
+  B --> C[Edit with live preview]
 \`\`\`
 
-也支援註腳[^web]、縮寫與 :sparkles: Emoji。
+Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
 
-![LumaReader 圖示](../icon.png)
+![LumaReader icon](../icon.png)
 
 *[MD]: Markdown
-[^web]: 一般閱讀與編輯不會將文件上傳到伺服器。
+[^web]: Ordinary reading and editing do not upload your document to a server.
 `;
 
   function extensionOf(name) {

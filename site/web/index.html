@@ -12,9 +12,23 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=web-4" />
+  <link rel="stylesheet" href="styles.css?v=web-5" />
 </head>
-<body>
+<body class="booting">
+  <div id="boot-loader" class="boot-loader" role="status" aria-live="polite" aria-label="Loading LumaReader Web">
+    <section class="boot-loader-card">
+      <div class="boot-loader-mark" aria-hidden="true">
+        <img src="assets/app-icon-source.png" alt="" />
+        <span class="boot-loader-orbit"></span>
+      </div>
+      <div>
+        <p class="boot-loader-kicker">LumaReader Web</p>
+        <h1>Preparing your reading space</h1>
+        <p class="boot-loader-copy">Loading the example document…</p>
+      </div>
+      <span class="boot-loader-progress" aria-hidden="true"><i></i></span>
+    </section>
+  </div>
   <div id="app" class="app">
     <aside id="sidebar" class="sidebar">
       <div class="brand-row">
@@ -284,12 +298,12 @@
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=web-4"></script>
+  <script src="web-bridge.js?v=web-5"></script>
   <script src="reader-utils.js?v=web-2"></script>
   <script src="adapters/core.js?v=web-2"></script>
   <script src="adapters/plain-text.js?v=web-2"></script>
   <script src="adapters/index.js?v=web-2"></script>
-  <script src="app.js?v=web-4"></script>
+  <script src="app.js?v=web-5"></script>
   <script src="multiformat-ui.js?v=web-4"></script>
 </body>
 </html>

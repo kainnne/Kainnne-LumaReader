@@ -98,3 +98,14 @@ test("web share links carry the current Markdown into a new reader", async () =>
   assert.equal(document.name, "分享測試.md");
   assert.equal(document.text, "# 給朋友看的內容\n\nHello!\n");
 });
+
+test("the default web example is written in English", async () => {
+  const window = loadWebBridge();
+  await window.lumaWeb.ready;
+  const response = await window.fetch(`/api/file?path=${encodeURIComponent("LumaReader Web.md")}`);
+  const document = await response.json();
+
+  assert.match(document.text, /^# LumaReader Web\n/);
+  assert.match(document.text, /## Read your way/);
+  assert.doesNotMatch(document.text, /[\u3400-\u9fff]/);
+});
