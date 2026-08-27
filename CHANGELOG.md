@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 — 2026-08-27
+
+### Editing
+
+- Offer a “Show bottom” action when the full-screen live preview has more rendered content below, preserving normal block-aware scrolling until the user chooses to align both panes.
+- Show a palette-aware editing notice when another document is selected during editing, with a clear reminder to save or exit editing first.
+
 ## 1.0.0 — 2026-08-23
 
 First public release of Kainnne LumaReader.

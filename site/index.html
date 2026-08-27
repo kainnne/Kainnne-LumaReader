@@ -6,8 +6,8 @@
     <meta name="google" content="notranslate" />
     <meta name="googlebot" content="notranslate" />
     <meta name="theme-color" content="#fff7fb" />
-    <link rel="icon" type="image/png" href="https://kainnne.com/brand/kainnne-mark.png" />
-    <link rel="apple-touch-icon" href="https://kainnne.com/brand/kainnne-mark.png" />
+    <link rel="icon" type="image/png" href="./icon.png" />
+    <link rel="apple-touch-icon" href="./icon.png" />
     <meta
       name="description"
       content="Kainnne LumaReader — a calm, local-first Markdown desktop reader for macOS and Windows."
@@ -16,14 +16,14 @@
     <meta property="og:description" content="A calm, local-first Markdown desktop reader for macOS and Windows." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://lumareader.kainnne.com/" />
-    <meta property="og:image" content="https://kainnne.com/brand/kainnne-mark.png" />
+    <meta property="og:image" content="https://lumareader.kainnne.com/icon.png" />
     <meta property="og:image:width" content="1254" />
     <meta property="og:image:height" content="1254" />
-    <meta property="og:image:alt" content="Kainnne flowing ribbon K brand mark" />
+    <meta property="og:image:alt" content="LumaReader application icon" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Kainnne LumaReader" />
     <meta name="twitter:description" content="A calm, local-first Markdown desktop reader for macOS and Windows." />
-    <meta name="twitter:image" content="https://kainnne.com/brand/kainnne-mark.png" />
+    <meta name="twitter:image" content="https://lumareader.kainnne.com/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -36,68 +36,101 @@
   </head>
   <body>
     <main>
-      <header>
-        <a class="brand" href="https://kainnne.com" aria-label="Kainnne home">Kainnne</a>
-        <a class="site-link shimmer-button" href="https://kainnne.com">
-          <span>Kainnne.com</span><span aria-hidden="true">↗</span>
+      <header class="site-header">
+        <a class="product-home" href="#top" aria-label="LumaReader home">
+          <span class="product-home-mark" aria-hidden="true"></span>
+          <span>LumaReader</span>
         </a>
+        <button class="language-toggle" type="button" aria-pressed="false" aria-label="Show the Traditional Chinese edition">
+          <span class="language-option is-active" data-language-option="en">EN</span>
+          <span class="toggle-track" aria-hidden="true"><span></span></span>
+          <span class="language-option" data-language-option="zh">繁中</span>
+        </button>
       </header>
 
-      <section class="hero" aria-labelledby="page-title">
+      <section class="hero" id="top" aria-labelledby="page-title">
         <img class="app-icon" src="./icon.png" alt="LumaReader application icon" />
-        <p class="type">MARKDOWN DESKTOP READER</p>
+        <p class="type" data-copy="type">MARKDOWN DESKTOP READER</p>
         <h1 id="page-title">LumaReader</h1>
-        <p class="tagline">Your local Markdown library, made for reading.</p>
+        <p class="tagline" data-copy="tagline">Your local Markdown library, made for reading.</p>
         <p class="local-first-callout" data-copy="local-first-callout">
           Local-first by design. Your documents stay on this computer—no account, cloud upload, analytics, or document telemetry.
         </p>
 
         <div class="download-actions" aria-label="Desktop downloads">
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-macOS-universal.dmg" data-download="macOS" aria-describedby="macos-notice">
+          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg" data-download="macOS" aria-describedby="macos-notice">
             <span class="button-copy">
               <small data-copy="macos-action">DOWNLOAD FOR</small>
               <strong>macOS</strong>
             </span>
             <span class="button-status" data-copy="macos-status">Universal</span>
           </a>
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-Windows-x64-Setup.exe" data-download="Windows" aria-describedby="download-note">
+          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-Windows-x64-Setup.exe" data-download="Windows" aria-describedby="windows-notice">
             <span class="button-copy">
-              <small>DOWNLOAD FOR</small>
+              <small data-copy="windows-action">DOWNLOAD FOR</small>
               <strong>Windows</strong>
             </span>
-            <span class="button-status">x64 Setup</span>
+            <span class="button-status" data-copy="windows-status">x64 Setup</span>
           </a>
         </div>
 
         <p class="download-note" id="download-note" data-copy="download-note">
-          Free and open source · Version 1.0.0 · macOS and Windows
+          Free download · Version 1.0.1 · macOS and Windows
         </p>
 
-        <p class="macos-notice" id="macos-notice" data-copy="macos-notice">
-          The Universal macOS build supports Apple silicon and Intel Macs. It is signed with Developer ID and notarized by Apple for direct distribution.
-        </p>
-
-        <p class="windows-notice" data-copy="windows-notice">
-          The Windows build is unsigned. Microsoft Defender SmartScreen may show an “unrecognized app” notice because the publisher is not verified. Download only from this official site or GitHub Releases.
-        </p>
+        <div class="platform-notices" aria-label="Download notes">
+          <p class="platform-notice macos-notice" id="macos-notice">
+            <strong data-copy="macos-notice-title">macOS · Signed and notarized</strong>
+            <span data-copy="macos-notice">Developed for macOS and signed with Developer ID, then notarized by Apple. You can download and open it with confidence.</span>
+          </p>
+          <p class="platform-notice windows-notice" id="windows-notice">
+            <strong data-copy="windows-notice-title">Windows · Unsigned</strong>
+            <span data-copy="windows-notice">Windows only: this build is currently unsigned, so Windows may show SmartScreen or “Unknown publisher” warnings when you download or open it.</span>
+          </p>
+        </div>
 
         <a class="github-button" href="https://github.com/kainnne/Kainnne-LumaReader">
-          <span>View on GitHub</span><span aria-hidden="true">↗</span>
+          <span data-copy="github-link">View on GitHub</span><span aria-hidden="true">↗</span>
         </a>
+      </section>
+
+      <section class="release" aria-labelledby="release-title">
+        <div class="release-heading">
+          <div>
+            <p class="section-label" data-copy="release-label">LATEST UPDATE · VERSION 1.0.1</p>
+            <h2 id="release-title" data-copy="release-title">A smoother finish for editing.</h2>
+          </div>
+          <time datetime="2026-08-27" data-copy="release-date">August 27, 2026</time>
+        </div>
+        <div class="release-grid">
+          <article>
+            <span class="release-number">01</span>
+            <div>
+              <h3 data-copy="release-1-title">Preview the true end when you need it</h3>
+              <p data-copy="release-1-body">Normal synchronized scrolling stays unchanged. When the source reaches the end but the rendered preview still has content below, a “Show bottom” button appears inside the preview.</p>
+            </div>
+          </article>
+          <article>
+            <span class="release-number">02</span>
+            <div>
+              <h3 data-copy="release-2-title">A clear reminder while editing</h3>
+              <p data-copy="release-2-body">Selecting another Markdown file during editing now shows a palette-matched notice that reminds you to save or exit editing first.</p>
+            </div>
+          </article>
+        </div>
+        <div class="release-links">
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.0.1"><span data-copy="release-notes-link">Full v1.0.1 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases"><span data-copy="version-history-link">Previous versions</span><span aria-hidden="true">↗</span></a>
+        </div>
       </section>
 
       <section class="overview" aria-labelledby="overview-title">
         <div class="overview-heading">
-          <p class="section-label">WHAT IT DOES</p>
+          <p class="section-label" data-copy="overview-label">WHAT IT DOES</p>
           <h2 id="overview-title" data-copy="overview-title">A calmer way to live with Markdown.</h2>
           <p class="overview-lead" data-copy="overview-lead">
             LumaReader gives an ordinary folder the feel of a considered reading app: clear hierarchy, comfortable typography, and powerful rendering without an account or a complicated setup.
           </p>
-          <button class="language-toggle" type="button" aria-pressed="false" aria-label="Show the Traditional Chinese edition">
-            <span class="language-option is-active" data-language-option="en">EN</span>
-            <span class="toggle-track" aria-hidden="true"><span></span></span>
-            <span class="language-option" data-language-option="zh">繁中</span>
-          </button>
         </div>
 
         <ol class="feature-list">
@@ -149,6 +182,11 @@
           </li>
         </ol>
       </section>
+
+      <footer>
+        <span data-copy="footer-copy">LumaReader is free and open source.</span>
+        <a href="https://kainnne.com"><span data-copy="footer-link">More from Kainnne</span><span aria-hidden="true">↗</span></a>
+      </footer>
     </main>
   </body>
 </html>

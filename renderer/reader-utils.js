@@ -81,5 +81,17 @@
     return points.at(-1)[1];
   }
 
-  return { normalizeStrongEmphasis, ancestorFolderPaths, markdownTokenLineStarts, mapByAnchors };
+  function isScrollAtEnd(scrollTop, scrollHeight, clientHeight, tolerance = 2) {
+    const maximum = Math.max(0, (Number(scrollHeight) || 0) - (Number(clientHeight) || 0));
+    const offset = Math.max(0, Number(scrollTop) || 0);
+    const threshold = Math.max(0, Number(tolerance) || 0);
+    return maximum === 0 || offset >= maximum - threshold;
+  }
+
+  function shouldOfferPreviewEnd(source, preview, sourceTolerance = 2, previewTolerance = sourceTolerance) {
+    return isScrollAtEnd(source?.scrollTop, source?.scrollHeight, source?.clientHeight, sourceTolerance)
+      && !isScrollAtEnd(preview?.scrollTop, preview?.scrollHeight, preview?.clientHeight, previewTolerance);
+  }
+
+  return { normalizeStrongEmphasis, ancestorFolderPaths, markdownTokenLineStarts, mapByAnchors, isScrollAtEnd, shouldOfferPreviewEnd };
 }));

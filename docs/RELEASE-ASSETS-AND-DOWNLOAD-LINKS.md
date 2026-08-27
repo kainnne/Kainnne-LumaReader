@@ -4,10 +4,10 @@ This file tells future agents how to name, store, and link LumaReader installers
 
 ## Current version
 
-- Current version: `1.0.0`
+- Current version: `1.0.1`
 - Source of truth: `package.json` → `version`
-- Git tag: `v1.0.0`
-- Release title: `Kainnne LumaReader 1.0.0`
+- Git tag: `v1.0.1`
+- Release title: `Kainnne LumaReader 1.0.1`
 
 Before every release, these values must match:
 
@@ -19,14 +19,14 @@ package.json version = Git tag without "v" = installer version = release version
 
 Every public installer filename must include the version, platform, architecture, and package type.
 
-Use these names for version `1.0.0`:
+Use these names for version `1.0.1`:
 
 ```text
-Kainnne-LumaReader-1.0.0-macOS-universal.dmg
-Kainnne-LumaReader-1.0.0-macOS-universal.zip
-Kainnne-LumaReader-1.0.0-Windows-x64-Setup.exe
-Kainnne-LumaReader-1.0.0-Windows-x64-Portable.exe
-Kainnne-LumaReader-1.0.0-SHA256SUMS.txt
+Kainnne-LumaReader-1.0.1-macOS-universal.dmg
+Kainnne-LumaReader-1.0.1-macOS-universal.zip
+Kainnne-LumaReader-1.0.1-Windows-x64-Setup.exe
+Kainnne-LumaReader-1.0.1-Windows-x64-Portable.exe
+Kainnne-LumaReader-1.0.1-SHA256SUMS.txt
 ```
 
 Rules:
@@ -36,7 +36,7 @@ Rules:
 - Use `universal` for the combined Apple silicon and Intel macOS build; use `x64` for Windows.
 - Use `Setup` for the Windows installer and `Portable` for the standalone build.
 - Keep capitalization and separators exactly consistent.
-- When the version changes, replace `1.0.0` everywhere.
+- The build workflows read the version from `package.json`; update the release notes and website links for every new version.
 
 ## Where files belong
 
@@ -116,11 +116,11 @@ A version-specific direct-download link uses this pattern:
 https://github.com/kainnne/Kainnne-LumaReader/releases/download/{TAG}/{FILENAME}
 ```
 
-Examples for version `1.0.0`:
+Examples for version `1.0.1`:
 
 ```text
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-macOS-universal.dmg
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-Windows-x64-Setup.exe
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-Windows-x64-Setup.exe
 ```
 
 Because filenames include the version, the website links must be updated for every release. Do not use an old filename with `/releases/latest/download/`; GitHub requires the filename to exactly match an asset in the latest Release.
@@ -144,7 +144,7 @@ The download buttons are defined in `site/index.html`.
 Example:
 
 ```html
-<a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.0/Kainnne-LumaReader-1.0.0-macOS-universal.dmg">
+<a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg">
   Download for macOS
 </a>
 ```

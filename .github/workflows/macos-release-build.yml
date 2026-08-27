@@ -20,6 +20,10 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Read package version
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Verify release secrets are configured
         env:
           CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
@@ -53,12 +57,14 @@ jobs:
         run: npm run dist:mac
 
       - name: Verify signature, notarization ticket, and architectures
+        env:
+          VERSION: ${{ steps.package-version.outputs.version }}
         run: |
           APP_PATH="dist/mac-universal/Kainnne LumaReader.app"
           EXECUTABLE="$APP_PATH/Contents/MacOS/Kainnne LumaReader"
           test -d "$APP_PATH"
-          test -f "dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg"
-          test -f "dist/Kainnne-LumaReader-1.0.0-macOS-universal.zip"
+          test -f "dist/Kainnne-LumaReader-${VERSION}-macOS-universal.dmg"
+          test -f "dist/Kainnne-LumaReader-${VERSION}-macOS-universal.zip"
           codesign --verify --deep --strict --verbose=4 "$APP_PATH"
           codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -F "Authority=Developer ID Application"
           spctl --assess --type execute --verbose=4 "$APP_PATH"
@@ -73,19 +79,21 @@ jobs:
 
       - name: Record macOS checksums
         working-directory: dist
+        env:
+          VERSION: ${{ steps.package-version.outputs.version }}
         run: |
           shasum -a 256 \
-            Kainnne-LumaReader-1.0.0-macOS-universal.dmg \
-            Kainnne-LumaReader-1.0.0-macOS-universal.zip \
+            Kainnne-LumaReader-${VERSION}-macOS-universal.dmg \
+            Kainnne-LumaReader-${VERSION}-macOS-universal.zip \
             > macos-sha256.txt
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Kainnne-LumaReader-1.0.0-macOS-universal-signed-notarized
+          name: Kainnne-LumaReader-${{ steps.package-version.outputs.version }}-macOS-universal-signed-notarized
           if-no-files-found: error
           retention-days: 14
           path: |
-            dist/Kainnne-LumaReader-1.0.0-macOS-universal.dmg
-            dist/Kainnne-LumaReader-1.0.0-macOS-universal.zip
+            dist/Kainnne-LumaReader-${{ steps.package-version.outputs.version }}-macOS-universal.dmg
+            dist/Kainnne-LumaReader-${{ steps.package-version.outputs.version }}-macOS-universal.zip
             dist/macos-smoke-results.json
             dist/macos-sha256.txt

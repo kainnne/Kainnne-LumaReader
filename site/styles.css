@@ -46,21 +46,30 @@ main {
   padding-bottom: 90px;
 }
 
-header {
+.site-header {
   min-height: 86px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.brand {
-  color: transparent;
-  background: var(--brand-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
+.product-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
   font-family: "Comfortaa", sans-serif;
-  font-size: 1.4rem;
+  font-size: 0.88rem;
   font-weight: 700;
+}
+
+.product-home-mark {
+  width: 14px;
+  height: 14px;
+  border-radius: 5px;
+  background: var(--brand-gradient);
+  box-shadow: 0 5px 13px rgba(111, 71, 135, 0.2);
+  transform: rotate(45deg);
 }
 
 .shimmer-button {
@@ -88,28 +97,6 @@ header {
 .shimmer-button > * { position: relative; z-index: 1; }
 
 .shimmer-button:is(:hover, :active)::before { left: 114%; }
-
-.site-link {
-  min-height: 44px;
-  padding: 0 17px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 999px;
-  background: linear-gradient(120deg, rgba(183, 148, 255, 0.25), rgba(255, 143, 171, 0.26));
-  box-shadow: 0 11px 30px rgba(103, 59, 94, 0.1), inset 0 1px rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(16px);
-  font-size: 0.76rem;
-  font-weight: 800;
-  transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
-}
-
-.site-link:is(:hover, :active) {
-  transform: translateY(-3px);
-  background: linear-gradient(120deg, rgba(183, 148, 255, 0.38), rgba(255, 143, 171, 0.39));
-  box-shadow: 0 15px 35px rgba(103, 59, 94, 0.16), inset 0 1px rgba(255, 255, 255, 0.68);
-}
 
 .hero {
   min-height: 650px;
@@ -252,17 +239,31 @@ h1 {
   font-weight: 700;
 }
 
-.macos-notice,
-.windows-notice {
-  width: min(620px, 100%);
-  margin: 4px 0 0;
-  color: #91838c;
-  font-size: 0.66rem;
+.platform-notices {
+  width: min(650px, 100%);
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  text-align: left;
+}
+
+.platform-notice {
+  margin: 0;
+  padding: 13px 14px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.36);
+  color: #816f7a;
+  font-size: 0.68rem;
   font-weight: 600;
   line-height: 1.55;
 }
 
-.macos-notice { color: #816f7a; }
+.platform-notice strong { color: var(--ink); font-size: 0.7rem; }
+.windows-notice { background: color-mix(in srgb, rgba(110, 168, 255, 0.16), rgba(255, 255, 255, 0.36)); }
 
 .download-note.is-notified { animation: note-pulse 0.42s ease; }
 
@@ -292,6 +293,67 @@ h1 {
   background: rgba(255, 255, 255, 0.62);
   box-shadow: 0 15px 35px rgba(103, 59, 94, 0.15), inset 0 1px rgba(255, 255, 255, 0.66);
 }
+
+.release {
+  padding: clamp(44px, 7vw, 76px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 34px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.3));
+  box-shadow: 0 26px 70px rgba(103, 59, 94, 0.1), inset 0 1px rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+}
+
+.release-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.release-heading h2 { max-width: 620px; }
+.release-heading time { flex: none; padding-bottom: 6px; color: var(--ink-soft); font-size: 0.74rem; font-weight: 700; }
+
+.release-grid {
+  margin-top: 38px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.release-grid article {
+  min-height: 190px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  border: 1px solid var(--glass-line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.release-number { padding-top: 3px; color: #8b7182; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; }
+.release-grid h3 { margin: 0; color: var(--ink); font-family: "Comfortaa", sans-serif; font-size: 1rem; line-height: 1.45; }
+.release-grid p { margin: 10px 0 0; color: var(--ink-soft); font-size: 0.82rem; font-weight: 600; line-height: 1.68; }
+
+.release-links {
+  margin-top: 19px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.release-links a,
+footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.release-links a:is(:hover, :active),
+footer a:is(:hover, :active) { color: #7540a7; }
 
 .overview {
   padding: clamp(52px, 8vw, 100px) 0;
@@ -325,7 +387,7 @@ h2 {
 
 .language-toggle {
   min-height: 42px;
-  margin-top: 27px;
+  margin: 0;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;
@@ -453,20 +515,41 @@ h2 {
 
 body.is-switching [data-copy] { opacity: 0; transform: translateY(3px); }
 
+footer {
+  min-height: 88px;
+  padding-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   main { width: calc(100% - 28px); }
   .hero { min-height: 610px; padding: 66px 4px 76px; }
+  .release { padding: 38px 30px; }
+  .release-grid { grid-template-columns: 1fr; }
   .overview { grid-template-columns: 1fr; gap: 48px; }
   .overview-heading { position: static; }
 }
 
 @media (max-width: 560px) {
-  header { min-height: 74px; }
-  .brand { font-size: 1.2rem; }
-  .site-link { min-height: 40px; padding-inline: 14px; }
+  .site-header { min-height: 74px; }
+  .product-home { font-size: 0.8rem; }
+  .language-toggle { min-height: 38px; padding-inline: 11px; }
   .app-icon { width: 96px; height: 96px; border-radius: 23px; }
   .download-actions { grid-template-columns: 1fr; }
+  .platform-notices { grid-template-columns: 1fr; }
   .download-button { min-height: 84px; border-radius: 23px; }
+  .release { padding: 30px 20px; border-radius: 26px; }
+  .release-heading { align-items: start; flex-direction: column; gap: 12px; }
+  .release-heading time { padding: 0; }
+  .release-grid article { min-height: 0; padding: 19px; }
+  footer { align-items: start; flex-direction: column; gap: 12px; }
   .feature-list li { grid-template-columns: 34px 1fr; gap: 9px; }
   .format-list li { grid-template-columns: 1fr; gap: 2px; }
 }

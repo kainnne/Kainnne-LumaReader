@@ -8,6 +8,8 @@ const {
   ancestorFolderPaths,
   markdownTokenLineStarts,
   mapByAnchors,
+  isScrollAtEnd,
+  shouldOfferPreviewEnd,
 } = require("../renderer/reader-utils.js");
 
 test("normalizes bold labels followed immediately by CJK text", () => {
@@ -50,4 +52,22 @@ test("maps scroll positions piecewise between content anchors", () => {
   assert.equal(mapByAnchors(200, anchors), 300);
   assert.equal(mapByAnchors(500, anchors), 900);
   assert.equal(mapByAnchors(900, anchors), 900);
+});
+
+test("recognizes the visual end of a scroll range within a small layout tolerance", () => {
+  assert.equal(isScrollAtEnd(700, 1000, 300), true);
+  assert.equal(isScrollAtEnd(694.5, 1000, 300, 6), true);
+  assert.equal(isScrollAtEnd(693.5, 1000, 300, 6), false);
+  assert.equal(isScrollAtEnd(0, 240, 300), true);
+});
+
+test("offers an explicit preview-end action only when source is at the end and preview is not", () => {
+  const sourceAtEnd = { scrollTop: 700, scrollHeight: 1000, clientHeight: 300 };
+  const sourceAboveEnd = { scrollTop: 640, scrollHeight: 1000, clientHeight: 300 };
+  const previewAboveEnd = { scrollTop: 900, scrollHeight: 1400, clientHeight: 300 };
+  const previewAtEnd = { scrollTop: 1100, scrollHeight: 1400, clientHeight: 300 };
+
+  assert.equal(shouldOfferPreviewEnd(sourceAtEnd, previewAboveEnd), true);
+  assert.equal(shouldOfferPreviewEnd(sourceAboveEnd, previewAboveEnd), false);
+  assert.equal(shouldOfferPreviewEnd(sourceAtEnd, previewAtEnd), false);
 });

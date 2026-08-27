@@ -32,6 +32,6 @@ This checklist is the evidence gate for public desktop releases. A checkbox must
 ## Publication
 
 - [ ] SHA-256 hashes are generated only from final signed/notarized macOS and final Windows assets.
-- [ ] GitHub Release `v1.0.0` contains the exact documented filenames and checksum file.
+- [ ] The GitHub Release matching `package.json` contains the exact documented filenames and checksum file.
 - [ ] Both public website buttons return successful direct downloads in a signed-out session.
 - [ ] The website is inspected at desktop and mobile widths after GitHub Pages deploys.

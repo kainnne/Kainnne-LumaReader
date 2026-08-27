@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=1.0.0" />
+  <link rel="stylesheet" href="styles.css?v=1.0.1" />
 </head>
 <body>
   <div id="app" class="app">
@@ -160,6 +160,7 @@
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
         <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="off" hidden></textarea>
         <div id="editor-preview-resizer" class="editor-preview-resizer" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" data-i18n-aria="resizeEditorPreview" aria-valuemin="25" aria-valuemax="75" aria-valuenow="50" tabindex="0" hidden><span aria-hidden="true"></span></div>
+        <button id="editor-preview-end" class="editor-preview-end" type="button" data-i18n-aria="showPreviewEnd" aria-label="Show bottom" hidden><span aria-hidden="true">↓</span><span data-i18n="showPreviewEnd">Show bottom</span></button>
       </div>
       <nav id="paged-navigation" class="paged-navigation" aria-label="Page navigation" hidden>
         <button id="page-previous" class="page-turn-button" type="button" aria-label="Previous page">‹</button>
@@ -218,7 +219,7 @@
         </footer>
       </form>
     </dialog>
-    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <div id="toolbar-tooltip" class="toolbar-tooltip" role="tooltip" hidden></div>
 
     <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-copy" hidden>
@@ -241,11 +242,11 @@
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="reader-utils.js?v=1.0.0"></script>
-  <script src="adapters/core.js?v=1.0.0"></script>
-  <script src="adapters/plain-text.js?v=1.0.0"></script>
-  <script src="adapters/index.js?v=1.0.0"></script>
-  <script src="app.js?v=1.0.0"></script>
-  <script src="multiformat-ui.js?v=1.0.0"></script>
+  <script src="reader-utils.js?v=1.0.1"></script>
+  <script src="adapters/core.js?v=1.0.1"></script>
+  <script src="adapters/plain-text.js?v=1.0.1"></script>
+  <script src="adapters/index.js?v=1.0.1"></script>
+  <script src="app.js?v=1.0.1"></script>
+  <script src="multiformat-ui.js?v=1.0.1"></script>
 </body>
 </html>
