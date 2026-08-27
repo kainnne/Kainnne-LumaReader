@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
   setPreferences: (patch) => ipcRenderer.invoke("preferences:set", patch),
   createDocument: (payload) => ipcRenderer.invoke("document:create", payload),
   saveDocument: (payload) => ipcRenderer.invoke("document:save", payload),
+  exportPdf: (payload) => ipcRenderer.invoke("document:export-pdf", payload),
   onSaveRequested: (callback) => {
     const listener = () => callback();
     ipcRenderer.on("editor:save-requested", listener);
@@ -22,6 +23,11 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
     const listener = (_event, change) => callback(change);
     ipcRenderer.on("reader:font-size-requested", listener);
     return () => ipcRenderer.removeListener("reader:font-size-requested", listener);
+  },
+  onExportPdfRequested: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on("document:export-pdf-requested", listener);
+    return () => ipcRenderer.removeListener("document:export-pdf-requested", listener);
   },
   onLibraryChanged: (callback) => {
     const listener = (_event, payload) => callback(payload);

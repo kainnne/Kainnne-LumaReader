@@ -2,7 +2,7 @@
 
 ## Current boundary
 
-Kainnne LumaReader 1.0.1 is the current public desktop release baseline. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS and Windows binaries are published as GitHub Release assets and remain excluded from Git history.
+Kainnne LumaReader 1.0.2 is the current desktop release baseline. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS and Windows binaries are published as GitHub Release assets and remain excluded from Git history.
 
 ## Validated baseline
 
@@ -15,6 +15,7 @@ The following behavior was validated locally on macOS during Phase 1:
 - Local images, media, includes, KaTeX mathematics, Mermaid diagrams, tables, alerts, task lists, and syntax highlighting.
 - Raw Markdown editing for files inside the selected library, with in-place Saved confirmation, explicit exit from editing, `Command+S` / `Ctrl+S`, and external-change conflict protection.
 - Optional live comparison preview while editing, with a draggable split, source-led block-aware synchronized scrolling, and a single visible scrollbar at the far right.
+- Desktop PDF export through the native save dialog, with an A4 print layout that waits for fonts and images and removes application chrome from the exported document.
 - New Markdown creation begins with a native destination-folder picker, followed by an explicit name/destination confirmation, no-overwrite behavior, immediate library refresh, and transition into editing. Choosing a destination outside the current library intentionally makes that folder the new library root.
 - Reader, source, and editor text use the same size preference and `Command` / `Ctrl` with `+` and `-` shortcuts.
 - Matching custom reading-mode, palette, and language menus ordered after Edit, Source, and Media; Paged includes left/right and up/down navigation with visible previous/next controls.

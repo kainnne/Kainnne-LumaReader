@@ -26,6 +26,7 @@ macOS may request permission when a selected folder is inside Desktop, Documents
 - The reading-mode menu provides full-width **Vertical**, **Horizontal**, **Paged · Left / right**, and **Paged · Up / down** layouts.
 - **Source** toggles the raw Markdown view.
 - **Media** opens the media gallery for the current document.
+- **Export PDF** opens the system save dialog and exports the rendered reading view as an A4 PDF. Exit editing before exporting so the saved reading view is used.
 - **Edit** opens the raw Markdown editor. Save in place with **Command+S** on macOS or **Ctrl+S** on Windows, then exit editing when ready.
 - **Preview** in the editing toolbar opens a live rendered comparison. Drag the thin divider to resize the source and preview. Scrolling either pane keeps the rendered preview aligned to the Markdown source; the shared scrollbar is shown at the far right.
 - **A−** and **A+** change reading, source, and editor text size. The keyboard shortcuts are **Command− / Command+** on macOS and **Ctrl− / Ctrl+** on Windows.

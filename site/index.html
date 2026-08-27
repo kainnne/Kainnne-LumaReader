@@ -54,14 +54,14 @@
         <h1 id="page-title">LumaReader</h1>
 
         <div class="download-actions" aria-label="Desktop downloads">
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg" data-download="macOS" aria-describedby="macos-notice">
+          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-macOS-universal.dmg" data-download="macOS" aria-describedby="macos-notice">
             <span class="button-copy">
               <small data-copy="macos-action">DOWNLOAD FOR</small>
               <strong>macOS</strong>
             </span>
             <span class="button-status" data-copy="macos-status">Universal</span>
           </a>
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-Windows-x64-Setup.exe" data-download="Windows" aria-describedby="windows-notice">
+          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-Windows-x64-Setup.exe" data-download="Windows" aria-describedby="windows-notice">
             <span class="button-copy">
               <small data-copy="windows-action">DOWNLOAD FOR</small>
               <strong>Windows</strong>
@@ -71,7 +71,7 @@
         </div>
 
         <p class="download-note" id="download-note" data-copy="download-note">
-          Free download · Version 1.0.1 · macOS and Windows
+          Free download · Version 1.0.2 · macOS and Windows
         </p>
 
         <div class="platform-notices" aria-label="Download notes">
@@ -125,7 +125,7 @@
         <div class="release-heading">
           <div>
             <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
-            <h2 id="release-title" data-copy="release-title">Version 1.0.1 update details</h2>
+            <h2 id="release-title" data-copy="release-title">Version 1.0.2 update details</h2>
           </div>
           <time datetime="2026-08-27" data-copy="release-date">August 27, 2026</time>
         </div>
@@ -133,20 +133,57 @@
           <article>
             <span class="release-number">01</span>
             <div>
-              <h3 data-copy="release-1-title">Preview the true end when you need it</h3>
-              <p data-copy="release-1-body">Normal synchronized scrolling stays unchanged. When the source reaches the end but the rendered preview still has content below, a “Show bottom” button appears inside the preview.</p>
+              <h3 data-copy="release-1-title">Export the reading view as PDF</h3>
+              <p data-copy="release-1-body">A new PDF button in the document toolbar opens a native save dialog and exports the current rendered document.</p>
             </div>
           </article>
           <article>
             <span class="release-number">02</span>
             <div>
-              <h3 data-copy="release-2-title">A clear reminder while editing</h3>
-              <p data-copy="release-2-body">Selecting another Markdown file during editing now shows a palette-matched notice that reminds you to save or exit editing first.</p>
+              <h3 data-copy="release-2-title">A print layout made for complete documents</h3>
+              <p data-copy="release-2-body">The PDF uses an A4 reading layout and waits for fonts and images before export, while keeping code, tables, diagrams, and mathematics readable across pages.</p>
             </div>
           </article>
         </div>
         <div class="release-links">
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.0.1"><span data-copy="release-notes-link">Full v1.0.1 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.0.2"><span data-copy="release-notes-link">Full v1.0.2 release notes</span><span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="reader-demo" id="interface-preview" aria-labelledby="reader-demo-title">
+        <div class="reader-demo-heading">
+          <p class="section-label" data-copy="demo-label">INTERACTIVE PREVIEW</p>
+          <h2 id="reader-demo-title" data-copy="demo-title">A working look at the LumaReader interface</h2>
+        </div>
+        <div class="demo-window">
+          <aside class="demo-sidebar" aria-label="Sample files">
+            <div class="demo-brand"><span></span><strong>LumaReader</strong></div>
+            <div class="demo-search" data-copy="demo-search">Search documents</div>
+            <button class="demo-file is-active" type="button"><span>◇</span><span data-copy="demo-file-1">Product notes.md</span></button>
+            <button class="demo-file" type="button"><span>◇</span><span data-copy="demo-file-2">Reading list.md</span></button>
+            <button class="demo-file" type="button"><span>◇</span><span data-copy="demo-file-3">Ideas.md</span></button>
+          </aside>
+          <div class="demo-reader">
+            <header class="demo-toolbar">
+              <div class="demo-document-name"><strong data-copy="demo-document">Product notes.md</strong><span data-copy="demo-status">Rendered locally</span></div>
+              <div class="demo-actions">
+                <button type="button" class="demo-quiet-button"><span aria-hidden="true">⌘</span><span data-copy="demo-source">Source</span></button>
+                <button type="button" class="demo-quiet-button"><span aria-hidden="true">▧</span><span data-copy="demo-media">Media</span></button>
+                <button id="demo-export-pdf" type="button" class="demo-export-button"><span class="demo-pdf-icon" aria-hidden="true">PDF</span><span data-copy="demo-export">Export PDF</span></button>
+              </div>
+            </header>
+            <article class="demo-paper">
+              <p class="demo-eyebrow" data-copy="demo-paper-label">PRODUCT NOTE</p>
+              <h3 data-copy="demo-paper-title">A calm place for Markdown</h3>
+              <p data-copy="demo-paper-lead">Keep the source simple. Let the reading view handle hierarchy, spacing, code, and supporting details.</p>
+              <div class="demo-callout"><span>✦</span><p data-copy="demo-callout">The online button is a preview. PDF export stays in the desktop app.</p></div>
+              <pre><code>const reader = {
+  storage: "local",
+  format: "markdown",
+  output: "pdf"
+};</code></pre>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -214,5 +251,18 @@
         <a href="https://kainnne.com"><span data-copy="footer-link">More from Kainnne</span><span aria-hidden="true">↗</span></a>
       </footer>
     </main>
+
+    <dialog id="desktop-export-dialog" class="desktop-export-dialog" aria-labelledby="desktop-export-title">
+      <form method="dialog">
+        <button class="dialog-close" value="close" aria-label="Close">×</button>
+        <span class="dialog-icon" aria-hidden="true">PDF</span>
+        <h2 id="desktop-export-title" data-copy="dialog-title">PDF export is available in the desktop app</h2>
+        <p data-copy="dialog-copy">Download LumaReader to export the complete reading layout.</p>
+        <div class="dialog-actions">
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-macOS-universal.dmg"><span data-copy="dialog-mac">Download for macOS</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-Windows-x64-Setup.exe"><span data-copy="dialog-windows">Download for Windows</span></a>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

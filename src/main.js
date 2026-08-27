@@ -212,6 +212,7 @@ function installMenu() {
       submenu: [
         { label: "Change Document Library…", click: () => chooseLibrary() },
         { label: "Save Markdown", accelerator: "CmdOrCtrl+S", click: () => mainWindow?.webContents.send("editor:save-requested") },
+        { label: "Export as PDF…", accelerator: "CmdOrCtrl+Shift+E", click: () => mainWindow?.webContents.send("document:export-pdf-requested") },
         { type: "separator" },
         process.platform === "darwin" ? { role: "close" } : { role: "quit" },
       ],
@@ -239,6 +240,16 @@ function installMenu() {
     },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function pdfFileName(value) {
+  const source = String(value || "LumaReader document");
+  const base = path.basename(source, path.extname(source))
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-")
+    .replace(/[. ]+$/g, "")
+    .trim()
+    .slice(0, 120);
+  return `${base || "LumaReader document"}.pdf`;
 }
 
 function protectNavigation(window, origin) {
@@ -322,6 +333,31 @@ ipcMain.handle("document:save", async (event, payload) => {
       code: error.code || "SAVE_FAILED",
       message: error.message || "Unable to save this document.",
     };
+  }
+});
+ipcMain.handle("document:export-pdf", async (event, payload) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) {
+    return { ok: false, code: "INVALID_SENDER", message: "This PDF export request is not allowed." };
+  }
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: "Export PDF",
+    defaultPath: path.join(app.getPath("downloads"), pdfFileName(payload?.name)),
+    buttonLabel: "Export PDF",
+    filters: [{ name: "PDF document", extensions: ["pdf"] }],
+    properties: ["showOverwriteConfirmation"],
+  });
+  if (result.canceled || !result.filePath) return { ok: false, canceled: true };
+  try {
+    const pdf = await mainWindow.webContents.printToPDF({
+      printBackground: true,
+      preferCSSPageSize: true,
+      pageSize: "A4",
+      margins: { top: 0.5, bottom: 0.55, left: 0.55, right: 0.55 },
+    });
+    await fsp.writeFile(result.filePath, pdf);
+    return { ok: true, filePath: result.filePath };
+  } catch (error) {
+    return { ok: false, code: "PDF_EXPORT_FAILED", message: error.message || "Unable to export this document as PDF." };
   }
 });
 ipcMain.handle("document:create", async (event, payload) => {

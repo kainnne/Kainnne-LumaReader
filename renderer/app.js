@@ -88,9 +88,23 @@
   };
   Object.entries(editingBlockedLabels).forEach(([locale,[title,detail]])=>{editorTranslations[locale].editingBlockedTitle=title;editorTranslations[locale].editingBlockedDetail=detail;});
 
+  const pdfTranslations = {
+    en:{exportPdf:"Export PDF",exportingPdf:"Preparing PDF…",pdfExported:"PDF exported",pdfExportFailed:"Unable to export this document as PDF.",pdfUnavailable:"Open a document before exporting PDF."},
+    "zh-Hant":{exportPdf:"匯出 PDF",exportingPdf:"正在準備 PDF…",pdfExported:"PDF 已匯出",pdfExportFailed:"無法將這份文件匯出為 PDF。",pdfUnavailable:"請先開啟一份文件，再匯出 PDF。"},
+    "zh-Hans":{exportPdf:"导出 PDF",exportingPdf:"正在准备 PDF…",pdfExported:"PDF 已导出",pdfExportFailed:"无法将此文档导出为 PDF。",pdfUnavailable:"请先打开一份文档，再导出 PDF。"},
+    ja:{exportPdf:"PDF に書き出す",exportingPdf:"PDF を準備中…",pdfExported:"PDF を書き出しました",pdfExportFailed:"PDF を書き出せません。",pdfUnavailable:"先に文書を開いてください。"},
+    ko:{exportPdf:"PDF 내보내기",exportingPdf:"PDF 준비 중…",pdfExported:"PDF를 내보냈습니다",pdfExportFailed:"PDF를 내보낼 수 없습니다.",pdfUnavailable:"먼저 문서를 여세요."},
+    es:{exportPdf:"Exportar PDF",exportingPdf:"Preparando PDF…",pdfExported:"PDF exportado",pdfExportFailed:"No se pudo exportar el PDF.",pdfUnavailable:"Abre un documento antes de exportarlo."},
+    fr:{exportPdf:"Exporter en PDF",exportingPdf:"Préparation du PDF…",pdfExported:"PDF exporté",pdfExportFailed:"Impossible d’exporter le PDF.",pdfUnavailable:"Ouvrez un document avant de l’exporter."},
+    de:{exportPdf:"PDF exportieren",exportingPdf:"PDF wird vorbereitet…",pdfExported:"PDF exportiert",pdfExportFailed:"PDF konnte nicht exportiert werden.",pdfUnavailable:"Vor dem Export ein Dokument öffnen."},
+    "pt-BR":{exportPdf:"Exportar PDF",exportingPdf:"Preparando PDF…",pdfExported:"PDF exportado",pdfExportFailed:"Não foi possível exportar o PDF.",pdfUnavailable:"Abra um documento antes de exportar."},
+    ru:{exportPdf:"Экспорт PDF",exportingPdf:"Подготовка PDF…",pdfExported:"PDF экспортирован",pdfExportFailed:"Не удалось экспортировать PDF.",pdfUnavailable:"Сначала откройте документ."},
+    it:{exportPdf:"Esporta PDF",exportingPdf:"Preparazione PDF…",pdfExported:"PDF esportato",pdfExportFailed:"Impossibile esportare il PDF.",pdfUnavailable:"Apri un documento prima di esportare."}
+  };
+
   const toolbarTooltips = {
-    en:{readingMode:"Choose reading mode",source:"View original Markdown",edit:"Edit Markdown source",save:"Save changes · Shortcut: ⌘S / Ctrl+S",saved:"Saved",exitEdit:"Exit editing",discardEdits:"Discard unsaved changes",media:"Open media preview",fontDown:"Smaller text · Shortcut: ⌘− / Ctrl−",fontUp:"Larger text · Shortcut: ⌘+ / Ctrl+",palette:"Choose a palette",language:"Choose interface language",theme:"Light / dark mode"},
-    "zh-Hant":{readingMode:"選擇閱讀模式",source:"檢視 Markdown 原文",edit:"編輯 Markdown 原文",save:"儲存修改 · 快捷鍵：⌘S / Ctrl+S",saved:"已儲存",exitEdit:"退出編輯",discardEdits:"放棄未儲存修改",media:"開啟媒體預覽",fontDown:"縮小文字 · 快捷鍵：⌘− / Ctrl−",fontUp:"放大文字 · 快捷鍵：⌘+ / Ctrl+",palette:"選擇色系",language:"選擇介面語言",theme:"亮色／暗色模式"},
+    en:{readingMode:"Choose reading mode",source:"View original Markdown",edit:"Edit Markdown source",save:"Save changes · Shortcut: ⌘S / Ctrl+S",saved:"Saved",exitEdit:"Exit editing",discardEdits:"Discard unsaved changes",media:"Open media preview",exportPdf:"Export the current document as PDF",fontDown:"Smaller text · Shortcut: ⌘− / Ctrl−",fontUp:"Larger text · Shortcut: ⌘+ / Ctrl+",palette:"Choose a palette",language:"Choose interface language",theme:"Light / dark mode"},
+    "zh-Hant":{readingMode:"選擇閱讀模式",source:"檢視 Markdown 原文",edit:"編輯 Markdown 原文",save:"儲存修改 · 快捷鍵：⌘S / Ctrl+S",saved:"已儲存",exitEdit:"退出編輯",discardEdits:"放棄未儲存修改",media:"開啟媒體預覽",exportPdf:"將目前文件匯出為 PDF",fontDown:"縮小文字 · 快捷鍵：⌘− / Ctrl−",fontUp:"放大文字 · 快捷鍵：⌘+ / Ctrl+",palette:"選擇色系",language:"選擇介面語言",theme:"亮色／暗色模式"},
     "zh-Hans":{readingMode:"选择阅读模式",source:"查看 Markdown 原文",edit:"编辑 Markdown 原文",save:"保存修改 · 快捷键：⌘S / Ctrl+S",saved:"已保存",exitEdit:"退出编辑",discardEdits:"放弃未保存修改",media:"打开媒体预览",fontDown:"缩小文字 · 快捷键：⌘− / Ctrl−",fontUp:"放大文字 · 快捷键：⌘+ / Ctrl+",palette:"选择配色",language:"选择界面语言",theme:"浅色／深色模式"}
   };
 
@@ -151,7 +165,7 @@
 
   document.body.append(readingModeMenuEl,paletteMenuEl,languageMenuEl);
 
-  function t(key) { return createTranslations[state.language]?.[key] || editorTranslations[state.language]?.[key] || libraryTranslations[state.language]?.[key] || translations[state.language]?.[key] || createTranslations.en[key] || editorTranslations.en[key] || libraryTranslations.en[key] || translations.en[key] || key; }
+  function t(key) { return pdfTranslations[state.language]?.[key] || createTranslations[state.language]?.[key] || editorTranslations[state.language]?.[key] || libraryTranslations[state.language]?.[key] || translations[state.language]?.[key] || pdfTranslations.en[key] || createTranslations.en[key] || editorTranslations.en[key] || libraryTranslations.en[key] || translations.en[key] || key; }
   function imageT(key){return imageTranslations[state.language]?.[key]||imageTranslations.en[key]||key;}
   function extensionOf(value){const match=String(value||"").toLowerCase().match(/(\.[a-z0-9]+)(?:[?#].*)?$/);return match?match[1]:"";}
   function isMarkdown(value){return MARKDOWN_EXTENSIONS.includes(extensionOf(value));}
@@ -189,6 +203,29 @@
   function updateToolbarTooltips(){document.querySelectorAll(".reader-actions [data-tooltip-key]").forEach((element)=>{element.dataset.tooltip=toolbarTooltip(element.dataset.tooltipKey);element.removeAttribute("title");element.setAttribute("aria-describedby","toolbar-tooltip");});}
   function showToolbarTooltip(target){const copy=target?.dataset.tooltip;if(!copy)return;toolbarTooltipEl.textContent=copy;toolbarTooltipEl.hidden=false;const rect=target.getBoundingClientRect(),tip=toolbarTooltipEl.getBoundingClientRect();const left=Math.max(8,Math.min(innerWidth-tip.width-8,rect.left+(rect.width-tip.width)/2));toolbarTooltipEl.style.left=`${left}px`;toolbarTooltipEl.style.top=`${Math.max(8,rect.top-tip.height-7)}px`;}
   function hideToolbarTooltip(){toolbarTooltipEl.hidden=true;}
+
+  async function waitForPdfAssets(){
+    if(document.fonts?.ready)await document.fonts.ready.catch(()=>{});
+    const pending=[...contentEl.querySelectorAll("img")].filter((image)=>!image.complete).map((image)=>new Promise((resolve)=>{let settled=false;const done=()=>{if(settled)return;settled=true;resolve();};image.addEventListener("load",done,{once:true});image.addEventListener("error",done,{once:true});setTimeout(done,4000);}));
+    await Promise.all(pending);
+    await new Promise((resolve)=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  }
+
+  async function exportCurrentPdf(){
+    if(!state.currentPath||!window.lumaDesktop?.exportPdf){showToast(t("pdfUnavailable"));return;}
+    if(state.editing){showEditingBlockedNotice();return;}
+    const previousView=state.view;
+    if(previousView!=="rendered")setView("rendered");
+    const button=$("#export-pdf");
+    document.body.classList.add("pdf-exporting");button.disabled=true;showToast(t("exportingPdf"));
+    try{
+      await waitForPdfAssets();
+      const result=await window.lumaDesktop.exportPdf({name:state.currentName||state.currentPath});
+      if(result?.ok)showToast(t("pdfExported"));
+      else if(!result?.canceled)showToast(result?.message||t("pdfExportFailed"));
+    }catch(error){showToast(error.message||t("pdfExportFailed"));}
+    finally{document.body.classList.remove("pdf-exporting");button.disabled=false;if(previousView!=="rendered")setView(previousView);}
+  }
 
   function applyLanguage(language) {
     state.language = translations[language] ? language : "en";
@@ -608,6 +645,9 @@
   editorPreviewResizerEl.addEventListener("dblclick",()=>{applyEditorSplitRatio(.5,{save:true});scheduleLayoutRefresh();scheduleEditorScrollMapRefresh();});
   editorPreviewResizerEl.addEventListener("keydown",(event)=>{const stacked=matchMedia("(max-width: 820px)").matches,backward=stacked?"ArrowUp":"ArrowLeft",forward=stacked?"ArrowDown":"ArrowRight";if(![backward,forward,"Home"].includes(event.key))return;event.preventDefault();applyEditorSplitRatio(event.key==="Home"?.5:state.editorSplitRatio+(event.key===forward?.02:-.02),{save:true});scheduleLayoutRefresh();scheduleEditorScrollMapRefresh();});
   $("#media-view").addEventListener("click",openMediaPanel);$("#media-close").addEventListener("click",closeMediaPanel);scrimEl.addEventListener("click",closeMediaPanel);
+  $("#export-pdf").addEventListener("click",exportCurrentPdf);
+  $("#export-pdf").hidden=!window.lumaDesktop?.exportPdf;
+  window.lumaDesktop?.onExportPdfRequested?.(exportCurrentPdf);
   $("#image-viewer-close").addEventListener("click",closeImageViewer);imageViewerSizeEl.addEventListener("click",()=>setImageViewerActual(!state.imageViewerActual));imageViewerEl.addEventListener("click",(event)=>{if(event.target===imageViewerEl)closeImageViewer();});imageViewerEl.addEventListener("close",()=>setImageViewerActual(false));
   readingModeEl.addEventListener("change",()=>setMode(readingModeEl.value));document.querySelectorAll(".sidebar-tab").forEach((button)=>button.addEventListener("click",()=>switchSidebarPanel(button.dataset.panel)));
   document.querySelectorAll(".reader-actions [data-tooltip-key]").forEach((button)=>{button.addEventListener("pointerenter",()=>showToolbarTooltip(button));button.addEventListener("pointerleave",hideToolbarTooltip);button.addEventListener("focus",()=>showToolbarTooltip(button));button.addEventListener("blur",hideToolbarTooltip);button.addEventListener("click",hideToolbarTooltip);});

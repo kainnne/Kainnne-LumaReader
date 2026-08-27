@@ -6,7 +6,7 @@ on:
       version:
         description: Release version without the v prefix
         required: true
-        default: 1.0.1
+        default: 1.0.2
       target_sha:
         description: Verified source commit to tag
         required: true
