@@ -10,10 +10,10 @@
     <link rel="apple-touch-icon" href="./icon.png" />
     <meta
       name="description"
-      content="Kainnne LumaReader — a local-first Markdown desktop reader with rich rendering, editing, and multiple reading modes."
+      content="Kainnne LumaReader — a polished Markdown reader for desktop and web, with local-first editing, rich rendering, and multiple reading modes."
     />
     <meta property="og:title" content="Kainnne LumaReader" />
-    <meta property="og:description" content="A local-first Markdown desktop reader with rich rendering, editing, and multiple reading modes." />
+    <meta property="og:description" content="A polished Markdown reader for desktop and web, with local-first editing, rich rendering, and multiple reading modes." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://lumareader.kainnne.com/" />
     <meta property="og:image" content="https://lumareader.kainnne.com/icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:image:alt" content="LumaReader application icon" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Kainnne LumaReader" />
-    <meta name="twitter:description" content="A local-first Markdown desktop reader with rich rendering, editing, and multiple reading modes." />
+    <meta name="twitter:description" content="A polished Markdown reader for desktop and web, with local-first editing, rich rendering, and multiple reading modes." />
     <meta name="twitter:image" content="https://lumareader.kainnne.com/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,38 +50,43 @@
 
       <section class="hero" id="top" aria-labelledby="page-title">
         <img class="app-icon" src="./icon.png" alt="LumaReader application icon" />
-        <p class="type" data-copy="type">MARKDOWN DESKTOP READER</p>
+        <p class="type" data-copy="type">MARKDOWN READER · DESKTOP + WEB</p>
         <h1 id="page-title">LumaReader</h1>
 
-        <div class="download-actions" aria-label="Desktop downloads">
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-macOS-universal.dmg" data-download="macOS" aria-describedby="macos-notice">
-            <span class="button-copy">
-              <small data-copy="macos-action">DOWNLOAD FOR</small>
-              <strong>macOS</strong>
-            </span>
-            <span class="button-status" data-copy="macos-status">Universal</span>
-          </a>
-          <a class="download-button shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.1/Kainnne-LumaReader-1.0.1-Windows-x64-Setup.exe" data-download="Windows" aria-describedby="windows-notice">
-            <span class="button-copy">
-              <small data-copy="windows-action">DOWNLOAD FOR</small>
-              <strong>Windows</strong>
-            </span>
-            <span class="button-status" data-copy="windows-status">x64 Setup</span>
-          </a>
-        </div>
+        <div class="download-panel" id="download">
+          <div class="download-actions" aria-label="Desktop downloads">
+            <a class="download-button download-button-macos shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-macOS-universal.dmg" data-download="macOS">
+              <span class="button-copy">
+                <small data-copy="macos-action">DOWNLOAD FOR</small>
+                <strong>macOS</strong>
+              </span>
+              <span class="platform-trust"><span class="trust-mark" aria-hidden="true">✓</span><span data-copy="macos-trust">Developer ID signed · Notarized by Apple</span></span>
+            </a>
+            <a class="download-button download-button-windows shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-Windows-x64-Setup.exe" data-download="Windows">
+              <span class="button-copy">
+                <small data-copy="windows-action">DOWNLOAD FOR</small>
+                <strong>Windows</strong>
+              </span>
+              <span class="platform-trust"><span class="trust-mark trust-mark-warning" aria-hidden="true">!</span><span data-copy="windows-trust">Unsigned · SmartScreen or “Unknown publisher” may appear</span></span>
+            </a>
+          </div>
 
-        <p class="download-note" id="download-note" data-copy="download-note">
-          Free download · Version 1.0.1 · macOS and Windows
-        </p>
+          <div class="download-specs" aria-label="Installer formats">
+            <span data-copy="macos-spec">Universal app · Apple silicon + Intel · DMG</span>
+            <span data-copy="windows-spec">64-bit Windows · Setup installer</span>
+          </div>
 
-        <div class="platform-notices" aria-label="Download notes">
-          <p class="platform-notice macos-notice" id="macos-notice">
-            <strong data-copy="macos-notice-title">macOS · Signed and notarized</strong>
-            <span data-copy="macos-notice">The macOS build is signed with Developer ID and notarized by Apple.</span>
-          </p>
-          <p class="platform-notice windows-notice" id="windows-notice">
-            <strong data-copy="windows-notice-title">Windows · Unsigned</strong>
-            <span data-copy="windows-notice">Windows only: this build is currently unsigned, so Windows may show SmartScreen or “Unknown publisher” warnings when you download or open it.</span>
+          <a class="web-entry shimmer-button" href="./web/">
+            <span class="web-entry-copy">
+              <small data-copy="web-entry-label">USE IN YOUR BROWSER</small>
+              <strong data-copy="web-entry-title">Open LumaReader Web</strong>
+              <span data-copy="web-entry-body">Try the full reading interface with up to three temporary documents.</span>
+            </span>
+            <span class="web-entry-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <p class="download-note" id="download-note" data-copy="download-note">
+            Free desktop download · Version 1.0.2 · macOS and Windows
           </p>
         </div>
 
@@ -125,7 +130,7 @@
         <div class="release-heading">
           <div>
             <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
-            <h2 id="release-title" data-copy="release-title">Version 1.0.1 update details</h2>
+            <h2 id="release-title" data-copy="release-title">Version 1.0.2 update details</h2>
           </div>
           <time datetime="2026-08-27" data-copy="release-date">August 27, 2026</time>
         </div>
@@ -133,20 +138,27 @@
           <article>
             <span class="release-number">01</span>
             <div>
-              <h3 data-copy="release-1-title">Preview the true end when you need it</h3>
-              <p data-copy="release-1-body">Normal synchronized scrolling stays unchanged. When the source reaches the end but the rendered preview still has content below, a “Show bottom” button appears inside the preview.</p>
+              <h3 data-copy="release-1-title">Export the reading view as PDF</h3>
+              <p data-copy="release-1-body">The desktop app can now export the rendered document as an A4 PDF through the native save dialog, including print backgrounds, diagrams, mathematics, code, tables, and images.</p>
             </div>
           </article>
           <article>
             <span class="release-number">02</span>
             <div>
-              <h3 data-copy="release-2-title">A clear reminder while editing</h3>
-              <p data-copy="release-2-body">Selecting another Markdown file during editing now shows a palette-matched notice that reminds you to save or exit editing first.</p>
+              <h3 data-copy="release-2-title">Preview the true end when you need it</h3>
+              <p data-copy="release-2-body">Normal synchronized scrolling stays unchanged. When the source reaches the end but the rendered preview still has content below, a “Show bottom” button appears inside the preview.</p>
+            </div>
+          </article>
+          <article>
+            <span class="release-number">03</span>
+            <div>
+              <h3 data-copy="release-3-title">A clear reminder while editing</h3>
+              <p data-copy="release-3-body">Selecting another Markdown file during editing now shows a palette-matched notice that reminds you to save or exit editing first.</p>
             </div>
           </article>
         </div>
         <div class="release-links">
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.0.1"><span data-copy="release-notes-link">Full v1.0.1 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.0.2"><span data-copy="release-notes-link">Full v1.0.2 release notes</span><span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
@@ -154,15 +166,15 @@
         <div class="web-edition-copy">
           <p class="section-label" data-copy="web-label">WEB EDITION</p>
           <h2 id="web-edition-title" data-copy="web-title">Open Markdown in the browser</h2>
-          <p data-copy="web-copy">The complete LumaReader reading and editing experience now runs in the browser. Folder libraries and PDF export remain desktop-only.</p>
+          <p data-copy="web-copy">The LumaReader reading and editing interface now runs directly in the browser. Documents stay only in the current tab; folder libraries, downloads, and PDF export remain desktop-only.</p>
           <a class="web-launch-button shimmer-button" href="./web/">
             <span data-copy="web-action">Open LumaReader Web</span><span aria-hidden="true">↗</span>
           </a>
         </div>
         <ul class="web-edition-points">
-          <li><strong data-copy="web-point-1-title">Open several documents</strong><span data-copy="web-point-1-body">Keep Markdown and plain-text files together in one browser session.</span></li>
+          <li><strong data-copy="web-point-1-title">Up to three temporary documents</strong><span data-copy="web-point-1-body">Open Markdown or plain-text files, remove them individually, and make room for another document. Reloading or closing the tab clears the session.</span></li>
           <li><strong data-copy="web-point-2-title">Complete reading controls</strong><span data-copy="web-point-2-body">Four reading modes, 22 palettes, 11 languages, outlines, media, source view, and dark mode are included.</span></li>
-          <li><strong data-copy="web-point-3-title">Edit and save</strong><span data-copy="web-point-3-body">Use live preview and synchronized scrolling, then save to the original file when the browser permits it or download a copy.</span></li>
+          <li><strong data-copy="web-point-3-title">Session-based editing</strong><span data-copy="web-point-3-body">Use live preview and synchronized scrolling without uploading documents. The web edition does not provide document or PDF downloads.</span></li>
         </ul>
       </section>
 
@@ -218,8 +230,15 @@
           <li>
             <span class="feature-number">06</span>
             <div>
-              <strong data-copy="feature-6-title">Local documents and interface settings</strong>
-              <p data-copy="feature-6-body">Your library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide.</p>
+              <strong data-copy="feature-6-title">Export the rendered document as PDF</strong>
+              <p data-copy="feature-6-body">The desktop app exports the reading view through the native system save dialog with an A4 print layout, print backgrounds, and support for headings, code, tables, diagrams, mathematics, and images.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-number">07</span>
+            <div>
+              <strong data-copy="feature-7-title">Local documents and interface settings</strong>
+              <p data-copy="feature-7-body">Your desktop library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide.</p>
             </div>
           </li>
         </ol>

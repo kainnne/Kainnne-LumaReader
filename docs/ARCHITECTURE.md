@@ -49,3 +49,11 @@ Markdown output is sanitized with an explicit element and attribute allowlist. M
 ## Persistence
 
 The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, desktop sidebar state, editing-preview visibility, and editor split ratio are stored by the renderer. Users can therefore change the library without losing visual preferences.
+
+## Web edition boundary
+
+The static web edition lives under `site/web/` and reuses the renderer interface without Electron or the loopback document service. `web-bridge.js` loads before the renderer and provides a browser implementation of the small desktop bridge plus the read-only `/api/files`, `/api/file`, and `/api/meta` responses the renderer expects.
+
+Opened and newly created documents are held in a JavaScript `Map` for the lifetime of the tab. The bridge admits at most three non-sample Markdown or plain-text documents. Reloading or closing the tab discards the map; document content is never written to local storage or sent to the static site host. Visual preferences may remain in local storage because they contain no document text.
+
+Users can remove a document from the session through the sidebar after a confirmation dialog. This only deletes the in-memory entry and never deletes the source file. When the File System Access API supplies a writable handle and the browser grants permission, saving may write back to that selected local file. Otherwise, saving updates only the in-memory session. The web edition intentionally omits folder-library access, cloud persistence, document downloads, and PDF export.

@@ -238,6 +238,35 @@ button, input, select { font: inherit; }
 
 .file-button:hover { background: color-mix(in srgb, var(--paper) 72%, transparent); }
 .file-button.active { background: linear-gradient(110deg, var(--accent-soft), color-mix(in srgb, var(--paper) 72%, var(--accent-soft))); color: var(--accent-strong); font-weight: 700; }
+.file-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 2px;
+}
+.file-row .file-button { min-width: 0; }
+.file-remove-button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity .15s ease, color .15s ease, border-color .15s ease, background .15s ease;
+}
+.file-row:hover .file-remove-button,
+.file-row.active .file-remove-button,
+.file-remove-button:focus-visible { opacity: 1; }
+.file-remove-button:hover { border-color: color-mix(in srgb, #bd3d60 36%, var(--line)); background: color-mix(in srgb, #bd3d60 10%, var(--paper)); color: #ad3155; }
+.file-remove-button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 1px; }
 
 .reader-shell {
   grid-column: 2;
@@ -1272,6 +1301,15 @@ body.editor-blocked-hint #cancel-edit { animation: editing-action-hint .52s ease
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.session-capacity {
+  grid-column: 1 / -1;
+  margin-top: -3px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  text-align: center;
+}
+.session-capacity[hidden] { display: none; }
 
 .sidebar-tools input {
   height: var(--control-height);
@@ -2076,10 +2114,91 @@ body.scanning-library .live-dot { background: var(--accent); animation: luma-pul
 .new-markdown-actions .primary-button { border-color: var(--accent-strong); background: var(--accent-strong); color: #fff; }
 .new-markdown-actions .primary-button:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
 
+.session-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 28px 90px rgba(22, 14, 20, .3);
+}
+.session-dialog::backdrop { background: rgba(25, 17, 23, .48); backdrop-filter: blur(5px); }
+.session-dialog form { display: grid; gap: 18px; padding: 24px; }
+.session-dialog-header { display: flex; align-items: flex-start; gap: 13px; }
+.session-dialog-symbol {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 21px;
+  font-weight: 700;
+}
+.session-dialog-header h2 { margin: 0; font-size: 20px; line-height: 1.25; }
+.session-dialog-header p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.session-dialog-files { display: grid; gap: 7px; }
+.session-dialog-files[hidden] { display: none; }
+.session-dialog-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 7px 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 92%, var(--accent-soft));
+}
+.session-dialog-file span { overflow: hidden; font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.session-dialog-file button {
+  min-width: 58px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, #bd3d60 30%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, #bd3d60 8%, var(--paper));
+  color: #ad3155;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.session-dialog-file button:hover { border-color: #ad3155; background: color-mix(in srgb, #bd3d60 14%, var(--paper)); }
+.session-desktop-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.session-desktop-link[hidden] { display: none; }
+.session-desktop-link strong { color: var(--accent-strong); white-space: nowrap; }
+.session-desktop-link:hover { border-color: var(--accent); }
+.session-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.session-dialog-actions .compact-button { min-width: 86px; }
+.session-dialog-actions .primary-button { border-color: #ad3155; background: #ad3155; color: #fff; }
+.session-dialog-actions .primary-button:hover { border-color: #c44a6b; background: #c44a6b; color: #fff; }
+.session-dialog-actions .primary-button[hidden] { display: none; }
+
 @media (max-width: 520px) {
   .new-markdown-dialog { width: calc(100vw - 20px); }
   .new-markdown-dialog form { gap: 15px; padding: 18px; }
   .new-markdown-header p { font-size: 11px; }
+  .session-dialog { width: calc(100vw - 20px); }
+  .session-dialog form { gap: 15px; padding: 18px; }
 }
 
 /* Paged reading can advance across columns or down viewport-sized pages. */

@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=web-2" />
+  <link rel="stylesheet" href="styles.css?v=web-3" />
 </head>
 <body>
   <div id="app" class="app">
@@ -32,6 +32,7 @@
         </button>
         <input id="file-picker" type="file" accept=".md,.markdown,.mkd,.mdx,.txt,.log,image/*,audio/*,video/*" multiple hidden />
         <div id="library-root" class="library-root">Browser session</div>
+        <div id="session-capacity" class="session-capacity" aria-live="polite">0 / 3 · Cleared when this tab closes</div>
       </div>
 
       <div class="sidebar-tools">
@@ -219,6 +220,23 @@
         </footer>
       </form>
     </dialog>
+    <dialog id="session-dialog" class="session-dialog" aria-labelledby="session-dialog-title" aria-describedby="session-dialog-copy">
+      <form method="dialog">
+        <header class="session-dialog-header">
+          <span id="session-dialog-symbol" class="session-dialog-symbol" aria-hidden="true">×</span>
+          <div>
+            <h2 id="session-dialog-title">Remove this document?</h2>
+            <p id="session-dialog-copy">This only removes it from the current browser session. Your original local file is not deleted.</p>
+          </div>
+        </header>
+        <div id="session-dialog-files" class="session-dialog-files" hidden></div>
+        <a id="session-desktop-link" class="session-desktop-link" href="../#download" hidden><span id="session-desktop-copy">Need to manage more documents?</span><strong id="session-desktop-action">Get LumaReader Desktop →</strong></a>
+        <footer class="session-dialog-actions">
+          <button id="session-dialog-cancel" class="compact-button" value="cancel" type="button">Cancel</button>
+          <button id="session-dialog-confirm" class="compact-button primary-button" value="confirm" type="button">Remove</button>
+        </footer>
+      </form>
+    </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <div id="toolbar-tooltip" class="toolbar-tooltip" role="tooltip" hidden></div>
 
@@ -242,12 +260,12 @@
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=web-2"></script>
+  <script src="web-bridge.js?v=web-3"></script>
   <script src="reader-utils.js?v=web-2"></script>
   <script src="adapters/core.js?v=web-2"></script>
   <script src="adapters/plain-text.js?v=web-2"></script>
   <script src="adapters/index.js?v=web-2"></script>
-  <script src="app.js?v=web-2"></script>
+  <script src="app.js?v=web-3"></script>
   <script src="multiformat-ui.js?v=web-2"></script>
 </body>
 </html>

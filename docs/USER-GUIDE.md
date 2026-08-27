@@ -27,8 +27,10 @@ macOS may request permission when a selected folder is inside Desktop, Documents
 - **Source** toggles the raw Markdown view.
 - **Media** opens the media gallery for the current document.
 - **Export PDF** opens the system save dialog and exports the rendered reading view as an A4 PDF. Exit editing before exporting so the saved reading view is used.
-- **Edit** opens the raw Markdown editor. Save in place with **Command+S** on macOS or **Ctrl+S** on Windows, then exit editing when ready.
+- **Edit** opens the raw Markdown editor with the live preview visible by default. Save in place with **Command+S** on macOS or **Ctrl+S** on Windows, then exit editing when ready.
 - **Preview** in the editing toolbar opens a live rendered comparison. Drag the thin divider to resize the source and preview. Scrolling either pane keeps the rendered preview aligned to the Markdown source; the shared scrollbar is shown at the far right.
+- If the source reaches the end before a highly styled preview does, use **Show bottom** in the lower-right of the preview to reveal the remaining rendered content. Normal synchronized scrolling remains unchanged until that button is used.
+- Selecting another file while editing shows a reminder to save or exit editing before switching documents.
 - **A−** and **A+** change reading, source, and editor text size. The keyboard shortcuts are **Command− / Command+** on macOS and **Ctrl− / Ctrl+** on Windows.
 - The palette control contains twenty-two visual palettes. Dream Rose is the first-launch default; later choices are remembered.
 - The language selector changes interface labels only.
@@ -54,3 +56,11 @@ Supported include forms:
 ```
 
 Includes cannot escape the selected library when reading a library document.
+
+## Use LumaReader Web
+
+Open [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/) and select **Open** to choose Markdown or plain-text files. The web edition can hold at most three documents in one tab. Use the **×** beside a document name and confirm removal before opening another file.
+
+The web edition keeps document content only in the current browser tab. Reloading or closing the tab clears every opened or newly created document. Editing, live preview, synchronized scrolling, reading modes, palettes, source view, media, outline, theme, and interface language remain available. A browser that grants a writable file handle may allow **Save** to update the selected original file; otherwise, the edit remains in the current session.
+
+Folder libraries, cloud storage, document downloads, and PDF export are not available in the web edition. Use the macOS or Windows desktop app for those workflows.

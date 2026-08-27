@@ -1,12 +1,14 @@
 # Kainnne LumaReader 1.0.2
 
-Version 1.0.2 adds PDF export to the local-first Markdown reader for macOS and Windows.
+Version 1.0.2 adds PDF export to the local-first Markdown reader for macOS and Windows, alongside the public LumaReader Web edition.
 
 ## What changed
 
 - **Export the reading view as PDF.** A new PDF button sits with the document actions in the toolbar and opens the native system save dialog.
 - **Complete A4 print layout.** The export waits for fonts and images, preserves print backgrounds, and keeps headings, code, tables, diagrams, mathematics, and images readable across pages.
-- **Desktop-only export.** The website includes an interactive preview of the PDF action and directs visitors to the desktop app; documents are not uploaded for online export.
+- **Desktop-only export.** PDF export uses the installed application and never uploads the document for online processing.
+- **LumaReader Web.** The website now provides the reader and editor at `/web/`, with the complete reading controls, editing preview, and a three-document browser-session limit.
+- **Intentional web boundaries.** Web documents remain in the current tab and are cleared on reload or close. Individual files can be removed to free a slot. The web edition does not provide folder libraries, document downloads, cloud persistence, or PDF export.
 
 ## Downloads
 

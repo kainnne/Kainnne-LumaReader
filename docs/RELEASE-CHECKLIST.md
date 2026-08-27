@@ -35,3 +35,4 @@ This checklist is the evidence gate for public desktop releases. A checkbox must
 - [ ] The GitHub Release matching `package.json` contains the exact documented filenames and checksum file.
 - [ ] Both public website buttons return successful direct downloads in a signed-out session.
 - [ ] The website is inspected at desktop and mobile widths after GitHub Pages deploys.
+- [ ] The `/web/` entry opens, enforces the three-document session limit, removes a document only after confirmation, and clears document content after reload.

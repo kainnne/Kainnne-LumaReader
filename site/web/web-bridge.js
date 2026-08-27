@@ -3,6 +3,7 @@
 
   const TEXT_EXTENSIONS = [".md", ".markdown", ".mkd", ".mdx", ".txt", ".log"];
   const MARKDOWN_EXTENSIONS = [".md", ".markdown", ".mkd", ".mdx"];
+  const MAX_SESSION_DOCUMENTS = 3;
   const documents = new Map();
   const assets = new Map();
   const objectUrls = new Set();
@@ -11,10 +12,10 @@
 
   const sample = `# LumaReader Web
 
-正式網頁版保留桌面版的閱讀與編輯體驗。你可以一次開啟多份 Markdown 或純文字文件；檔案只存在目前的瀏覽器工作階段。
+正式網頁版保留桌面版的閱讀與編輯體驗。一次最多開啟三份 Markdown 或純文字文件；檔案只存在目前的瀏覽器工作階段。
 
 > [!NOTE]
-> 網頁版不提供資料夾匯入與 PDF 匯出，其餘閱讀器功能與桌面版一致。
+> 網頁版不提供資料夾匯入、下載與 PDF 匯出。需要長期保存或匯出時，請使用桌面版。
 
 ## 閱讀與導覽
 
@@ -29,10 +30,10 @@
 
 | 功能 | 網頁版 |
 | --- | --- |
-| 開啟多份文件 | 支援 |
+| 開啟多份文件 | 最多三份，關閉分頁後清除 |
 | 新增 Markdown | 支援 |
-| 儲存原檔 | 瀏覽器允許時直接寫回 |
-| 儲存副本 | 其他瀏覽器自動下載 |
+| 儲存修改 | 本次工作階段；瀏覽器允許時可直接寫回原檔 |
+| 下載與匯出 | 請使用 LumaReader 桌面版 |
 
 ### 進階 Markdown
 
@@ -54,7 +55,7 @@ flowchart LR
 ![LumaReader 圖示](../icon.png)
 
 *[MD]: Markdown
-[^web]: 文件內容不會因為閱讀而上傳。
+[^web]: 一般閱讀與編輯不會將文件上傳到伺服器。
 `;
 
   function extensionOf(name) {
@@ -78,8 +79,31 @@ flowchart LR
     return { kind: "log", mime: "text/plain", capabilities: { paged: true, source: true, wrap: true } };
   }
 
+  function sessionDocuments() {
+    return [...documents.values()].filter((document) => !document.sample);
+  }
+
+  function removeSampleDocuments() {
+    for (const [path, document] of documents) {
+      if (document.sample) documents.delete(path);
+    }
+  }
+
+  function sessionInfo() {
+    const files = sessionDocuments();
+    return { count: files.length, limit: MAX_SESSION_DOCUMENTS, files: files.map(fileRecord) };
+  }
+
   function fileRecord(document) {
-    return { path: document.path, name: document.name, extension: document.extension, ext: document.extension, size: document.text.length, modifiedNs: document.modifiedNs };
+    return {
+      path: document.path,
+      name: document.name,
+      extension: document.extension,
+      ext: document.extension,
+      size: new TextEncoder().encode(document.text).length,
+      modifiedNs: document.modifiedNs,
+      webSample: Boolean(document.sample),
+    };
   }
 
   function payload(document) {
@@ -95,12 +119,14 @@ flowchart LR
     };
   }
 
-  function addDocument({ name, text, handle = null, path = "" }) {
+  function addDocument({ name, text, handle = null, path = "", sample = false }) {
     const safeName = String(name || "Untitled.md").replace(/[\\/]/g, "-");
+    if (!sample && sessionDocuments().length >= MAX_SESSION_DOCUMENTS) return null;
+    if (!sample) removeSampleDocuments();
     const finalPath = path || uniquePath(safeName);
     const extension = extensionOf(finalPath);
     if (!TEXT_EXTENSIONS.includes(extension)) return null;
-    const document = { path: finalPath, name: finalPath.split("/").pop(), extension, text: String(text || ""), handle, modifiedNs: String(Date.now() * 1000000) };
+    const document = { path: finalPath, name: finalPath.split("/").pop(), extension, text: String(text || ""), handle, sample, modifiedNs: String(Date.now() * 1000000) };
     documents.set(finalPath, document);
     return document;
   }
@@ -115,17 +141,22 @@ flowchart LR
 
   async function importFiles(files, handles = []) {
     let lastDocument = "";
+    const pendingFiles = [];
+    let added = 0;
     const handleByName = new Map(handles.map((handle) => [handle.name, handle]));
     for (const file of Array.from(files || [])) {
       const extension = extensionOf(file.name);
       if (TEXT_EXTENSIONS.includes(extension)) {
         const document = addDocument({ name: file.name, text: await file.text(), handle: handleByName.get(file.name) || null });
-        if (document) lastDocument = document.path;
+        if (document) {
+          added += 1;
+          lastDocument = document.path;
+        } else pendingFiles.push(file);
       } else if (/^(image|audio|video)\//.test(file.type)) {
         addAsset(file);
       }
     }
-    return lastDocument;
+    return { path: lastDocument, added, pendingFiles, ...sessionInfo() };
   }
 
   async function chooseFiles() {
@@ -139,7 +170,7 @@ flowchart LR
         ],
       });
       const files = await Promise.all(handles.map((handle) => handle.getFile()));
-      return { supported: true, path: await importFiles(files, handles) };
+      return { supported: true, ...await importFiles(files, handles) };
     } catch (error) {
       if (error?.name === "AbortError") return { supported: true, path: "" };
       throw error;
@@ -164,16 +195,6 @@ flowchart LR
     try { return new URL(value, location.href).href; } catch { return ""; }
   }
 
-  function downloadDocument(currentDocument) {
-    const blob = new Blob([currentDocument.text], { type: documentType(currentDocument.extension).mime });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = currentDocument.name;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
   async function saveDocument({ path, text }) {
     const document = documents.get(path);
     if (!document) return { ok: false, message: "Document is not available in this browser session." };
@@ -192,8 +213,15 @@ flowchart LR
         console.warn("Unable to write the original file", error);
       }
     }
-    downloadDocument(document);
-    return { ok: true, modifiedNs: document.modifiedNs, downloaded: true, document: payload(document) };
+    return { ok: true, modifiedNs: document.modifiedNs, sessionOnly: true, document: payload(document) };
+  }
+
+  function removeDocument(path) {
+    const document = documents.get(path);
+    if (!document) return { ok: false, code: "DOCUMENT_NOT_FOUND" };
+    documents.delete(path);
+    const remaining = [...documents.values()];
+    return { ok: true, removedPath: path, nextPath: remaining[0]?.path || "", ...sessionInfo() };
   }
 
   function json(data, status = 200) {
@@ -222,7 +250,7 @@ flowchart LR
         if (!response.ok) return json({ error: `Unable to open source (${response.status})` }, response.status);
         const name = decodeURIComponent(new URL(source).pathname.split("/").pop() || "Remote.md");
         const document = addDocument({ name, text: await response.text() });
-        return document ? json(payload(document)) : json({ error: "Unsupported document type" }, 415);
+        return document ? json(payload(document)) : json({ error: "Browser session document limit reached", code: "SESSION_DOCUMENT_LIMIT" }, 409);
       } catch (error) {
         return json({ error: error?.message || "Unable to open source" }, 400);
       }
@@ -239,9 +267,9 @@ flowchart LR
     const browserLanguage = navigator.language || "en";
     localStorage.setItem("lumareader-language", browserLanguage.startsWith("zh") ? "zh-Hant" : browserLanguage);
   }
-  addDocument({ name: "LumaReader Web.md", text: sample, path: "LumaReader Web.md" });
+  addDocument({ name: "LumaReader Web.md", text: sample, path: "LumaReader Web.md", sample: true });
 
-  window.lumaWeb = { chooseFiles, importFiles, mediaUrl };
+  window.lumaWeb = { chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
   window.lumaDesktop = {
     isDesktop: false,
     platform: "web",
@@ -260,6 +288,7 @@ flowchart LR
       if (!normalized || normalized === ".md") return { ok: false, message: "Enter a document name." };
       if (documents.has(normalized)) return { ok: false, code: "DOCUMENT_ALREADY_EXISTS" };
       const document = addDocument({ name: normalized, text: `# ${normalized.replace(/\.md$/i, "")}\n\n` });
+      if (!document) return { ok: false, code: "SESSION_DOCUMENT_LIMIT", message: "Browser session document limit reached." };
       return { ok: true, root: "Browser session", document: payload(document) };
     },
     saveDocument,

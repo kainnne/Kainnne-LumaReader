@@ -28,6 +28,7 @@ The following behavior was validated locally on macOS during Phase 1:
 - Automated document-service, editing, format, media, and path-boundary tests.
 - macOS production output is a Universal DMG and ZIP. Direct distribution requires Developer ID signing, Hardened Runtime, Apple notarization, a stapled ticket, Gatekeeper acceptance, and a final launch test.
 - Windows production output is an unsigned x64 Setup and Portable executable. A genuine Windows runner builds them and performs runtime/API smoke tests; SmartScreen disclosure remains visible on the website and release notes.
+- The static web edition reuses the reader under `/web/`, keeps at most three user documents in tab memory, provides a confirmed per-document remove action, and clears document state on reload or close. It has no folder library, cloud persistence, document download, or PDF export. See `docs/WEB-EDITION.md` for the maintained boundary and acceptance checks.
 
 ## Repository policy
 
@@ -58,4 +59,4 @@ The four local crash reports from 2026-08-12 23:42–23:45 came from failed `/pr
 
 The application should remain a polished, intuitive, local-first Markdown reader. Interface text may be localized, but Markdown content must never be translated automatically. The selected library remains under user control, and the local service must continue to bind only to the loopback interface.
 
-The future desktop releases should preserve one shared codebase and produce separate macOS and Windows download artifacts from that source. Those artifacts belong in GitHub Releases, not in the Git repository.
+Future desktop releases should preserve one shared codebase and produce separate macOS and Windows download artifacts from that source. Those artifacts belong in GitHub Releases, not in the Git repository. Browser work should continue to reuse the renderer while keeping the intentionally narrower persistence and export boundary documented in `docs/WEB-EDITION.md`.

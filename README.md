@@ -4,7 +4,7 @@ Kainnne LumaReader is a local-first Markdown desktop app focused on calm typogra
 
 ## Project status
 
-Version 1.0.0 is the first public desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build and an unsigned Windows x64 build. Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
+Version 1.0.2 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build and an unsigned Windows x64 build. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
 
 ## Highlights
 
@@ -20,13 +20,22 @@ Version 1.0.0 is the first public desktop release. The same local-first Electron
 - Syntax highlighting, raw source preview, document outline, media preview, and live refresh.
 - In-place raw Markdown editing with a compact toolbar action and native `Command+S` / `Ctrl+S` save. Saving confirms in place; the reader returns only when the user exits editing.
 - Optional live comparison preview while editing, with a draggable split, source-led synchronized scrolling, and one shared scrollbar at the far right.
+- Editing opens with live preview enabled. If the rendered side extends past the source at the end of a highly styled document, a deliberate **Show bottom** action reveals the remaining preview without changing the normal synchronization behavior.
+- Selecting another document during editing displays a palette-matched reminder to save or exit editing first.
 - Create a new `.md` by choosing its destination folder first. LumaReader confirms the name and destination, never overwrites an existing file, refreshes the library immediately, then opens the new document directly in the editor.
+- Export the rendered reading view as an A4 PDF through the native save dialog. Print backgrounds, diagrams, mathematics, code, tables, and images are preserved.
 - Matching custom menus for reading mode, palette, and interface language; Vertical remains the default, while Paged supports both left/right and up/down navigation.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
 - Every palette colors the application frame and accents while keeping the central reading paper neutral white in light mode and neutral charcoal in dark mode for clear text contrast.
 - Eleven interface languages. Document content is never translated automatically.
 - Reader text, Markdown source, and editor text share the same size control through the toolbar or `Command` / `Ctrl` with `+` and `-`.
 - Compact responsive controls and a persistent sidebar toggle.
+
+## Web edition
+
+The web edition reuses the complete reader interface without requiring an account. It can open or create up to three Markdown or plain-text documents in one tab, remove individual documents, and edit with the same preview and synchronized scrolling controls. Document content stays in browser memory and is cleared when the tab reloads or closes; no document upload, cloud persistence, file download, folder library, or PDF export is provided. When the browser grants a writable file handle, saving can update the original local file directly.
+
+Implementation boundaries and manual acceptance checks are documented in [Web Edition](docs/WEB-EDITION.md).
 
 ## Privacy model
 
@@ -55,7 +64,7 @@ Create an unpacked macOS application:
 npm run pack:mac
 ```
 
-See [Development](docs/DEVELOPMENT.md), [Architecture](docs/ARCHITECTURE.md), [User Guide](docs/USER-GUIDE.md), and [Project Handoff](docs/HANDOFF.md) for details.
+See [Development](docs/DEVELOPMENT.md), [Architecture](docs/ARCHITECTURE.md), [Web Edition](docs/WEB-EDITION.md), [User Guide](docs/USER-GUIDE.md), and [Project Handoff](docs/HANDOFF.md) for details.
 
 ## Downloads
 

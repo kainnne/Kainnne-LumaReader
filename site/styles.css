@@ -99,7 +99,7 @@ main {
 .shimmer-button:is(:hover, :active)::before { left: 114%; }
 
 .hero {
-  min-height: 590px;
+  min-height: 760px;
   padding: 68px 24px 76px;
   display: flex;
   flex-direction: column;
@@ -137,23 +137,28 @@ h1 {
   letter-spacing: -0.07em;
 }
 
+.download-panel {
+  width: min(720px, 100%);
+  margin-top: 28px;
+}
+
 .download-actions {
-  width: min(650px, 100%);
-  margin-top: 24px;
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .download-button {
-  min-height: 94px;
-  padding: 17px 20px;
+  min-height: 218px;
+  padding: 25px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: 30px;
   border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 26px;
+  border-radius: 32px;
   background:
     linear-gradient(120deg, rgba(183, 148, 255, 0.54), rgba(255, 143, 171, 0.56) 54%, rgba(94, 234, 212, 0.42));
   box-shadow: 0 17px 42px rgba(126, 70, 115, 0.17), inset 0 1px rgba(255, 255, 255, 0.68);
@@ -162,7 +167,7 @@ h1 {
   transition: transform 0.24s ease, box-shadow 0.24s ease, filter 0.24s ease;
 }
 
-.download-button:nth-child(2) {
+.download-button-windows {
   background:
     linear-gradient(120deg, rgba(110, 168, 255, 0.5), rgba(183, 148, 255, 0.55) 54%, rgba(255, 143, 171, 0.42));
 }
@@ -173,19 +178,7 @@ h1 {
   filter: saturate(1.08);
 }
 
-.download-button.is-pending {
-  cursor: not-allowed;
-  filter: saturate(0.58);
-  opacity: 0.72;
-}
-
-.download-button.is-pending:is(:hover, :active) {
-  transform: none;
-  box-shadow: 0 17px 42px rgba(126, 70, 115, 0.13), inset 0 1px rgba(255, 255, 255, 0.68);
-  filter: saturate(0.58);
-}
-
-.button-copy { display: grid; gap: 3px; }
+.button-copy { display: grid; gap: 7px; }
 
 .button-copy small {
   font-size: 0.58rem;
@@ -195,53 +188,100 @@ h1 {
 
 .button-copy strong {
   font-family: "Comfortaa", sans-serif;
-  font-size: clamp(1.2rem, 2.3vw, 1.55rem);
+  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  letter-spacing: -0.045em;
 }
 
-.button-status {
-  flex: none;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  border-radius: 999px;
+.platform-trust {
+  width: 100%;
+  min-height: 54px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  border-radius: 17px;
   background: rgba(255, 255, 255, 0.26);
-  font-size: 0.64rem;
+  font-size: 0.67rem;
   font-weight: 800;
-  white-space: nowrap;
+  line-height: 1.45;
+}
+
+.trust-mark {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.64);
+  color: #4d705c;
+  font-size: 0.7rem;
+}
+
+.trust-mark-warning { color: #8a543e; }
+
+.download-specs {
+  width: 100%;
+  margin-top: 9px;
+  padding: 0 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  color: #856a7b;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.web-entry {
+  width: 100%;
+  min-height: 92px;
+  margin-top: 17px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 25px;
+  background: linear-gradient(112deg, rgba(255, 255, 255, 0.55), rgba(234, 220, 255, 0.57), rgba(208, 242, 245, 0.5));
+  box-shadow: 0 16px 38px rgba(103, 59, 94, 0.13), inset 0 1px rgba(255, 255, 255, 0.72);
+  color: #402334;
+  text-align: left;
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.web-entry:is(:hover, :active) {
+  transform: translateY(-4px);
+  box-shadow: 0 21px 46px rgba(103, 59, 94, 0.19), inset 0 1px rgba(255, 255, 255, 0.78);
+}
+
+.web-entry-copy { display: grid; gap: 3px; }
+.web-entry-copy small { color: #806475; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.13em; }
+.web-entry-copy strong { font: 700 1.05rem/1.35 "Comfortaa", sans-serif; }
+.web-entry-copy > span { color: #766270; font-size: 0.68rem; font-weight: 700; line-height: 1.5; }
+
+.web-entry-arrow {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.34);
+  font-size: 1rem;
 }
 
 .download-note {
   min-height: 20px;
-  margin: 12px 0 0;
+  margin: 11px 0 0;
   color: #856a7b;
   font-size: 0.72rem;
   font-weight: 700;
 }
-
-.platform-notices {
-  width: min(650px, 100%);
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  text-align: left;
-}
-
-.platform-notice {
-  margin: 0;
-  padding: 13px 14px;
-  display: grid;
-  gap: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 17px;
-  background: rgba(255, 255, 255, 0.36);
-  color: #816f7a;
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.55;
-}
-
-.platform-notice strong { color: var(--ink); font-size: 0.7rem; }
-.windows-notice { background: color-mix(in srgb, rgba(110, 168, 255, 0.16), rgba(255, 255, 255, 0.36)); }
 
 .download-note.is-notified { animation: note-pulse 0.42s ease; }
 
@@ -349,7 +389,7 @@ h1 {
 .release-grid {
   margin-top: 38px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -610,7 +650,7 @@ footer {
 
 @media (max-width: 760px) {
   main { width: calc(100% - 28px); }
-  .hero { min-height: 550px; padding: 58px 4px 66px; }
+  .hero { min-height: 700px; padding: 58px 4px 66px; }
   .solution,
   .release,
   .web-edition { padding: 38px 30px; }
@@ -627,9 +667,11 @@ footer {
   .language-toggle { min-height: 38px; padding-inline: 11px; }
   .app-icon { width: 96px; height: 96px; border-radius: 23px; }
   .download-actions { grid-template-columns: 1fr; }
-  .platform-notices { grid-template-columns: 1fr; }
+  .download-specs { display: none; }
   .hero-links { grid-template-columns: 1fr; }
-  .download-button { min-height: 84px; border-radius: 23px; }
+  .download-button { min-height: 190px; border-radius: 27px; }
+  .web-entry { min-height: 98px; padding: 17px 18px; border-radius: 23px; }
+  .web-entry-copy > span { max-width: 230px; }
   .solution,
   .release,
   .web-edition { padding: 30px 20px; border-radius: 26px; }
