@@ -3,6 +3,7 @@ dist/
 dist-preview/
 release/
 coverage/
+.wrangler/
 .DS_Store
 Thumbs.db
 *.log
