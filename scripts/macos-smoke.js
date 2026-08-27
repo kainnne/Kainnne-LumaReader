@@ -5,8 +5,9 @@ const fs = require("node:fs/promises");
 const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
+const { version: PACKAGE_VERSION } = require("../package.json");
 
-const EXPECTED_VERSION = process.env.EXPECTED_VERSION || "1.0.0";
+const EXPECTED_VERSION = process.env.EXPECTED_VERSION || PACKAGE_VERSION;
 const APP_EXECUTABLE = process.argv[2];
 
 function appBundleForExecutable(executable) {

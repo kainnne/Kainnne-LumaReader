@@ -1,5 +1,5 @@
 param(
-  [string]$ExpectedVersion = "1.0.0"
+  [string]$ExpectedVersion
 )
 
 $ErrorActionPreference = "Stop"
@@ -7,6 +7,11 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $distRoot = Join-Path $projectRoot "dist"
 $library = (Resolve-Path (Join-Path $projectRoot "tests/release-library")).Path
 $results = @()
+
+if ([string]::IsNullOrWhiteSpace($ExpectedVersion)) {
+  $package = Get-Content (Join-Path $projectRoot "package.json") -Raw | ConvertFrom-Json
+  $ExpectedVersion = $package.version
+}
 
 function Stop-LumaReaderProcesses {
   Get-Process -Name "Kainnne LumaReader" -ErrorAction SilentlyContinue |
@@ -85,7 +90,7 @@ $setupSignature = Get-AuthenticodeSignature -FilePath $setup
 if ($setupSignature.Status -ne "NotSigned") {
   throw "The Windows installer must remain unsigned, but Authenticode reported $($setupSignature.Status)."
 }
-$installRoot = Join-Path $env:RUNNER_TEMP "lumareader-1.0.0-install"
+$installRoot = Join-Path $env:RUNNER_TEMP "lumareader-$ExpectedVersion-install"
 $installer = Start-Process -FilePath $setup -ArgumentList @("/S", "/D=$installRoot") -Wait -PassThru
 if ($installer.ExitCode -ne 0) {
   throw "The NSIS installer exited with code $($installer.ExitCode)."
