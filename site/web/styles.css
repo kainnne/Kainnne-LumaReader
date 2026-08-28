@@ -1319,19 +1319,6 @@ body.editor-blocked-hint #cancel-edit { animation: editing-action-hint .52s ease
   margin-bottom: 9px;
 }
 
-.web-home-link {
-  display: inline-grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  color: var(--muted);
-  text-decoration: none;
-  background: color-mix(in srgb, var(--paper) 86%, transparent);
-}
-.web-home-link:hover { color: var(--accent-strong); border-color: var(--accent); }
 .export-pdf-button { display: none !important; }
 .compact-button {
   display: inline-flex;
@@ -1497,6 +1484,8 @@ body.sidebar-collapsed .toast { left: 50%; }
   .reader-actions { padding-right: 2px; }
   .labeled-button span:last-child,
   #palette-name { display: none; }
+  .desktop-download-button span:last-child { display: inline; }
+  .desktop-download-button { padding-inline: 8px; }
   .language-picker select { width: 74px; max-width: 74px; }
   .mode-button { padding-inline: 7px; }
   .content,
@@ -2525,6 +2514,31 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
   border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
   border-radius: 50%;
   background: color-mix(in srgb, var(--paper) 50%, transparent);
+  font-size: 10px;
+}
+
+.desktop-download-button {
+  border-color: var(--accent-strong);
+  background: linear-gradient(125deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-strong) 24%, transparent);
+}
+.desktop-download-button:hover,
+.desktop-download-button:focus-visible {
+  border-color: var(--accent-strong);
+  background: linear-gradient(125deg, color-mix(in srgb, var(--accent) 84%, #fff), var(--accent-strong));
+  color: #fff;
+  transform: translateY(-1px);
+}
+.desktop-download-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255,255,255,.52);
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
   font-size: 10px;
 }
 

@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=web-5" />
+  <link rel="stylesheet" href="styles.css?v=web-6" />
 </head>
 <body class="booting">
   <div id="boot-loader" class="boot-loader" role="status" aria-live="polite" aria-label="Loading LumaReader Web">
@@ -49,7 +49,6 @@
       <div class="brand-row">
         <img class="brand-icon" src="assets/app-icon-source.png" alt="" />
         <strong>LumaReader Web</strong>
-        <a class="web-home-link" href="../" aria-label="回到 LumaReader 官網">↗</a>
       </div>
 
       <div class="library-controls">
@@ -121,6 +120,7 @@
             <span data-i18n="comparisonPreview">Preview</span>
           </label>
           <button id="share-document" class="icon-button labeled-button share-document-button" data-tooltip-key="shareMarkdown" type="button" data-i18n-title="shareMarkdown" title="Share this Markdown" aria-label="Share this Markdown" hidden><span class="share-button-icon" aria-hidden="true">↗</span><span data-i18n="shareMarkdown">Share Markdown</span></button>
+          <a id="desktop-download" class="icon-button labeled-button desktop-download-button" data-tooltip-key="desktopDownload" href="../#download" data-i18n-title="desktopDownload" data-i18n-aria="desktopDownload" title="Download LumaReader Desktop" aria-label="Download LumaReader Desktop"><span class="desktop-download-icon" aria-hidden="true">↗</span><span data-i18n="desktopDownload">Download Desktop</span></a>
           <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
           <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
           <button id="export-pdf" class="icon-button labeled-button export-pdf-button" data-tooltip-key="exportPdf" type="button" data-i18n-title="exportPdf" title="Export PDF" aria-label="Export PDF" hidden><span class="pdf-button-icon" aria-hidden="true">PDF</span><span data-i18n="exportPdf">Export PDF</span></button>
@@ -313,12 +313,12 @@
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=web-6"></script>
+  <script src="web-bridge.js?v=web-7"></script>
   <script src="reader-utils.js?v=web-2"></script>
   <script src="adapters/core.js?v=web-2"></script>
   <script src="adapters/plain-text.js?v=web-2"></script>
   <script src="adapters/index.js?v=web-2"></script>
-  <script src="app.js?v=web-6"></script>
+  <script src="app.js?v=web-7"></script>
   <script src="multiformat-ui.js?v=web-4"></script>
 </body>
 </html>

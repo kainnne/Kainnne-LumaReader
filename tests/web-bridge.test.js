@@ -122,15 +122,17 @@ test("web sharing prefers the temporary Cloudflare short link", async () => {
   assert.equal(shared.url, "https://lumareader-share.chaos60649.workers.dev/s/Ab3xK9pq");
 });
 
-test("the default web example is written in English", async () => {
+test("the default web example promotes Desktop in English and Traditional Chinese", async () => {
   const window = loadWebBridge();
   await window.lumaWeb.ready;
   const response = await window.fetch(`/api/file?path=${encodeURIComponent("LumaReader Web.md")}`);
   const document = await response.json();
 
   assert.match(document.text, /^# LumaReader Web\n/);
-  assert.match(document.text, /## Read your way/);
-  assert.doesNotMatch(document.text, /[\u3400-\u9fff]/);
+  assert.match(document.text, /## Start with LumaReader Desktop \/ 建議先下載 LumaReader 桌面版/);
+  assert.match(document.text, /Download LumaReader Desktop \/ 下載 LumaReader 桌面版/);
+  assert.match(document.text, /## Read your way \/ 用喜歡的方式閱讀/);
+  assert.match(document.text, /不必將文件上傳到伺服器/);
 });
 
 test("sharing the unchanged built-in example reuses the permanent Web address", async () => {
@@ -143,4 +145,17 @@ test("sharing the unchanged built-in example reuses the permanent Web address", 
   assert.equal(shared.ok, true);
   assert.equal(shared.canonical, true);
   assert.equal(shared.url, "https://example.test/web/");
+});
+
+test("the Desktop download action sits beside Share Markdown in the Web toolbar", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../site/web/index.html"), "utf8");
+  const shareIndex = html.indexOf('id="share-document"');
+  const desktopIndex = html.indexOf('id="desktop-download"');
+  const sourceIndex = html.indexOf('id="source-view"');
+
+  assert.ok(shareIndex >= 0);
+  assert.ok(desktopIndex > shareIndex);
+  assert.ok(sourceIndex > desktopIndex);
+  assert.match(html.slice(desktopIndex, sourceIndex), /href="\.\.\/#download"/);
+  assert.doesNotMatch(html.match(/<div class="brand-row">[\s\S]*?<\/div>/)?.[0] || "", /web-home-link/);
 });

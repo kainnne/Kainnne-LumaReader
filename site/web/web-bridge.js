@@ -15,31 +15,52 @@
 
   const sample = `# LumaReader Web
 
-Turn a Markdown file into a calm, focused reading space—right in your browser.
+## Start with LumaReader Desktop / 建議先下載 LumaReader 桌面版
+
+**LumaReader Desktop is the main edition: the complete, local-first way to read, organize, edit, and export your Markdown library.**
+
+**LumaReader 桌面版是我們的主要服務：你可以在本機完整閱讀、整理、編輯並匯出 Markdown 資料庫。**
+
+- **Keep documents local.** Ordinary reading and editing do not require uploading your files to a server.<br>**文件留在本機。** 一般閱讀與編輯不必將文件上傳到伺服器，更適合私密筆記與工作資料。
+- **Open a complete library.** Select an entire Markdown folder and keep its structure, media, and related files together.<br>**完整開啟資料庫。** 可直接選擇整個 Markdown 資料夾，保留原有的目錄、媒體與相關檔案。
+- **Keep the full workflow.** Manage more documents, save locally, and export the rendered result as PDF.<br>**保留完整工作流程。** 管理更多文件、直接儲存到本機，並將排版完成的內容匯出為 PDF。
+- **No account required.** Your library stays under your control on this computer.<br>**不需建立帳號。** 文件資料庫仍由你保管，留在自己的電腦上。
+
+[Download LumaReader Desktop / 下載 LumaReader 桌面版](../#download)
 
 > [!NOTE]
-> Documents you open are read directly by your browser and are not uploaded. For folder libraries, downloads, and PDF export, use LumaReader Desktop.
+> LumaReader Web is a quick way to experience the interface or share a Markdown document. Opened files stay in this browser session unless you deliberately create a temporary share link.
+>
+> LumaReader Web 適合快速體驗介面或分享單一 Markdown。開啟的文件只留在目前的瀏覽器工作階段；只有主動建立暫時分享連結時，才會將分享副本送往雲端。
 
-## Read your way
+## Try the interface / 先體驗介面
 
-- [x] Vertical, horizontal, and paged reading modes
-- [x] Document search, format filters, and a live outline
-- [x] 22 color palettes, dark mode, and 11 interface languages
-- [x] Source view, media preview, and an image viewer
+Turn a Markdown file into a calm, focused reading space—right in your browser.
 
-## Edit with context
+直接在瀏覽器裡，將 Markdown 文件變成舒適、專注的閱讀空間。
+
+## Read your way / 用喜歡的方式閱讀
+
+- [x] Vertical, horizontal, and paged reading modes / 直式、橫式與翻頁閱讀模式
+- [x] Document search, format filters, and a live outline / 文件搜尋、格式篩選與即時目錄
+- [x] 22 color palettes, dark mode, and 11 interface languages / 22 組色系、深色模式與 11 種介面語言
+- [x] Source view, media preview, and an image viewer / 原文檢視、媒體預覽與圖片瀏覽器
+
+## Edit with context / 一邊編輯，一邊確認排版
 
 Select **Edit** to open the source and rendered preview together. Resize the two panes, keep their scrolling synchronized, and use **Show bottom** when an elaborate layout makes the end of the preview difficult to reach.
 
-| Feature | Web edition |
-| --- | --- |
-| Open documents | Up to three at a time |
-| Create Markdown | Supported |
-| Save changes | Writes back when the browser grants permission |
-| Share Markdown | Creates a link containing the current document |
-| Download and export | Available in LumaReader Desktop |
+按下 **Edit** 後，原文與排版預覽會同時開啟。你可以調整兩側寬度、同步捲動；遇到較複雜的版面時，也能用 **Show bottom** 查看預覽最末端。
 
-### Rich Markdown
+| Feature / 功能 | Web edition / 網頁版 |
+| --- | --- |
+| Open documents / 開啟文件 | Up to three at a time / 同時最多三份 |
+| Create Markdown / 建立 Markdown | Supported / 支援 |
+| Save changes / 儲存修改 | Writes back when the browser grants permission / 瀏覽器授權後可寫回原始檔案 |
+| Share Markdown / 分享 Markdown | Creates a temporary share link / 建立暫時分享連結 |
+| Download and export / 下載與匯出 | Available in LumaReader Desktop / 請使用 LumaReader 桌面版 |
+
+### Rich Markdown / 豐富的 Markdown 呈現
 
 Mathematics: $E = mc^2$
 
@@ -56,10 +77,12 @@ flowchart LR
 
 Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
 
+同時支援註腳[^web]、縮寫與 :sparkles: Emoji。
+
 ![LumaReader icon](../icon.png)
 
 *[MD]: Markdown
-[^web]: Ordinary reading and editing do not upload your document to a server.
+[^web]: Ordinary reading and editing do not upload your document to a server. 一般閱讀與編輯不會將文件上傳到伺服器。
 `;
 
   function extensionOf(name) {
