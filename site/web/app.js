@@ -179,6 +179,7 @@
     toolbarVisibility:storedToolbarVisibility(),languagePromptSeen:localStorage.getItem("lumareader-language-prompt-seen")==="true",importingImages:false,
     creatingDocument:false,choosingCreateDirectory:false,createDirectory:"",createDirectoryPath:"",createDestinationToken:"",pendingWebFiles:[],sessionDialogPath:"",sessionDialogMode:"remove"
   };
+  let mermaidLibraryPromise = null;
 
   const $ = (selector) => document.querySelector(selector);
   const treeEl = $("#files-panel"), outlineEl = $("#outline-panel"), contentEl = $("#content"), rawEl = $("#raw-source"), sourceEditorEl = $("#source-editor");
@@ -634,13 +635,43 @@
   function enhanceTextNodes(root,abbreviations){ const terms=Object.keys(abbreviations).sort((a,b)=>b.length-a.length);const abbrPattern=terms.length?terms.map(escapeRegExp).join("|"):"(?!)";const pattern=new RegExp(`(:[a-z0-9_+-]+:|\\^[^\\^\\n]+\\^|~[^~\\n]+~|\\b(?:${abbrPattern})\\b)`,"gi");const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach((node)=>{if(node.parentElement?.closest("pre,code,kbd,a,.katex,.mermaid,abbr,sup,sub"))return;const text=node.nodeValue;if(!pattern.test(text)){pattern.lastIndex=0;return;}pattern.lastIndex=0;const fragment=document.createDocumentFragment();let last=0;for(const match of text.matchAll(pattern)){fragment.append(text.slice(last,match.index));const token=match[0];let element=null;if(/^:[a-z0-9_+-]+:$/i.test(token)&&emojiMap[token.slice(1,-1)])fragment.append(emojiMap[token.slice(1,-1)]);else if(token.startsWith("^")&&token.endsWith("^")){element=document.createElement("sup");element.textContent=token.slice(1,-1);}else if(token.startsWith("~")&&token.endsWith("~")){element=document.createElement("sub");element.textContent=token.slice(1,-1);}else{const key=terms.find((term)=>term.toLowerCase()===token.toLowerCase());if(key){element=document.createElement("abbr");element.title=abbreviations[key];element.textContent=token;}}if(element)fragment.append(element);else if(!emojiMap[token.slice(1,-1)])fragment.append(token);last=match.index+token.length;}fragment.append(text.slice(last));node.replaceWith(fragment);}); }
 
   function enhanceAlerts(root){ root.querySelectorAll("blockquote").forEach((quote)=>{const first=quote.querySelector("p");if(!first)return;const match=/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i.exec(first.textContent);if(!match)return;quote.classList.add("callout",`callout-${match[1].toLowerCase()}`);first.innerHTML=first.innerHTML.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i,`<strong>${match[1]}</strong><br>`);}); }
+  function loadMermaidLibrary(){
+    if(window.mermaid)return Promise.resolve(window.mermaid);
+    if(!mermaidLibraryPromise){
+      mermaidLibraryPromise=new Promise((resolve,reject)=>{
+        const script=document.createElement("script");
+        script.src=new URL("vendor/mermaid/mermaid.min.js?v=11.16.1",document.baseURI).href;
+        script.async=true;
+        script.dataset.lumareaderMermaid="";
+        script.addEventListener("load",()=>window.mermaid?resolve(window.mermaid):reject(new Error("Mermaid did not initialize.")),{once:true});
+        script.addEventListener("error",()=>reject(new Error("Unable to load Mermaid.")),{once:true});
+        document.head.append(script);
+      }).catch((error)=>{mermaidLibraryPromise=null;document.querySelector("script[data-lumareader-mermaid]")?.remove();throw error;});
+    }
+    return mermaidLibraryPromise;
+  }
+  async function renderMermaidDiagrams(root,requestId){
+    const nodes=[...root.querySelectorAll(".mermaid")];
+    if(!nodes.length)return;
+    nodes.forEach((node)=>node.setAttribute("aria-busy","true"));
+    try{
+      const mermaid=await loadMermaidLibrary();
+      if(requestId!==state.documentRequestId)return;
+      const currentNodes=nodes.filter((node)=>node.isConnected&&root.contains(node));
+      if(!currentNodes.length)return;
+      mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:document.documentElement.classList.contains("dark")?"dark":"default",fontFamily:"-apple-system, BlinkMacSystemFont, sans-serif",suppressErrorRendering:true});
+      await mermaid.run({nodes:currentNodes});
+      currentNodes.forEach((node)=>node.removeAttribute("aria-busy"));
+      requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh(captureReadingPosition());});
+    }catch(error){nodes.forEach((node)=>node.removeAttribute("aria-busy"));console.warn("Mermaid",error);}
+  }
   function slugify(text,used){const base=text.trim().toLowerCase().replace(/\s+/g,"-").replace(/[^\p{L}\p{N}_-]/gu,"")||"section";let id=base,index=2;while(used.has(id))id=`${base}-${index++}`;used.add(id);return id;}
   function buildOutline(){ outlineEl.innerHTML="";const headings=[...contentEl.querySelectorAll("h1,h2,h3,h4")];if(!headings.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noOutline");outlineEl.appendChild(p);return;}headings.forEach((heading)=>{const button=document.createElement("button");button.type="button";button.className=`outline-item level-${heading.tagName.slice(1)}`;button.textContent=heading.textContent;button.addEventListener("click",()=>{heading.scrollIntoView({behavior:"smooth",block:"start"});sidebarEl.classList.remove("open");});outlineEl.appendChild(button);});}
 
   async function renderDocument(preserve=false,requestId=state.documentRequestId,markdownText=state.renderText){ if(requestId!==state.documentRequestId)return false;const position=preserve?captureReadingPosition():{ratio:0};closeImageViewer();if(state.activeAdapter)disposeActiveAdapter();state.documentKind="markdown";document.body.dataset.documentKind="markdown";contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");if(!markdownText){contentEl.replaceChildren();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(updatePagination);return true;}const extensions=extractExtensions(markdownText);const protectedMath=protectMath(extensions.source);const normalizedStrong=window.LumaReaderUtils.normalizeStrongEmphasis(protectedMath.source);const parsedText=protectSubscript(normalizedStrong);let html=window.marked.parse(parsedText,{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceDocumentImages(contentEl);enhanceAlerts(contentEl);
     if(window.renderMathInElement){try{window.renderMathInElement(contentEl,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:"ignore",ignoredTags:["script","noscript","style","textarea","pre","code"]});}catch(error){console.warn("KaTeX",error);}}
     enhanceTextNodes(contentEl,extensions.abbreviations);contentEl.querySelectorAll("pre code").forEach((code)=>{if(code.classList.contains("language-mermaid")){const container=document.createElement("div");container.className="mermaid";container.textContent=code.textContent;code.parentElement.replaceWith(container);return;}try{window.hljs?.highlightElement(code);}catch{}const pre=code.closest("pre");if(pre&&!pre.querySelector(".copy-code")){const copy=document.createElement("button");copy.type="button";copy.className="copy-code";copy.textContent=t("copy");copy.addEventListener("click",async()=>{await navigator.clipboard.writeText(code.textContent);copy.textContent=t("copied");setTimeout(()=>copy.textContent=t("copy"),1200);});pre.appendChild(copy);}});
-    if(window.mermaid&&contentEl.querySelector(".mermaid")){try{window.mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:document.documentElement.classList.contains("dark")?"dark":"default",fontFamily:"-apple-system, BlinkMacSystemFont, sans-serif",suppressErrorRendering:true});await window.mermaid.run({nodes:contentEl.querySelectorAll(".mermaid")});}catch(error){console.warn("Mermaid",error);}}
+    void renderMermaidDiagrams(contentEl,requestId);
     if(requestId!==state.documentRequestId)return false;if(editorPreviewIsActive())assignEditorPreviewBlocks(parsedText);else state.editorPreviewBlocks=[];
     rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(preserve)restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();});document.fonts?.ready?.then(()=>{if(requestId!==state.documentRequestId)return;if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh(position);});contentEl.querySelectorAll("img").forEach((image)=>image.addEventListener("load",()=>{if(requestId!==state.documentRequestId)return;if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh(captureReadingPosition());},{once:true}));return true; }
 

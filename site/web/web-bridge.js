@@ -74,7 +74,7 @@ Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
 
 同時支援註腳[^web]、縮寫與 :sparkles: Emoji。
 
-![LumaReader icon](../icon.png)
+![LumaReader icon](../icon-content.webp)
 
 *[MD]: Markdown
 [^web]: Ordinary reading and editing do not upload your document to a server. 一般閱讀與編輯不會將文件上傳到伺服器。
