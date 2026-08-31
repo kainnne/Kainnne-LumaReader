@@ -835,8 +835,12 @@ class LocalReaderService {
       throw new HttpError("The image destination is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
     }
     await fsp.mkdir(assetsCandidate, { recursive: true });
+    // Keep both sides of this post-creation containment check on the same
+    // realpath implementation. Windows can otherwise normalize temp paths
+    // differently between sync and promise-based realpath calls.
+    const realLibraryRoot = await fsp.realpath(this.libraryRoot);
     const assetsDirectory = await fsp.realpath(assetsCandidate);
-    if (!isInside(this.libraryRoot, assetsDirectory)) {
+    if (!isInside(realLibraryRoot, assetsDirectory)) {
       throw new HttpError("The image destination is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
     }
 
