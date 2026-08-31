@@ -839,6 +839,7 @@ class LocalReaderService {
     // realpath implementation. Windows can otherwise normalize temp paths
     // differently between sync and promise-based realpath calls.
     const realLibraryRoot = await fsp.realpath(this.libraryRoot);
+    const realDocumentDirectory = path.dirname(await fsp.realpath(documentPath));
     const assetsDirectory = await fsp.realpath(assetsCandidate);
     if (!isInside(realLibraryRoot, assetsDirectory)) {
       throw new HttpError("The image destination is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
@@ -863,7 +864,7 @@ class LocalReaderService {
     if (!filePath || !fs.existsSync(filePath)) {
       throw new HttpError("Unable to choose a unique image name", 409, "IMAGE_NAME_CONFLICT");
     }
-    const relativePath = path.relative(documentDirectory, filePath).split(path.sep).join("/");
+    const relativePath = path.relative(realDocumentDirectory, filePath).split(path.sep).join("/");
     const markdownPath = relativePath.split("/").map(encodeURIComponent).join("/");
     return { path: relativePath, markdownPath, name: fileName, size: bytes.length };
   }
