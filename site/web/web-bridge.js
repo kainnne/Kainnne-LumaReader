@@ -28,11 +28,6 @@
 
 [Download LumaReader Desktop / 下載 LumaReader 桌面版](../#download)
 
-> [!NOTE]
-> LumaReader Web is a quick way to experience the interface or share a Markdown document. Opened files stay in this browser session unless you deliberately create a temporary share link.
->
-> LumaReader Web 適合快速體驗介面或分享單一 Markdown。開啟的文件只留在目前的瀏覽器工作階段；只有主動建立暫時分享連結時，才會將分享副本送往雲端。
-
 ## Try the interface / 先體驗介面
 
 Turn a Markdown file into a calm, focused reading space—right in your browser.
@@ -373,6 +368,27 @@ Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
     return { ok: true, modifiedNs: document.modifiedNs, sessionOnly: true, document: payload(document) };
   }
 
+  async function importImage({ path, name, bytes }) {
+    const document = documents.get(path);
+    if (!document || !MARKDOWN_EXTENSIONS.includes(document.extension)) return { ok: false, code: "DOCUMENT_NOT_FOUND" };
+    const safeName = String(name || "image.png").replace(/[\\/]/g, "-").replace(/^\.+/, "") || "image.png";
+    const extension = extensionOf(safeName);
+    const mime = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp" }[extension];
+    if (!mime) return { ok: false, code: "UNSUPPORTED_IMAGE" };
+    const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+    if (!data.length || data.byteLength > 32 * 1024 * 1024) return { ok: false, code: "INVALID_IMAGE" };
+    const documentParts = document.path.split("/");
+    const documentName = documentParts.pop() || "document.md";
+    const folder = documentParts.join("/");
+    const assetFolder = `${documentName.replace(/\.[^.]+$/, "")}.assets`;
+    const requestedPath = [folder, assetFolder, safeName].filter(Boolean).join("/");
+    const assetPath = uniquePath(requestedPath);
+    const file = new File([data], assetPath.split("/").pop(), { type: mime });
+    addAsset(file, assetPath);
+    const markdownPath = assetPath.slice(folder ? folder.length + 1 : 0).split("/").map(encodeURIComponent).join("/");
+    return { ok: true, image: { path: assetPath, markdownPath } };
+  }
+
   function removeDocument(path) {
     const document = documents.get(path);
     if (!document) return { ok: false, code: "DOCUMENT_NOT_FOUND" };
@@ -452,6 +468,7 @@ Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
       return { ok: true, root: "LumaReader Web", document: payload(document) };
     },
     saveDocument,
+    importImage,
     onSaveRequested: () => () => {},
     onFontSizeRequested: () => () => {},
     onLibraryChanged: () => () => {},

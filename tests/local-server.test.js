@@ -8,7 +8,7 @@ const path = require("node:path");
 const { Writable } = require("node:stream");
 const { finished } = require("node:stream/promises");
 const { pathToFileURL } = require("node:url");
-const { DOCUMENT_EXTENSIONS, LocalReaderService, markdownFileName, scanDocuments } = require("../src/local-server");
+const { DOCUMENT_EXTENSIONS, LocalReaderService, markdownFileName, imageAssetFileName, scanDocuments } = require("../src/local-server");
 const { BINARY_DOCUMENT_EXTENSIONS, EXPLICITLY_UNSUPPORTED_EXTENSIONS, getDocumentType } = require("../src/document-types");
 
 const repositoryRoot = path.resolve(__dirname, "..");
@@ -127,6 +127,27 @@ test("saves Markdown inside the selected library and returns the refreshed paylo
   assert.equal(after.kind, "markdown");
   assert.equal(after.text, "# After\n\nSaved locally.\n");
   assert.ok(after.modifiedNs >= before.modifiedNs);
+});
+
+test("imports editor images beside the Markdown document with portable unique paths", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "lumareader-image-import-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, "notes"));
+  fs.writeFileSync(path.join(root, "notes", "trip.md"), "# Trip\n");
+  const imageService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
+  const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+
+  assert.equal(imageAssetFileName("My photo.PNG"), "My-photo.png");
+  const first = await imageService.importMarkdownImage("notes/trip.md", "My photo.PNG", bytes);
+  const second = await imageService.importMarkdownImage("notes/trip.md", "My photo.PNG", bytes);
+
+  assert.equal(first.markdownPath, "assets/My-photo.png");
+  assert.equal(second.markdownPath, "assets/My-photo-2.png");
+  assert.deepEqual(fs.readFileSync(path.join(root, "notes", first.path)), bytes);
+  await assert.rejects(
+    () => imageService.importMarkdownImage("notes/trip.md", "payload.svg", bytes),
+    (error) => error.code === "UNSUPPORTED_IMAGE_TYPE",
+  );
 });
 
 test("creates a new Markdown document in the current library folder without overwriting", async (t) => {

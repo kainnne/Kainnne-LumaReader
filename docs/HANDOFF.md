@@ -2,7 +2,7 @@
 
 ## Current boundary
 
-Kainnne LumaReader 1.0.2 is the current desktop release baseline. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS and Windows binaries are published as GitHub Release assets and remain excluded from Git history.
+Kainnne LumaReader 1.1.0 is the current desktop release baseline. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS and Windows binaries are published as GitHub Release assets and remain excluded from Git history.
 
 ## Validated baseline
 
@@ -16,6 +16,9 @@ The following behavior was validated locally on macOS during Phase 1:
 - Raw Markdown editing for files inside the selected library, with in-place Saved confirmation, explicit exit from editing, `Command+S` / `Ctrl+S`, and external-change conflict protection.
 - Optional live comparison preview while editing, with a draggable split, source-led block-aware synchronized scrolling, and a single visible scrollbar at the far right.
 - Desktop PDF export through the native save dialog, with an A4 print layout that waits for fonts and images and removes application chrome from the exported document.
+- A compact Settings gear combines appearance, all 22 palettes, language, and individual toolbar visibility. Source and Media begin hidden, palette selection stays open for comparison, and onboarding explicitly introduces Settings.
+- Markdown authoring tools insert common syntax or portable document-adjacent images without moving the editor viewport. Unsaved edits require confirmation before they are discarded.
+- Packaged macOS and Windows builds register Markdown file associations so the operating system can offer LumaReader in **Open With** without silently replacing the user's current default.
 - New Markdown creation begins with a native destination-folder picker, followed by an explicit name/destination confirmation, no-overwrite behavior, immediate library refresh, and transition into editing. Choosing a destination outside the current library intentionally makes that folder the new library root.
 - Reader, source, and editor text use the same size preference and `Command` / `Ctrl` with `+` and `-` shortcuts.
 - Matching custom reading-mode, palette, and language menus ordered after Edit, Source, and Media; Paged includes left/right and up/down navigation with visible previous/next controls.
@@ -61,4 +64,4 @@ The application should remain a polished, intuitive, local-first Markdown reader
 
 Future desktop releases should preserve one shared codebase and produce separate macOS and Windows download artifacts from that source. Those artifacts belong in GitHub Releases, not in the Git repository. Browser work should continue to reuse the renderer while keeping the intentionally narrower persistence and export boundary documented in `docs/WEB-EDITION.md`.
 
-The account-free Web share service is maintained in `cloudflare/lumareader-share/`. Deploy it with Wrangler after tests pass; its production `SHARE_LINKS` binding points to the `lumareader-share-links` KV namespace. Do not remove the 30-day TTL or the exact reader-origin validation. The unchanged built-in sample must continue to bypass KV, and client-side sharing must retain the self-contained long-link fallback so a Worker outage does not disable sharing.
+The account-free Web share and download-counter service is maintained in `cloudflare/lumareader-share/`. Deploy it with Wrangler after tests pass; its production `SHARE_LINKS` binding points to the `lumareader-share-links` KV namespace and `DOWNLOADS_DB` points to the download-count D1 database. Do not remove the 30-day share TTL or the exact reader-origin validation. The unchanged built-in sample must continue to bypass KV, and client-side sharing must retain the self-contained long-link fallback so a Worker outage does not disable sharing. Download redirects increment macOS or Windows atomically and expose only their combined total to the website; no user identity or document data belongs in that database.

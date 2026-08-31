@@ -95,6 +95,18 @@ $installer = Start-Process -FilePath $setup -ArgumentList @("/S", "/D=$installRo
 if ($installer.ExitCode -ne 0) {
   throw "The NSIS installer exited with code $($installer.ExitCode)."
 }
+$fileClass = "Kainnne LumaReader Markdown"
+foreach ($extension in @("md", "markdown", "mkd", "mdx")) {
+  $openWithPath = "HKCU:\Software\Classes\.$extension\OpenWithProgids"
+  $openWith = Get-ItemProperty -Path $openWithPath -ErrorAction Stop
+  if ($openWith.PSObject.Properties.Name -notcontains $fileClass) {
+    throw "The NSIS installer did not register .$extension for Open With."
+  }
+}
+$openCommand = (Get-Item "HKCU:\Software\Classes\$fileClass\shell\open\command" -ErrorAction Stop).GetValue("")
+if ($openCommand -notmatch "Kainnne LumaReader\.exe" -or $openCommand -notmatch "%1") {
+  throw "The Markdown Open With command is invalid: $openCommand"
+}
 Invoke-LumaReaderSmoke -Executable (Join-Path $installRoot "Kainnne LumaReader.exe") -Label "NSIS installed application"
 
 $portable = (Get-ChildItem (Join-Path $distRoot "*-Windows-x64-Portable.exe") | Select-Object -First 1).FullName

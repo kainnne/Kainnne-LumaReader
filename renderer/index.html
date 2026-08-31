@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=1.0.2" />
+  <link rel="stylesheet" href="styles.css?v=1.1.0" />
 </head>
 <body>
   <div id="app" class="app">
@@ -93,6 +93,41 @@
             <input id="editor-preview-toggle" type="checkbox" />
             <span data-i18n="comparisonPreview">Preview</span>
           </label>
+          <div id="editor-insert-control" class="toolbar-dropdown editor-insert-control" hidden>
+            <button id="editor-insert-toggle" class="toolbar-select-button editor-insert-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="editor-insert-menu">
+              <span class="dropdown-leading-icon" aria-hidden="true">＋</span>
+              <span class="dropdown-label" data-i18n="insertMarkdown">Insert</span>
+              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div id="editor-insert-menu" class="toolbar-menu editor-insert-menu" role="menu" hidden>
+              <section class="editor-insert-group" aria-labelledby="insert-structure-label">
+                <strong id="insert-structure-label" data-i18n="insertStructure">Structure</strong>
+                <div>
+                  <button type="button" data-markdown-command="heading-1">H1</button>
+                  <button type="button" data-markdown-command="heading-2">H2</button>
+                  <button type="button" data-markdown-command="heading-3">H3</button>
+                </div>
+              </section>
+              <section class="editor-insert-group" aria-labelledby="insert-inline-label">
+                <strong id="insert-inline-label" data-i18n="insertInline">Inline</strong>
+                <div>
+                  <button type="button" data-markdown-command="bold"><b>B</b></button>
+                  <button type="button" data-markdown-command="italic"><i>I</i></button>
+                  <button type="button" data-markdown-command="link" data-i18n="insertLink">Link</button>
+                  <button type="button" data-markdown-command="image" data-i18n="insertImage">Image</button>
+                </div>
+              </section>
+              <section class="editor-insert-group" aria-labelledby="insert-block-label">
+                <strong id="insert-block-label" data-i18n="insertBlock">Blocks</strong>
+                <div>
+                  <button type="button" data-markdown-command="quote" data-i18n="insertQuote">Quote</button>
+                  <button type="button" data-markdown-command="code" data-i18n="insertCode">Code</button>
+                  <button type="button" data-markdown-command="task" data-i18n="insertTask">Task</button>
+                  <button type="button" data-markdown-command="table" data-i18n="insertTable">Table</button>
+                </div>
+              </section>
+            </div>
+          </div>
           <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
           <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
           <button id="export-pdf" class="icon-button labeled-button export-pdf-button" data-tooltip-key="exportPdf" type="button" data-i18n-title="exportPdf" title="Export PDF" aria-label="Export PDF" hidden><span class="pdf-button-icon" aria-hidden="true">PDF</span><span data-i18n="exportPdf">Export PDF</span></button>
@@ -111,13 +146,54 @@
             <div id="reading-mode-menu" class="toolbar-menu reading-mode-menu" role="menu" hidden></div>
           </div>
 
-          <div class="toolbar-dropdown palette-control">
-            <button id="palette-toggle" class="toolbar-select-button palette-button" data-tooltip-key="palette" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="palette-menu" data-i18n-aria="palette" aria-label="Color palette">
-              <span id="palette-swatch" class="palette-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span id="palette-name" class="dropdown-label">Dream Rose</span>
-              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
+          <div class="toolbar-dropdown palette-control appearance-control">
+            <button id="palette-toggle" class="icon-button appearance-button" data-tooltip-key="appearance" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="palette-menu" aria-label="Appearance and toolbar settings">
+              <span id="appearance-theme-icon" class="appearance-theme-icon" aria-hidden="true">⚙</span>
+              <span id="palette-name" class="visually-hidden">Dream Rose</span>
             </button>
-            <div id="palette-menu" class="toolbar-menu palette-menu" role="menu" hidden></div>
+            <div id="palette-menu" class="toolbar-menu palette-menu appearance-menu" role="dialog" aria-label="Appearance and toolbar settings" hidden>
+              <header class="appearance-menu-header">
+                <div><strong data-i18n="appearanceSettings">Appearance &amp; toolbar</strong><span data-i18n="appearanceHint">Keep the reader focused on what you use.</span></div>
+                <button id="appearance-close" type="button" aria-label="Close">×</button>
+              </header>
+              <section class="appearance-section">
+                <strong data-i18n="colorMode">Color mode</strong>
+                <div class="appearance-mode-switch" role="group" aria-label="Color mode">
+                  <button id="theme-light" type="button" data-theme-choice="light"><span aria-hidden="true">☀</span><span data-i18n="lightMode">Light mode</span></button>
+                  <button id="theme-dark" type="button" data-theme-choice="dark"><span aria-hidden="true">◐</span><span data-i18n="darkMode">Dark mode</span></button>
+                </div>
+              </section>
+              <section class="appearance-section">
+                <strong data-i18n="palette">Color palette</strong>
+                <div id="palette-options" class="palette-options" role="listbox"></div>
+              </section>
+              <section class="appearance-section">
+                <strong data-i18n="language">Interface language</strong>
+                <select id="settings-language" class="settings-language" aria-label="Interface language">
+                  <option value="en">English</option>
+                  <option value="zh-Hant">繁體中文</option>
+                  <option value="zh-Hans">简体中文</option>
+                  <option value="ja">日本語</option>
+                  <option value="ko">한국어</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="pt-BR">Português (Brasil)</option>
+                  <option value="ru">Русский</option>
+                  <option value="it">Italiano</option>
+                </select>
+              </section>
+              <section class="appearance-section toolbar-visibility-section">
+                <strong data-i18n="toolbarVisibility">Toolbar visibility</strong>
+                <label><span data-i18n="language">Interface language</span><input type="checkbox" data-toolbar-visibility="language" checked /></label>
+                <label><span data-i18n="readingMode">Reading mode</span><input type="checkbox" data-toolbar-visibility="readingMode" checked /></label>
+                <label><span data-i18n="source">Source</span><input type="checkbox" data-toolbar-visibility="source" /></label>
+                <label><span data-i18n="media">Media</span><input type="checkbox" data-toolbar-visibility="media" /></label>
+                <label><span data-i18n="textSize">Text size</span><input type="checkbox" data-toolbar-visibility="textSize" checked /></label>
+                <label><span data-i18n="exportPdf">Export PDF</span><input type="checkbox" data-toolbar-visibility="exportPdf" checked /></label>
+                <button id="toolbar-reset" class="toolbar-reset" type="button" data-i18n="restoreToolbar">Restore default toolbar</button>
+              </section>
+            </div>
           </div>
 
           <div class="toolbar-dropdown language-control">
@@ -145,7 +221,6 @@
           <button id="font-down" class="icon-button text-button" data-tooltip-key="fontDown" type="button" data-i18n-title="smallerText" title="Smaller text" aria-label="Smaller text">A−</button>
           <button id="font-up" class="icon-button text-button" data-tooltip-key="fontUp" type="button" data-i18n-title="largerText" title="Larger text" aria-label="Larger text">A＋</button>
 
-          <button id="theme" class="icon-button" data-tooltip-key="theme" type="button" data-i18n-title="darkMode" title="Dark mode" aria-label="Dark mode">◐</button>
         </div>
       </header>
 
@@ -160,6 +235,11 @@
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
         <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="off" hidden></textarea>
+        <input id="editor-image-picker" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
+        <div id="editor-image-drop" class="editor-image-drop" aria-hidden="true" hidden>
+          <span aria-hidden="true">▧</span>
+          <strong data-i18n="dropImages">Drop images to add them</strong>
+        </div>
         <div id="editor-preview-resizer" class="editor-preview-resizer" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" data-i18n-aria="resizeEditorPreview" aria-valuemin="25" aria-valuemax="75" aria-valuenow="50" tabindex="0" hidden><span aria-hidden="true"></span></div>
         <button id="editor-preview-end" class="editor-preview-end" type="button" data-i18n-aria="showPreviewEnd" aria-label="Show bottom" hidden><span aria-hidden="true">↓</span><span data-i18n="showPreviewEnd">Show bottom</span></button>
       </div>
@@ -168,7 +248,6 @@
         <span id="page-number" class="page-number" aria-live="polite"></span>
         <button id="page-next" class="page-turn-button" type="button" aria-label="Next page">›</button>
       </nav>
-      <div id="live-status" class="live-status" aria-live="polite"><span class="live-dot"></span><span data-i18n="live">Live</span></div>
     </main>
 
     <aside id="media-panel" class="media-panel" aria-hidden="true">
@@ -220,7 +299,32 @@
         </footer>
       </form>
     </dialog>
+    <dialog id="discard-edit-dialog" class="discard-edit-dialog" aria-labelledby="discard-edit-title" aria-describedby="discard-edit-copy">
+      <form method="dialog">
+        <header class="discard-edit-header">
+          <span class="discard-edit-symbol" aria-hidden="true">!</span>
+          <div>
+            <h2 id="discard-edit-title" data-i18n="discardConfirmTitle">Discard unsaved changes?</h2>
+            <p id="discard-edit-copy" data-i18n="discardConfirmCopy">Your edits will be lost. This action cannot be undone.</p>
+          </div>
+        </header>
+        <footer class="discard-edit-actions">
+          <button id="discard-edit-keep" class="compact-button" value="keep" type="button" data-i18n="keepEditing">Keep editing</button>
+          <button id="discard-edit-confirm" class="compact-button danger-button" value="discard" type="button" data-i18n="discardWithoutSaving">Don't save</button>
+        </footer>
+      </form>
+    </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <div id="language-hide-prompt" class="language-hide-prompt" role="dialog" aria-labelledby="language-hide-title" hidden>
+      <div>
+        <strong id="language-hide-title" data-i18n="languageChanged">Language updated</strong>
+        <span data-i18n="languageHideQuestion">Move the language button into Settings?</span>
+      </div>
+      <div>
+        <button id="language-hide-keep" type="button" data-i18n="keepLanguageButton">Keep it</button>
+        <button id="language-hide-confirm" class="primary-button" type="button" data-i18n="hideLanguageButton">Move to Settings</button>
+      </div>
+    </div>
     <div id="toolbar-tooltip" class="toolbar-tooltip" role="tooltip" hidden></div>
 
     <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-copy" hidden>
@@ -241,13 +345,12 @@
   <script src="vendor/marked/marked.umd.js?v=17.0.5"></script>
   <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
-  <script src="vendor/mermaid/mermaid.min.js?v=11.16.1"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="reader-utils.js?v=1.0.2"></script>
-  <script src="adapters/core.js?v=1.0.2"></script>
-  <script src="adapters/plain-text.js?v=1.0.2"></script>
-  <script src="adapters/index.js?v=1.0.2"></script>
-  <script src="app.js?v=1.0.2"></script>
-  <script src="multiformat-ui.js?v=1.0.2"></script>
+  <script src="reader-utils.js?v=1.1.0"></script>
+  <script src="adapters/core.js?v=1.1.0"></script>
+  <script src="adapters/plain-text.js?v=1.1.0"></script>
+  <script src="adapters/index.js?v=1.1.0"></script>
+  <script src="app.js?v=1.1.0"></script>
+  <script src="multiformat-ui.js?v=1.1.0"></script>
 </body>
 </html>

@@ -7,12 +7,16 @@ const MAX_REQUEST_BYTES = 128 * 1024;
 const SHARE_ID_PATTERN = /^[23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ]{8}$/;
 const SHARE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
 const SOCIAL_IMAGE = "https://lumareader.kainnne.com/icon.png";
+const DOWNLOADS = Object.freeze({
+  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.1.0/Kainnne-LumaReader-1.1.0-macOS-universal.dmg",
+  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.1.0/Kainnne-LumaReader-1.1.0-Windows-x64-Setup.exe",
+});
 
 function corsHeaders(origin) {
   if (origin !== ALLOWED_ORIGIN) return {};
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "content-type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -147,15 +151,56 @@ async function openShare(request, env, id) {
   });
 }
 
+async function downloadCounts(request, env) {
+  const origin = request.headers.get("Origin") || "";
+  const cors = corsHeaders(origin);
+  if (origin && origin !== ALLOWED_ORIGIN) return json({ ok: false, error: "Origin is not allowed" }, 403, cors);
+  if (!env.DOWNLOADS_DB) return json({ ok: false, error: "Download counter is unavailable" }, 503, cors);
+  try {
+    const result = await env.DOWNLOADS_DB.prepare(
+      "SELECT platform, count FROM download_counts WHERE platform IN ('macos', 'windows')",
+    ).all();
+    const platforms = { macos: 0, windows: 0 };
+    for (const row of result.results || []) {
+      if (Object.hasOwn(platforms, row.platform)) platforms[row.platform] = Number(row.count) || 0;
+    }
+    return json({ ok: true, total: platforms.macos + platforms.windows, platforms }, 200, {
+      ...cors,
+      "Cache-Control": "no-store",
+    });
+  } catch {
+    return json({ ok: false, error: "Download counter is unavailable" }, 503, cors);
+  }
+}
+
+async function recordDownload(platform, env) {
+  if (!DOWNLOADS[platform] || !env.DOWNLOADS_DB) return new Response("Download counter is unavailable", { status: 503 });
+  try {
+    await env.DOWNLOADS_DB.prepare(
+      `INSERT INTO download_counts (platform, count, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP)
+       ON CONFLICT(platform) DO UPDATE SET count = count + 1, updated_at = CURRENT_TIMESTAMP`,
+    ).bind(platform).run();
+  } catch {
+    return new Response("Download counter is unavailable", { status: 503 });
+  }
+  return new Response(null, {
+    status: 302,
+    headers: { Location: DOWNLOADS[platform], "Cache-Control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === "OPTIONS" && url.pathname === "/api/shares") {
+    if (request.method === "OPTIONS" && ["/api/shares", "/api/downloads"].includes(url.pathname)) {
       const origin = request.headers.get("Origin") || "";
       if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403 });
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
     if (request.method === "POST" && url.pathname === "/api/shares") return createShare(request, env);
+    if (request.method === "GET" && url.pathname === "/api/downloads") return downloadCounts(request, env);
+    if (request.method === "GET" && url.pathname === "/d/macos") return recordDownload("macos", env);
+    if (request.method === "GET" && url.pathname === "/d/windows") return recordDownload("windows", env);
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "lumareader-share" }, 200, { "Cache-Control": "no-store" });
     const match = request.method === "GET" ? /^\/s\/([^/]+)$/.exec(url.pathname) : null;
     if (match) return openShare(request, env, match[1]);

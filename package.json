@@ -1,6 +1,6 @@
 {
   "name": "kainnne-lumareader",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A local-first Markdown and plain-text reader for macOS and Windows.",
   "main": "src/main.js",
   "private": true,
@@ -10,7 +10,7 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check src/open-target.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js",
     "pack:mac": "electron-builder --mac --universal --dir --publish never",
     "pack:mac:unsigned": "electron-builder --mac --universal --dir --publish never -c.mac.identity=- -c.mac.hardenedRuntime=false -c.mac.notarize=false -c.mac.forceCodeSigning=false",
     "dist:mac": "electron-builder --mac dmg zip --universal --publish never",
@@ -33,10 +33,23 @@
         ]
       }
     ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "md",
+          "markdown",
+          "mkd",
+          "mdx"
+        ],
+        "name": "Kainnne LumaReader Markdown",
+        "description": "Markdown document",
+        "role": "Editor"
+      }
+    ],
     "asar": true,
     "electronFuses": {
       "runAsNode": false,
-      "enableCookieEncryption": true,
+      "enableCookieEncryption": false,
       "enableNodeOptionsEnvironmentVariable": false,
       "enableNodeCliInspectArguments": false,
       "enableEmbeddedAsarIntegrityValidation": true,

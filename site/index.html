@@ -55,14 +55,14 @@
 
         <div class="download-panel" id="download">
           <div class="download-actions" aria-label="Desktop downloads">
-            <a class="download-button download-button-macos shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-macOS-universal.dmg" data-download="macOS">
+            <a class="download-button download-button-macos shimmer-button" href="https://lumareader-share.chaos60649.workers.dev/d/macos" data-download="macOS">
               <span class="button-copy">
                 <small data-copy="macos-action">DOWNLOAD FOR</small>
                 <strong>macOS</strong>
               </span>
               <span class="platform-trust"><span class="trust-mark" aria-hidden="true">✓</span><span data-copy="macos-trust">Developer ID signed · Notarized by Apple</span></span>
             </a>
-            <a class="download-button download-button-windows shimmer-button" href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-Windows-x64-Setup.exe" data-download="Windows">
+            <a class="download-button download-button-windows shimmer-button" href="https://lumareader-share.chaos60649.workers.dev/d/windows" data-download="Windows">
               <span class="button-copy">
                 <small data-copy="windows-action">DOWNLOAD FOR</small>
                 <strong>Windows</strong>
@@ -86,8 +86,13 @@
           </a>
 
           <p class="download-note" id="download-note" data-copy="download-note">
-            Free desktop download · Version 1.0.2 · macOS and Windows
+            Free desktop download · Version 1.1.0 · macOS and Windows
           </p>
+          <details class="download-activity" id="download-activity">
+            <summary data-copy="download-activity-summary">Download activity</summary>
+            <p id="download-activity-count" aria-live="polite" data-copy="download-activity-loading">Checking the count…</p>
+            <small data-copy="download-activity-note">macOS and Windows are counted together from version 1.1.0.</small>
+          </details>
         </div>
 
         <div class="hero-links">
@@ -130,35 +135,35 @@
         <div class="release-heading">
           <div>
             <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
-            <h2 id="release-title" data-copy="release-title">Version 1.0.2 update details</h2>
+            <h2 id="release-title" data-copy="release-title">Version 1.1.0 update details</h2>
           </div>
-          <time datetime="2026-08-27" data-copy="release-date">August 27, 2026</time>
+          <time datetime="2026-08-31" data-copy="release-date">August 31, 2026</time>
         </div>
         <div class="release-grid">
           <article>
             <span class="release-number">01</span>
             <div>
-              <h3 data-copy="release-1-title">Export the reading view as PDF</h3>
-              <p data-copy="release-1-body">The desktop app can now export the rendered document as an A4 PDF through the native save dialog, including print backgrounds, diagrams, mathematics, code, tables, and images.</p>
+              <h3 data-copy="release-1-title">Faster Markdown authoring</h3>
+              <p data-copy="release-1-body">Insert headings, links, lists, code, tables, and images without losing the editor position. Dropped images are stored beside the document and appear in preview immediately.</p>
             </div>
           </article>
           <article>
             <span class="release-number">02</span>
             <div>
-              <h3 data-copy="release-2-title">Preview the true end when you need it</h3>
-              <p data-copy="release-2-body">Normal synchronized scrolling stays unchanged. When the source reaches the end but the rendered preview still has content below, a “Show bottom” button appears inside the preview.</p>
+              <h3 data-copy="release-2-title">Settings in one clear place</h3>
+              <p data-copy="release-2-body">The new gear opens appearance, palette, language, and toolbar visibility settings. Palette choices stay open while you compare them, and the first-launch guide now introduces Settings.</p>
             </div>
           </article>
           <article>
             <span class="release-number">03</span>
             <div>
-              <h3 data-copy="release-3-title">A clear reminder while editing</h3>
-              <p data-copy="release-3-body">Selecting another Markdown file during editing now shows a palette-matched notice that reminds you to save or exit editing first.</p>
+              <h3 data-copy="release-3-title">Safer editing, polished PDF, and Open With</h3>
+              <p data-copy="release-3-body">Closing an edited document now asks before discarding changes. PDF pages use a softer layout and discreet footer, while installed apps can open Markdown from the system’s Open With menu.</p>
             </div>
           </article>
         </div>
         <div class="release-links">
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.0.2"><span data-copy="release-notes-link">Full v1.0.2 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.1.0"><span data-copy="release-notes-link">Full v1.1.0 release notes</span><span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
@@ -224,7 +229,7 @@
             <span class="feature-number">05</span>
             <div>
               <strong data-copy="feature-5-title">Create, edit, preview, and save Markdown</strong>
-              <p data-copy="feature-5-body">Choose any destination folder for a new .md, confirm its name and location, and start writing immediately. Edit beside an optional live preview with a draggable split and synchronized scrolling; resize source and editor text with Command/Ctrl + or −, then save without leaving the editor.</p>
+              <p data-copy="feature-5-body">Choose any destination folder for a new .md, then write beside a live preview. Insert common Markdown structures from the editor menu or drop in an image; LumaReader keeps your editing position stable and asks before discarding unsaved changes.</p>
             </div>
           </li>
           <li>
@@ -238,7 +243,14 @@
             <span class="feature-number">07</span>
             <div>
               <strong data-copy="feature-7-title">Local documents and interface settings</strong>
-              <p data-copy="feature-7-body">Your desktop library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide.</p>
+              <p data-copy="feature-7-body">The Settings gear brings together 11 interface languages, light and dark modes, 22 palettes, and controls for hiding individual toolbar features. Preferences stay saved, and the first-launch guide shows where to adjust them.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-number">08</span>
+            <div>
+              <strong data-copy="feature-8-title">Open Markdown from macOS or Windows</strong>
+              <p data-copy="feature-8-body">The installed app appears in the system Open With list for .md, .markdown, .mkd, and .mdx files. You can also choose LumaReader as the default Markdown app through Finder or Windows Settings.</p>
             </div>
           </li>
         </ol>
@@ -246,6 +258,7 @@
 
       <footer>
         <span data-copy="footer-copy">LumaReader is free and open source.</span>
+        <a href="mailto:ryanzhu@kainnne.com"><span data-copy="footer-contact">Contact the author</span><span aria-hidden="true">↗</span></a>
         <a href="https://kainnne.com"><span data-copy="footer-link">More from Kainnne</span><span aria-hidden="true">↗</span></a>
       </footer>
     </main>

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
   setPreferences: (patch) => ipcRenderer.invoke("preferences:set", patch),
   createDocument: (payload) => ipcRenderer.invoke("document:create", payload),
   saveDocument: (payload) => ipcRenderer.invoke("document:save", payload),
+  importImage: (payload) => ipcRenderer.invoke("document:import-image", payload),
   exportPdf: (payload) => ipcRenderer.invoke("document:export-pdf", payload),
   onSaveRequested: (callback) => {
     const listener = () => callback();

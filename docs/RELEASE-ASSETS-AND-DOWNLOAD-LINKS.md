@@ -4,10 +4,10 @@ This file tells future agents how to name, store, and link LumaReader installers
 
 ## Current version
 
-- Current version: `1.0.2`
+- Current version: `1.1.0`
 - Source of truth: `package.json` → `version`
-- Git tag: `v1.0.2`
-- Release title: `Kainnne LumaReader 1.0.2`
+- Git tag: `v1.1.0`
+- Release title: `Kainnne LumaReader 1.1.0`
 
 Before every release, these values must match:
 
@@ -19,14 +19,14 @@ package.json version = Git tag without "v" = installer version = release version
 
 Every public installer filename must include the version, platform, architecture, and package type.
 
-Use these names for version `1.0.2`:
+Use these names for version `1.1.0`:
 
 ```text
-Kainnne-LumaReader-1.0.2-macOS-universal.dmg
-Kainnne-LumaReader-1.0.2-macOS-universal.zip
-Kainnne-LumaReader-1.0.2-Windows-x64-Setup.exe
-Kainnne-LumaReader-1.0.2-Windows-x64-Portable.exe
-Kainnne-LumaReader-1.0.2-SHA256SUMS.txt
+Kainnne-LumaReader-1.1.0-macOS-universal.dmg
+Kainnne-LumaReader-1.1.0-macOS-universal.zip
+Kainnne-LumaReader-1.1.0-Windows-x64-Setup.exe
+Kainnne-LumaReader-1.1.0-Windows-x64-Portable.exe
+Kainnne-LumaReader-1.1.0-SHA256SUMS.txt
 ```
 
 Rules:
@@ -116,11 +116,11 @@ A version-specific direct-download link uses this pattern:
 https://github.com/kainnne/Kainnne-LumaReader/releases/download/{TAG}/{FILENAME}
 ```
 
-Examples for version `1.0.2`:
+Examples for version `1.1.0`:
 
 ```text
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-macOS-universal.dmg
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-Windows-x64-Setup.exe
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.1.0/Kainnne-LumaReader-1.1.0-macOS-universal.dmg
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.1.0/Kainnne-LumaReader-1.1.0-Windows-x64-Setup.exe
 ```
 
 Because filenames include the version, the website links must be updated for every release. Do not use an old filename with `/releases/latest/download/`; GitHub requires the filename to exactly match an asset in the latest Release.
@@ -144,10 +144,12 @@ The download buttons are defined in `site/index.html`.
 Example:
 
 ```html
-<a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.0.2/Kainnne-LumaReader-1.0.2-macOS-universal.dmg">
+<a href="https://lumareader-share.chaos60649.workers.dev/d/macos">
   Download for macOS
 </a>
 ```
+
+The public website deliberately routes primary macOS and Windows downloads through the existing Cloudflare Worker. Each route performs one atomic D1 increment and then redirects to the exact versioned GitHub Release asset. `GET /api/downloads` returns the combined public total; it does not store an IP address, user identity, filename, or document content. The counter starts at zero for v1.1.0. Do not test the production redirect by downloading it before launch, because that would create a false public count; validate redirect behavior in automated tests and validate the GitHub asset URL separately.
 
 ## Agent release checklist
 

@@ -1,7 +1,15 @@
 const editions = {
   en: {
     "type": "MARKDOWN READER · DESKTOP + WEB",
-    "download-note": "Free desktop download · Version 1.0.2 · macOS and Windows",
+    "download-note": "Free desktop download · Version 1.1.0 · macOS and Windows",
+    "download-activity-summary": "Download activity",
+    "download-activity-loading": "Checking the count…",
+    "download-activity-note": "macOS and Windows are counted together from version 1.1.0.",
+    "download-activity-zero": "The counter has just started. Please give LumaReader a try.",
+    "download-activity-low": "LumaReader has been downloaded {count} times. Please give it a try too.",
+    "download-activity-growing": "LumaReader has been downloaded {count} times. Thank you for giving it a try.",
+    "download-activity-established": "Kainnne LumaReader has been downloaded about {count} times.",
+    "download-activity-error": "The download count is temporarily unavailable.",
     "macos-action": "DOWNLOAD FOR",
     "windows-action": "DOWNLOAD FOR",
     "macos-trust": "Developer ID signed · Notarized by Apple",
@@ -24,15 +32,15 @@ const editions = {
     "solution-4-title": "Reading interface",
     "solution-4-body": "Clear typography, three reading modes, light and dark appearances, and 22 palettes provide practical layout choices.",
     "release-label": "VERSION HISTORY",
-    "release-title": "Version 1.0.2 update details",
-    "release-date": "August 27, 2026",
-    "release-1-title": "Export the reading view as PDF",
-    "release-1-body": "The desktop app can now export the rendered document as an A4 PDF through the native save dialog, including print backgrounds, diagrams, mathematics, code, tables, and images.",
-    "release-2-title": "Preview the true end when you need it",
-    "release-2-body": "Normal synchronized scrolling stays unchanged. When the source reaches the end but the rendered preview still has content below, a “Show bottom” button appears inside the preview.",
-    "release-3-title": "A clear reminder while editing",
-    "release-3-body": "Selecting another Markdown file during editing now shows a palette-matched notice that reminds you to save or exit editing first.",
-    "release-notes-link": "Full v1.0.2 release notes",
+    "release-title": "Version 1.1.0 update details",
+    "release-date": "August 31, 2026",
+    "release-1-title": "Faster Markdown authoring",
+    "release-1-body": "Insert headings, links, lists, code, tables, and images without losing the editor position. Dropped images are stored beside the document and appear in preview immediately.",
+    "release-2-title": "Settings in one clear place",
+    "release-2-body": "The new gear opens appearance, palette, language, and toolbar visibility settings. Palette choices stay open while you compare them, and the first-launch guide now introduces Settings.",
+    "release-3-title": "Safer editing, polished PDF, and Open With",
+    "release-3-body": "Closing an edited document now asks before discarding changes. PDF pages use a softer layout and discreet footer, while installed apps can open Markdown from the system’s Open With menu.",
+    "release-notes-link": "Full v1.1.0 release notes",
     "version-history-link": "Download previous versions",
     "web-label": "WEB EDITION",
     "web-title": "Open Markdown in the browser",
@@ -61,17 +69,28 @@ const editions = {
     "feature-4-title": "Extended Markdown rendering",
     "feature-4-body": "Render tables, task lists, alerts, highlighted code, KaTeX mathematics, Mermaid diagrams, footnotes, emoji, abbreviations, superscript, subscript, and reusable local includes.",
     "feature-5-title": "Create, edit, preview, and save Markdown",
-    "feature-5-body": "Choose any destination folder for a new .md, confirm its name and location, and start writing immediately. Edit beside an optional live preview with a draggable split and synchronized scrolling; resize source and editor text with Command/Ctrl + or −, then save without leaving the editor.",
+    "feature-5-body": "Choose any destination folder for a new .md, then write beside a live preview. Insert common Markdown structures from the editor menu or drop in an image; LumaReader keeps your editing position stable and asks before discarding unsaved changes.",
     "feature-6-title": "Export the rendered document as PDF",
     "feature-6-body": "The desktop app exports the reading view through the native system save dialog with an A4 print layout, print backgrounds, and support for headings, code, tables, diagrams, mathematics, and images.",
     "feature-7-title": "Local documents and interface settings",
-    "feature-7-body": "Your desktop library stays on your computer: no account, upload, or automatic translation. LumaReader includes 11 interface languages, light and dark modes, 22 palettes with a neutral reading surface, saved preferences, and a short first-launch guide.",
+    "feature-7-body": "The Settings gear brings together 11 interface languages, light and dark modes, 22 palettes, and controls for hiding individual toolbar features. Preferences stay saved, and the first-launch guide shows where to adjust them.",
+    "feature-8-title": "Open Markdown from macOS or Windows",
+    "feature-8-body": "The installed app appears in the system Open With list for .md, .markdown, .mkd, and .mdx files. You can also choose LumaReader as the default Markdown app through Finder or Windows Settings.",
     "footer-copy": "LumaReader is free and open source.",
+    "footer-contact": "Contact the author",
     "footer-link": "More from Kainnne"
   },
   zh: {
     "type": "MARKDOWN 閱讀器 · 桌面版＋網頁版",
-    "download-note": "桌面版免費下載 · 版本 1.0.2 · 支援 macOS 與 Windows",
+    "download-note": "桌面版免費下載 · 版本 1.1.0 · 支援 macOS 與 Windows",
+    "download-activity-summary": "下載紀錄",
+    "download-activity-loading": "正在確認下載次數…",
+    "download-activity-note": "macOS 與 Windows 合併計算；從 v1.1.0 開始記錄。",
+    "download-activity-zero": "下載紀錄剛開始計算。拜託下載看看。",
+    "download-activity-low": "LumaReader 已被下載 {count} 次，也拜託你下載看看。",
+    "download-activity-growing": "LumaReader 已被下載 {count} 次，謝謝你願意試試看。",
+    "download-activity-established": "Kainnne LumaReader 已經被下載約 {count} 次。",
+    "download-activity-error": "目前暫時無法讀取下載次數。",
     "macos-action": "下載",
     "windows-action": "下載",
     "macos-trust": "Developer ID 簽章 · 已通過 Apple 公證",
@@ -94,15 +113,15 @@ const editions = {
     "solution-4-title": "閱讀介面",
     "solution-4-body": "介面提供清楚的排版、三種閱讀模式、淺色與深色外觀，以及 22 組配色，可依內容調整閱讀方式。",
     "release-label": "版本更新紀錄",
-    "release-title": "v1.0.2 更新內容",
-    "release-date": "2026 年 8 月 27 日",
-    "release-1-title": "將閱讀版面匯出為 PDF",
-    "release-1-body": "桌面版現在可以透過系統儲存視窗，將排版後的文件匯出為 A4 PDF；背景、圖表、數學公式、程式碼、表格與圖片都會一併保留。",
-    "release-2-title": "需要時顯示預覽最底部",
-    "release-2-body": "原本的同步捲動方式維持不變。當左側原文已經到底，但右側預覽仍有內容時，預覽窗會顯示「顯示最底部」按鈕。",
-    "release-3-title": "編輯中切換文件時顯示提醒",
-    "release-3-body": "在編輯模式中點選其他 Markdown 檔案時，介面會顯示符合目前配色的提示，提醒你先儲存內容或退出編輯模式。",
-    "release-notes-link": "查看 v1.0.2 完整更新紀錄",
+    "release-title": "v1.1.0 更新內容",
+    "release-date": "2026 年 8 月 31 日",
+    "release-1-title": "更順手的 Markdown 編輯工具",
+    "release-1-body": "可快速插入標題、連結、清單、程式碼、表格與圖片，而且不會打亂原本的編輯位置。拖入圖片後，檔案會存放在文件旁並立即顯示於預覽。",
+    "release-2-title": "把常用設定整理到同一處",
+    "release-2-body": "新的齒輪按鈕整合亮暗模式、色系、語言與工具列顯示設定。挑選色系時選單會保持開啟，第一次使用的導覽也會介紹設定功能。",
+    "release-3-title": "更安全的編輯、PDF 排版與系統開啟功能",
+    "release-3-body": "關閉已修改的文件前會先確認是否放棄變更；PDF 版面與頁尾更柔和。安裝後，也能從系統的「打開方式」選擇 LumaReader 開啟 Markdown。",
+    "release-notes-link": "查看 v1.1.0 完整更新紀錄",
     "version-history-link": "下載過往版本",
     "web-label": "網頁版",
     "web-title": "直接在瀏覽器開啟 Markdown",
@@ -131,21 +150,69 @@ const editions = {
     "feature-4-title": "延伸 Markdown 語法",
     "feature-4-body": "支援表格、待辦清單、提示區塊、程式碼上色、KaTeX 數學公式、Mermaid 圖表、註腳、Emoji、縮寫、上下標與本機內容引用。",
     "feature-5-title": "新增、編輯、預覽與儲存 Markdown",
-    "feature-5-body": "建立 .md 檔案時，可先選擇儲存資料夾，再確認檔名與位置。編輯時可開啟即時預覽、拖曳調整左右寬度並同步捲動；也能用 Command／Ctrl 搭配 + 或 − 調整原文與編輯區字級。儲存後會留在編輯畫面。",
+    "feature-5-body": "建立 .md 檔案後，可一邊編輯、一邊查看即時預覽。編輯選單能快速插入常用 Markdown 語法，也可以直接拖入圖片；操作時會保持原本的捲動位置，關閉未儲存內容前也會先詢問。",
     "feature-6-title": "將排版後的文件匯出為 PDF",
     "feature-6-body": "桌面版會透過系統儲存視窗輸出 A4 PDF，保留列印背景，並妥善處理標題、程式碼、表格、圖表、數學公式與圖片。",
     "feature-7-title": "本機儲存與介面設定",
-    "feature-7-body": "桌面版文件保留在電腦裡，不需帳號，也不會上傳或自動翻譯。介面提供 11 種語言、淺色與深色外觀，以及 22 組配色，並會記住使用偏好；第一次開啟時也有簡短導覽。",
+    "feature-7-body": "設定齒輪整合 11 種介面語言、亮暗模式、22 組配色，以及個別工具按鈕的顯示選項。所有偏好都會保留，第一次使用的導覽也會帶你找到這些設定。",
+    "feature-8-title": "從 macOS 或 Windows 直接開啟 Markdown",
+    "feature-8-body": "安裝後，系統會在 .md、.markdown、.mkd 與 .mdx 的「打開方式」中顯示 LumaReader；也可以透過 Finder 或 Windows 設定，將它選為 Markdown 的預設程式。",
     "footer-copy": "LumaReader 免費且開放原始碼。",
+    "footer-contact": "聯絡作者",
     "footer-link": "更多 Kainnne 作品"
   }
 };
 
 const languageToggle = document.querySelector(".language-toggle");
 const languageOptions = document.querySelectorAll("[data-language-option]");
+const downloadActivity = document.querySelector("#download-activity");
+const downloadActivityCount = document.querySelector("#download-activity-count");
+const downloadCountEndpoint = "https://lumareader-share.chaos60649.workers.dev/api/downloads";
+let currentLanguage = "en";
+let downloadCount = null;
+let downloadCountFailed = false;
+
+function renderDownloadCount() {
+  if (!downloadActivityCount) return;
+  const strings = editions[currentLanguage];
+  if (downloadCountFailed) {
+    downloadActivityCount.textContent = strings["download-activity-error"];
+    return;
+  }
+  if (!Number.isFinite(downloadCount)) {
+    downloadActivityCount.textContent = strings["download-activity-loading"];
+    return;
+  }
+  const count = Math.max(0, Math.floor(downloadCount));
+  const key = count === 0
+    ? "download-activity-zero"
+    : count < 50
+      ? "download-activity-low"
+      : count < 500
+        ? "download-activity-growing"
+        : "download-activity-established";
+  const formatted = new Intl.NumberFormat(currentLanguage === "zh" ? "zh-Hant" : "en").format(count);
+  downloadActivityCount.textContent = strings[key].replace("{count}", formatted);
+}
+
+async function loadDownloadCount() {
+  if (downloadActivity?.dataset.loaded === "true") return;
+  downloadActivity.dataset.loaded = "true";
+  try {
+    const response = await fetch(downloadCountEndpoint, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Download count request failed: ${response.status}`);
+    const payload = await response.json();
+    downloadCount = Number(payload.total);
+    if (!Number.isFinite(downloadCount)) throw new Error("Invalid download count");
+  } catch {
+    downloadCountFailed = true;
+  }
+  renderDownloadCount();
+}
 
 function setEdition(language) {
   const nextCopy = editions[language];
+  currentLanguage = language;
 
   document.body.classList.add("is-switching");
   window.setTimeout(() => {
@@ -161,6 +228,7 @@ function setEdition(language) {
     languageOptions.forEach((option) => {
       option.classList.toggle("is-active", option.dataset.languageOption === language);
     });
+    renderDownloadCount();
     document.body.classList.remove("is-switching");
   }, 150);
 }
@@ -168,4 +236,8 @@ function setEdition(language) {
 languageToggle.addEventListener("click", () => {
   const language = languageToggle.getAttribute("aria-pressed") === "true" ? "en" : "zh";
   setEdition(language);
+});
+
+downloadActivity?.addEventListener("toggle", () => {
+  if (downloadActivity.open) loadDownloadCount();
 });

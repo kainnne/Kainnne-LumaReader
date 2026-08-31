@@ -9,7 +9,7 @@ The application has four boundaries:
 1. **Electron main process** — owns the window, native folder dialog, persisted settings, menu, and application lifecycle.
 2. **Preload bridge** — exposes folder selection, preferences, and restricted Markdown create/save methods. Node integration remains disabled.
 3. **Loopback document service** — scans and reads the selected library, expands includes, serves local media, and hosts the renderer on a random `127.0.0.1` port.
-4. **Renderer** — selects a document adapter, renders the supported preview type, manages reading modes, and owns visual preferences stored in browser local storage.
+4. **Renderer** — selects a document adapter, renders the supported preview type, manages editing and reading modes, and owns visual and toolbar preferences stored in browser local storage.
 
 ## Library selection
 
@@ -46,9 +46,13 @@ The BrowserWindow uses `contextIsolation`, disables Node integration, enables th
 
 Markdown output is sanitized with an explicit element and attribute allowlist. MDX imports are displayed as code. Unknown JSX elements are unwrapped or removed and are never executed. Mermaid uses strict security mode.
 
+## System file associations
+
+Electron Builder declares `.md`, `.markdown`, `.mkd`, and `.mdx` as editable document types in packaged macOS and Windows builds. Launch arguments and macOS `open-file` events are normalized into explicit `file://` sources, then opened through the same bounded document-service path as a file chosen from the app. Registration makes LumaReader available in **Open With**; the operating system and user retain control of the default application.
+
 ## Persistence
 
-The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, desktop sidebar state, editing-preview visibility, and editor split ratio are stored by the renderer. Users can therefore change the library without losing visual preferences.
+The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, toolbar visibility, desktop sidebar state, editing-preview visibility, and editor split ratio are stored by the renderer. Users can therefore change the library without losing visual preferences.
 
 ## Web edition boundary
 
@@ -58,4 +62,6 @@ Opened and newly created documents are held in a JavaScript `Map` for the lifeti
 
 Users can remove a document from the session through the sidebar after a confirmation dialog. This only deletes the in-memory entry and never deletes the source file. When the File System Access API supplies a writable handle and the browser grants permission, saving may write back to that selected local file. Otherwise, saving updates only the in-memory session. The web edition intentionally omits folder-library access, cloud persistence, document downloads, and PDF export.
 
-Drag-and-drop feeds the same in-memory import path as the file picker and therefore preserves the three-document limit. Sharing serializes the current Markdown name and text, compresses it when the browser supports `CompressionStream`, and first builds a complete `#share=` reader URL. The browser sends that URL plus a derived title and excerpt to the isolated `lumareader-share` Cloudflare Worker. The Worker validates the exact LumaReader origin and path, stores the record in KV with a 30-day TTL, and returns an eight-character short path. Its public GET page emits document-specific Open Graph metadata before redirecting to the complete reader URL. If the Worker fails, the browser exposes the complete fragment URL directly; opening either form reconstructs and sanitizes the Markdown locally. The unchanged built-in sample bypasses the Worker and reuses `/web/`.
+Drag-and-drop feeds the same in-memory import path as the file picker and therefore preserves the three-document limit. Images dropped specifically onto the editor remain browser-local assets and are referenced through portable relative Markdown paths. Sharing serializes the current Markdown name and text, compresses it when the browser supports `CompressionStream`, and first builds a complete `#share=` reader URL. The browser sends that URL plus a derived title and excerpt to the isolated `lumareader-share` Cloudflare Worker. The Worker validates the exact LumaReader origin and path, stores the record in KV with a 30-day TTL, and returns an eight-character short path. Its public GET page emits document-specific Open Graph metadata before redirecting to the complete reader URL. If the Worker fails, the browser exposes the complete fragment URL directly; opening either form reconstructs and sanitizes the Markdown locally. The unchanged built-in sample bypasses the Worker and reuses `/web/`.
+
+The same Worker owns two versioned download redirect routes. Each route performs one atomic D1 increment for `macos` or `windows` before redirecting to the corresponding GitHub Release asset. The public count endpoint sums those two rows and returns no visitor identifier, request history, or document information.

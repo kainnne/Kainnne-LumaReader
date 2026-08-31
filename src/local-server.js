@@ -21,6 +21,7 @@ const { version: APP_VERSION } = require("../package.json");
 
 const APP_NAME = "Kainnne LumaReader";
 const MAX_MEDIA_BYTES = 32 * 1024 * 1024;
+const IMPORT_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp"]);
 const MAX_XLSX_CENTRAL_DIRECTORY_BYTES = 16 * 1024 * 1024;
 const inflateRawAsync = promisify(inflateRaw);
 const IGNORED_DIRECTORIES = new Set([
@@ -106,6 +107,21 @@ function markdownFileName(rawName) {
     throw new HttpError("The Markdown file name is too long", 400, "DOCUMENT_NAME_TOO_LONG");
   }
   return fileName;
+}
+
+function imageAssetFileName(rawName) {
+  const input = path.basename(String(rawName || "").normalize("NFC").trim());
+  const extension = path.extname(input).toLowerCase();
+  if (!IMPORT_IMAGE_EXTENSIONS.has(extension)) {
+    throw new HttpError("Choose a PNG, JPEG, GIF, or WebP image", 415, "UNSUPPORTED_IMAGE_TYPE");
+  }
+  const stem = input.slice(0, -extension.length)
+    .replace(/[<>:"/\\|?*%\u0000-\u001f]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[. -]+|[. -]+$/g, "")
+    .slice(0, 100) || "image";
+  return `${stem}${extension}`;
 }
 
 function isDocument(filePath) {
@@ -800,6 +816,54 @@ class LocalReaderService {
     return localPayload(filePath, "project", this.libraryRoot, publicPath, (target, targetType, targetStat) => this.preflightBinary(target, targetType, targetStat));
   }
 
+  async importMarkdownImage(rawPath, rawName, rawBytes) {
+    const documentPath = this.resolveProjectDocument(rawPath);
+    const { type } = await statDocument(documentPath);
+    if (type.kind !== "markdown") {
+      throw new HttpError("Images can only be added while editing Markdown", 415, "DOCUMENT_READ_ONLY");
+    }
+    const bytes = Buffer.isBuffer(rawBytes) ? rawBytes : Buffer.from(rawBytes || []);
+    if (!bytes.length || bytes.length > MAX_MEDIA_BYTES) {
+      throw new HttpError("The image is empty or exceeds the 32 MB limit", 413, "IMAGE_TOO_LARGE");
+    }
+    const preferredName = imageAssetFileName(rawName);
+    const extension = path.extname(preferredName);
+    const stem = preferredName.slice(0, -extension.length);
+    const documentDirectory = path.dirname(documentPath);
+    const assetsCandidate = path.join(documentDirectory, "assets");
+    if (!isInside(this.libraryRoot, assetsCandidate)) {
+      throw new HttpError("The image destination is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
+    }
+    await fsp.mkdir(assetsCandidate, { recursive: true });
+    const assetsDirectory = await fsp.realpath(assetsCandidate);
+    if (!isInside(this.libraryRoot, assetsDirectory)) {
+      throw new HttpError("The image destination is outside the selected library", 403, "PATH_OUTSIDE_LIBRARY");
+    }
+
+    let filePath = "";
+    let fileName = "";
+    for (let index = 1; index <= 999; index += 1) {
+      fileName = index === 1 ? preferredName : `${stem}-${index}${extension}`;
+      filePath = path.join(assetsDirectory, fileName);
+      try {
+        await fsp.writeFile(filePath, bytes, { flag: "wx" });
+        break;
+      } catch (error) {
+        if (error.code === "EEXIST") continue;
+        if (["EACCES", "EPERM", "EROFS"].includes(error.code)) {
+          throw new HttpError("LumaReader cannot write images to this document folder", 403, "IMAGE_DESTINATION_NOT_WRITABLE");
+        }
+        throw error;
+      }
+    }
+    if (!filePath || !fs.existsSync(filePath)) {
+      throw new HttpError("Unable to choose a unique image name", 409, "IMAGE_NAME_CONFLICT");
+    }
+    const relativePath = path.relative(documentDirectory, filePath).split(path.sep).join("/");
+    const markdownPath = relativePath.split("/").map(encodeURIComponent).join("/");
+    return { path: relativePath, markdownPath, name: fileName, size: bytes.length };
+  }
+
   async createMarkdownDocument(rawDirectory, rawName) {
     if (!this.libraryRoot) throw new HttpError("Choose a library folder first", 400, "LIBRARY_NOT_SELECTED");
     // Use one realpath implementation for both sides of the containment check.
@@ -1041,6 +1105,7 @@ module.exports = {
   HttpError,
   LocalReaderService,
   markdownFileName,
+  imageAssetFileName,
   inspectXlsxArchive,
   parseRange,
   scanDocuments,

@@ -7,6 +7,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const packageMetadata = require("../package.json");
 const { LocalReaderService } = require("./local-server");
+const { firstMarkdownSource, sourceFromFileArgument } = require("./open-target");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
@@ -19,6 +20,8 @@ const PREFERENCE_KEYS = new Set([
   "fontSize",
   "formatSelections",
   "language",
+  "languagePromptSeen",
+  "lastDocumentPath",
   "onboardingVersion",
   "palette",
   "pagedDirection",
@@ -30,6 +33,7 @@ const PREFERENCE_KEYS = new Set([
   "sidebarWidth",
   "textFormatSelections",
   "theme",
+  "toolbarVisibility",
 ]);
 
 app.setName(APP_TITLE);
@@ -66,9 +70,8 @@ function registerProtocol() {
   }
 }
 
-function openProtocol(value) {
-  const source = sourceFromProtocol(value);
-  if (source === null) return false;
+function openSource(source) {
+  if (typeof source !== "string") return false;
   pendingSource = source || null;
   if (mainWindow && readerOrigin) {
     if (pendingSource) {
@@ -84,13 +87,29 @@ function openProtocol(value) {
   return true;
 }
 
-for (const argument of process.argv) {
-  if (sourceFromProtocol(argument) !== null) openProtocol(argument);
+function openProtocol(value) {
+  const source = sourceFromProtocol(value);
+  return source === null ? false : openSource(source);
 }
+
+function openFile(value) {
+  const source = sourceFromFileArgument(value);
+  return source ? openSource(source) : false;
+}
+
+for (const argument of process.argv) {
+  if (openProtocol(argument)) break;
+}
+if (!pendingSource) openSource(firstMarkdownSource(process.argv));
 
 app.on("open-url", (event, url) => {
   event.preventDefault();
   openProtocol(url);
+});
+
+app.on("open-file", (event, filePath) => {
+  event.preventDefault();
+  openFile(filePath);
 });
 
 function validDirectory(candidate) {
@@ -335,6 +354,21 @@ ipcMain.handle("document:save", async (event, payload) => {
     };
   }
 });
+ipcMain.handle("document:import-image", async (event, payload) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) {
+    return { ok: false, code: "INVALID_SENDER", message: "This image import is not allowed." };
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { ok: false, code: "INVALID_IMAGE_REQUEST", message: "The image import request is invalid." };
+  }
+  try {
+    const bytes = payload.bytes instanceof Uint8Array ? payload.bytes : new Uint8Array(payload.bytes || []);
+    const image = await readerService.importMarkdownImage(payload.path, payload.name, bytes);
+    return { ok: true, image };
+  } catch (error) {
+    return { ok: false, code: error.code || "IMAGE_IMPORT_FAILED", message: error.message || "Unable to add this image." };
+  }
+});
 ipcMain.handle("document:export-pdf", async (event, payload) => {
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { ok: false, code: "INVALID_SENDER", message: "This PDF export request is not allowed." };
@@ -352,7 +386,10 @@ ipcMain.handle("document:export-pdf", async (event, payload) => {
       printBackground: true,
       preferCSSPageSize: true,
       pageSize: "A4",
-      margins: { top: 0.5, bottom: 0.55, left: 0.55, right: 0.55 },
+      margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      displayHeaderFooter: true,
+      headerTemplate: "<span></span>",
+      footerTemplate: '<div style="box-sizing:border-box;width:100%;padding:0 11px 0 0;text-align:right;color:#8b858c;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:5.5px;font-weight:600;letter-spacing:.08em;opacity:.13;transform:translateY(6px);">Kainnne LumaReader</div>',
     });
     await fsp.writeFile(result.filePath, pdf);
     return { ok: true, filePath: result.filePath };
@@ -402,6 +439,11 @@ ipcMain.handle("document:create", async (event, payload) => {
 app.on("second-instance", (_event, commandLine) => {
   for (const argument of commandLine) {
     if (openProtocol(argument)) return;
+  }
+  const markdownSource = firstMarkdownSource(commandLine);
+  if (markdownSource) {
+    openSource(markdownSource);
+    return;
   }
   if (!mainWindow) return;
   if (mainWindow.isMinimized()) mainWindow.restore();

@@ -285,6 +285,35 @@ h1 {
 
 .download-note.is-notified { animation: note-pulse 0.42s ease; }
 
+.download-activity {
+  width: fit-content;
+  max-width: 100%;
+  margin: 2px auto 0;
+  color: rgba(94, 68, 85, 0.62);
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.download-activity summary {
+  width: fit-content;
+  margin-inline: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  cursor: pointer;
+  list-style-position: inside;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.download-activity summary:is(:hover, :focus-visible) {
+  color: rgba(74, 32, 56, 0.82);
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.download-activity p { margin: 5px 0 0; color: rgba(74, 32, 56, 0.76); }
+.download-activity small { display: block; margin-top: 1px; color: rgba(115, 89, 107, 0.56); font-size: 0.58rem; }
+
 @keyframes note-pulse {
   50% { color: #6d3ca0; transform: translateY(-2px); }
 }

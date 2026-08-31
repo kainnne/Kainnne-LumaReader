@@ -3,7 +3,7 @@
 
   const ALL_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx", ".txt", ".log"]);
   const DEFAULT_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx"]);
-  const ONBOARDING_VERSION = 3;
+  const ONBOARDING_VERSION = 4;
   const STORAGE_FORMATS = "lumareader-text-formats-v2";
   const STORAGE_TOUR = "lumareader-onboarding-version";
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -21,7 +21,7 @@
         ["Open your documents", "Choose files or drag Markdown directly onto the reader. You can keep up to three documents open."],
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
         ["Read your way", "Use vertical, horizontal, or paged reading. Both scroll directions remain available when the content needs them."],
-        ["Light or dark", "LumaReader starts bright with Dream Rose. Use this button whenever you want to switch between light and dark reading."],
+        ["Make the toolbar yours", "Open Settings to switch light or dark mode, choose a palette, change language, or hide controls you do not use."],
       ],
       step: "Step {current} of {total}",
       next: "Next",
@@ -39,7 +39,7 @@
         ["開啟文件", "選擇檔案，或直接將 Markdown 拖曳到閱讀器；一次最多可開啟 3 份文件。"],
         ["選擇檔案格式", "Markdown 預設開啟；需要時才將 .txt 或 .log 加入清單。"],
         ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；內容需要時仍可橫向與縱向捲動。"],
-        ["亮色或暗色", "LumaReader 預設使用明亮的夢幻粉櫻；需要時可隨時使用這個按鈕切換亮色與暗色閱讀。"],
+        ["調整成你習慣的工具列", "從設定切換亮暗模式與色系，也能變更語言或收起不常用的功能。"],
       ],
       step: "步驟 {current} / {total}",
       next: "下一步",
@@ -158,7 +158,7 @@
     return Number(preferences.onboardingVersion ?? localStorage.getItem(STORAGE_TOUR) ?? 0);
   }
 
-  const tourTargets = ["#choose-file", "#format-filter-toggle", "#reading-mode-control", "#theme"];
+  const tourTargets = ["#choose-file", "#format-filter-toggle", "#reading-mode-toggle", "#palette-toggle"];
 
   function positionSpotlight(target) {
     if (!target || !els.spotlight) return;

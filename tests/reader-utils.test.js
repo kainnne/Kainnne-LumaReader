@@ -10,6 +10,7 @@ const {
   mapByAnchors,
   isScrollAtEnd,
   shouldOfferPreviewEnd,
+  applyMarkdownCommand,
 } = require("../renderer/reader-utils.js");
 
 test("normalizes bold labels followed immediately by CJK text", () => {
@@ -70,4 +71,22 @@ test("offers an explicit preview-end action only when source is at the end and p
   assert.equal(shouldOfferPreviewEnd(sourceAtEnd, previewAboveEnd), true);
   assert.equal(shouldOfferPreviewEnd(sourceAboveEnd, previewAboveEnd), false);
   assert.equal(shouldOfferPreviewEnd(sourceAtEnd, previewAtEnd), false);
+});
+
+test("applies inline Markdown commands while preserving an editor selection", () => {
+  const bold = applyMarkdownCommand("A useful note", 2, 8, "bold");
+  assert.equal(bold.text, "A **useful** note");
+  assert.deepEqual([bold.selectionStart, bold.selectionEnd], [4, 10]);
+
+  const link = applyMarkdownCommand("Read docs", 5, 9, "link");
+  assert.equal(link.text, "Read [docs](https://)");
+  assert.equal(link.text.slice(link.selectionStart, link.selectionEnd), "https://");
+});
+
+test("applies headings and block commands to complete editor lines", () => {
+  const heading = applyMarkdownCommand("Intro\nOld title\nBody", 8, 8, "heading-2");
+  assert.equal(heading.text, "Intro\n## Old title\nBody");
+
+  const tasks = applyMarkdownCommand("one\ntwo\nthree", 0, 7, "task");
+  assert.equal(tasks.text, "- [ ] one\n- [ ] two\nthree");
 });

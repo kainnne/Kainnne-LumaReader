@@ -93,5 +93,80 @@
       && !isScrollAtEnd(preview?.scrollTop, preview?.scrollHeight, preview?.clientHeight, previewTolerance);
   }
 
-  return { normalizeStrongEmphasis, ancestorFolderPaths, markdownTokenLineStarts, mapByAnchors, isScrollAtEnd, shouldOfferPreviewEnd };
+  function replaceMarkdownRange(source, start, end, replacement, selectionStart, selectionEnd = selectionStart) {
+    return {
+      text: `${source.slice(0, start)}${replacement}${source.slice(end)}`,
+      selectionStart: start + selectionStart,
+      selectionEnd: start + selectionEnd,
+    };
+  }
+
+  function markdownLineRange(source, start, end) {
+    const lineStart = source.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+    const effectiveEnd = end > start && source[end - 1] === "\n" ? end - 1 : end;
+    const nextBreak = source.indexOf("\n", effectiveEnd);
+    return [lineStart, nextBreak < 0 ? source.length : nextBreak];
+  }
+
+  function applyMarkdownCommand(value, selectionStart, selectionEnd, command, labels = {}) {
+    const source = String(value || "");
+    const start = Math.max(0, Math.min(source.length, Number(selectionStart) || 0));
+    const end = Math.max(start, Math.min(source.length, Number(selectionEnd) || start));
+    const selected = source.slice(start, end);
+    const textLabel = labels.text || "text";
+    const linkLabel = labels.link || "link text";
+
+    if (["heading-1", "heading-2", "heading-3"].includes(command)) {
+      const level = Number(command.at(-1));
+      const [blockStart, blockEnd] = markdownLineRange(source, start, end);
+      const block = source.slice(blockStart, blockEnd);
+      const lines = block.split("\n").map((line) => `${"#".repeat(level)} ${line.replace(/^\s{0,3}#{1,6}\s+/, "") || textLabel}`);
+      const replacement = lines.join("\n");
+      return replaceMarkdownRange(source, blockStart, blockEnd, replacement, replacement.length, replacement.length);
+    }
+
+    if (["quote", "task", "list"].includes(command)) {
+      const [blockStart, blockEnd] = markdownLineRange(source, start, end);
+      const block = source.slice(blockStart, blockEnd);
+      const prefix = command === "quote" ? "> " : command === "task" ? "- [ ] " : "- ";
+      const replacement = block.split("\n").map((line) => `${prefix}${line || textLabel}`).join("\n");
+      return replaceMarkdownRange(source, blockStart, blockEnd, replacement, replacement.length, replacement.length);
+    }
+
+    if (command === "bold" || command === "italic") {
+      const marker = command === "bold" ? "**" : "*";
+      const inner = selected || textLabel;
+      const replacement = `${marker}${inner}${marker}`;
+      const selectFrom = marker.length;
+      const selectTo = selected ? selectFrom + inner.length : selectFrom + inner.length;
+      return replaceMarkdownRange(source, start, end, replacement, selectFrom, selectTo);
+    }
+
+    if (command === "link") {
+      const label = selected || linkLabel;
+      const replacement = `[${label}](https://)`;
+      const urlStart = label.length + 3;
+      return replaceMarkdownRange(source, start, end, replacement, urlStart, urlStart + 8);
+    }
+
+    if (command === "code") {
+      if (selected.includes("\n")) {
+        const replacement = `\`\`\`\n${selected}\n\`\`\``;
+        return replaceMarkdownRange(source, start, end, replacement, 4, 4 + selected.length);
+      }
+      const inner = selected || textLabel;
+      return replaceMarkdownRange(source, start, end, `\`${inner}\``, 1, 1 + inner.length);
+    }
+
+    if (command === "table") {
+      const headers = labels.tableHeaders || ["Column 1", "Column 2"];
+      const cells = labels.tableCells || ["Value", "Value"];
+      const replacement = `| ${headers.join(" | ")} |\n| ${headers.map(() => "---").join(" | ")} |\n| ${cells.join(" | ")} |`;
+      return replaceMarkdownRange(source, start, end, replacement, 2, 2 + headers[0].length);
+    }
+
+    return { text: source, selectionStart: start, selectionEnd: end };
+  }
+
+  return { normalizeStrongEmphasis, ancestorFolderPaths, markdownTokenLineStarts, mapByAnchors, isScrollAtEnd, shouldOfferPreviewEnd, applyMarkdownCommand };
 }));

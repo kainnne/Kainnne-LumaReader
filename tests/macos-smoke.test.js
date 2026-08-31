@@ -2,11 +2,16 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const packageMetadata = require("../package.json");
 const { appBundleForExecutable, verifyCodeSignature } = require("../scripts/macos-smoke");
 
 const APP = "/private/tmp/Luma Test.app";
 const EXECUTABLE = `${APP}/Contents/MacOS/Luma Test`;
 const macTest = process.platform === "darwin" ? test : test.skip;
+
+test("keeps Chromium cookie encryption disabled to avoid macOS Safe Storage prompts", () => {
+  assert.equal(packageMetadata.build.electronFuses.enableCookieEncryption, false);
+});
 
 macTest("resolves the containing app bundle from its executable", () => {
   assert.equal(appBundleForExecutable(EXECUTABLE), APP);

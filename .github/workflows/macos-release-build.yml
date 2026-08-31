@@ -72,6 +72,10 @@ jobs:
           ARCHITECTURES="$(lipo -archs "$EXECUTABLE")"
           [[ "$ARCHITECTURES" == *arm64* ]]
           [[ "$ARCHITECTURES" == *x86_64* ]]
+          ASSOCIATIONS="$(plutil -extract CFBundleDocumentTypes.0.CFBundleTypeExtensions json -o - "$APP_PATH/Contents/Info.plist")"
+          for extension in md markdown mkd mdx; do
+            printf '%s' "$ASSOCIATIONS" | grep -F "\"${extension}\""
+          done
           echo "Verified universal architectures: $ARCHITECTURES"
 
       - name: Smoke-test signed and notarized application
