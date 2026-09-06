@@ -437,7 +437,7 @@ handle("document:save", async (context, event, payload) => {
     return { ok: false, code: "INVALID_SAVE_REQUEST", message: "The save request is invalid." };
   }
   try {
-    const document = await readerService.saveMarkdownDocument(payload.path, payload.text, payload.expectedModifiedNs);
+    const document = await readerService.saveMarkdownDocument(payload.path, payload.text, payload.expectedModifiedNs, payload.expectedRevision);
     return { ok: true, document };
   } catch (error) {
     return {

@@ -55,7 +55,7 @@ test("failed replacement preserves the original and removes only its temporary f
 });
 test("simultaneous stale saves from two windows cannot silently overwrite each other",async(t)=>{
  const root=fixture(t);fs.writeFileSync(path.join(root,"draft.md"),"original");const a=new LocalReaderService({rendererRoot,libraryRoot:root}),b=new LocalReaderService({rendererRoot,libraryRoot:root});
- const original=await a.openSource("draft.md");const results=await Promise.allSettled([a.saveMarkdownDocument("draft.md","first",original.modifiedNs),b.saveMarkdownDocument("draft.md","second",original.modifiedNs)]);
+ const original=await a.openSource("draft.md");const results=await Promise.allSettled([a.saveMarkdownDocument("draft.md","first",original.modifiedNs,original.revision),b.saveMarkdownDocument("draft.md","second",original.modifiedNs,original.revision)]);
  assert.equal(results.filter(r=>r.status==="fulfilled").length,1);assert.equal(results.find(r=>r.status==="rejected").reason.code,"DOCUMENT_CHANGED");assert.equal(fs.readFileSync(path.join(root,"draft.md"),"utf8"),"first");
 });
 test("scans stop at configured resource limits",async(t)=>{
@@ -66,4 +66,14 @@ test("library roots use the same canonical paths as asynchronous filesystem oper
  const root = fixture(t);
  const service = new LocalReaderService({ rendererRoot, libraryRoot: root });
  assert.equal(service.getLibraryRoot(), await fsp.realpath(root));
+});
+
+test("content revisions reject external same-length edits even with a matching timestamp", async (t) => {
+ const root = fixture(t); const file = path.join(root, "draft.md"); fs.writeFileSync(file, "before");
+ const service = new LocalReaderService({ rendererRoot, libraryRoot: root });
+ const original = await service.openSource("draft.md");
+ fs.writeFileSync(file, "after!");
+ const current = await service.openSource("draft.md");
+ await assert.rejects(() => service.saveMarkdownDocument("draft.md", "my edit", current.modifiedNs, original.revision), error => error.code === "DOCUMENT_CHANGED");
+ assert.equal(fs.readFileSync(file, "utf8"), "after!");
 });

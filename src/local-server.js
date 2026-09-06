@@ -597,10 +597,12 @@ async function localPayload(filePath, sourceType, root, publicPath = null, inspe
       preflight,
     };
   }
-  const text = decodeUtf8(await fsp.readFile(filePath));
+  const bytes = await fsp.readFile(filePath);
+  const text = decodeUtf8(bytes);
   const boundary = sourceType === "project" ? root : path.dirname(filePath);
   return {
     ...common,
+    revision: crypto.createHash("sha256").update(bytes).digest("hex"),
     content: { mode: "text", encoding: "utf-8" },
     text,
     renderText: type.kind === "markdown"
@@ -801,15 +803,15 @@ class LocalReaderService {
     return localPayload(filePath, sourceType, this.libraryRoot, publicPath, (target, type, stat) => this.preflightBinary(target, type, stat));
   }
 
-  async saveMarkdownDocument(rawPath, text, expectedModifiedNs = null) {
+  async saveMarkdownDocument(rawPath, text, expectedModifiedNs = null, expectedRevision = null) {
     const key = this.resolveProjectDocument(rawPath);
     const previous = saveQueues.get(key) || Promise.resolve();
-    const pending = previous.catch(() => {}).then(() => this.writeMarkdownDocument(key, text, expectedModifiedNs));
+    const pending = previous.catch(() => {}).then(() => this.writeMarkdownDocument(key, text, expectedModifiedNs, expectedRevision));
     saveQueues.set(key, pending);
     try { return await pending; } finally { if (saveQueues.get(key) === pending) saveQueues.delete(key); }
   }
 
-  async writeMarkdownDocument(filePath, text, expectedModifiedNs = null) {
+  async writeMarkdownDocument(filePath, text, expectedModifiedNs = null, expectedRevision = null) {
     // Recheck after the prior save completes, including changes to this window's folder.
     if (this.resolveProjectDocument(path.relative(this.libraryRoot, filePath)) !== filePath) throw new HttpError("Document moved", 409, "DOCUMENT_CHANGED");
     const publicPath = path.relative(this.libraryRoot, filePath).split(path.sep).join("/");
@@ -823,6 +825,11 @@ class LocalReaderService {
     if (Buffer.byteLength(text, "utf8") > type.maxBytes) {
       const limitMb = Math.round(type.maxBytes / (1024 * 1024));
       throw new HttpError(`Document exceeds the ${limitMb} MB edit limit`, 413, "DOCUMENT_TOO_LARGE");
+    }
+    const originalBytes = await fsp.readFile(filePath);
+    const revision = crypto.createHash("sha256").update(originalBytes).digest("hex");
+    if (expectedRevision !== null && expectedRevision !== revision) {
+      throw new HttpError("This document changed outside LumaReader. Reopen it before saving.", 409, "DOCUMENT_CHANGED");
     }
     if (expectedModifiedNs !== null && expectedModifiedNs !== undefined) {
       const expected = Number(expectedModifiedNs);
@@ -842,7 +849,8 @@ class LocalReaderService {
       try { await handle.writeFile(text, "utf8"); await handle.sync(); } finally { await handle.close(); }
       const current = await fsp.stat(filePath);
       if (current.mtimeMs !== stat.mtimeMs || current.size !== stat.size || current.ino !== stat.ino ||
-          await fsp.realpath(filePath) !== filePath) throw new HttpError("This document changed while saving", 409, "DOCUMENT_CHANGED");
+          await fsp.realpath(filePath) !== filePath ||
+          !(await fsp.readFile(filePath)).equals(originalBytes)) throw new HttpError("This document changed while saving", 409, "DOCUMENT_CHANGED");
       await fsp.rename(temporary, filePath);
     } catch (error) {
       if (["EACCES", "EPERM", "EROFS"].includes(error.code)) {
