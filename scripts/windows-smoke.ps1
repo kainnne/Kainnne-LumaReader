@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($env:CI -ne "true") { throw "Installer smoke tests must run in an isolated CI runner." }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $distRoot = Join-Path $projectRoot "dist"
 $results = @()
@@ -34,12 +35,21 @@ if ($setupSignature.Status -ne "NotSigned") {
   throw "The Windows installer must remain unsigned, but Authenticode reported $($setupSignature.Status)."
 }
 $installRoot = Join-Path $env:RUNNER_TEMP "lumareader-$ExpectedVersion-install"
+# Seed an unrelated default in this disposable runner. Installation must preserve it.
+$existingDefault = "LumaReaderSmoke.ExistingDefault"
+foreach ($extension in @("md", "markdown", "mkd", "mdx")) {
+  $extensionKey = "HKCU:\Software\Classes\.$extension"
+  New-Item -Path $extensionKey -Force | Out-Null
+  Set-Item -Path $extensionKey -Value $existingDefault
+}
 $installer = Start-Process -FilePath $setup -ArgumentList @("/S", "/D=$installRoot") -Wait -PassThru
 if ($installer.ExitCode -ne 0) {
   throw "The NSIS installer exited with code $($installer.ExitCode)."
 }
 $fileClass = "Kainnne LumaReader Markdown"
 foreach ($extension in @("md", "markdown", "mkd", "mdx")) {
+  $defaultValue = (Get-Item "HKCU:\Software\Classes\.$extension").GetValue("")
+  if ($defaultValue -ne $existingDefault) { throw "Installation changed the existing .$extension default." }
   $openWithPath = "HKCU:\Software\Classes\.$extension\OpenWithProgids"
   $openWith = Get-ItemProperty -Path $openWithPath -ErrorAction Stop
   if ($openWith.PSObject.Properties.Name -notcontains $fileClass) {
@@ -47,7 +57,7 @@ foreach ($extension in @("md", "markdown", "mkd", "mdx")) {
   }
 }
 $openCommand = (Get-Item "HKCU:\Software\Classes\$fileClass\shell\open\command" -ErrorAction Stop).GetValue("")
-if ($openCommand -notmatch "Kainnne LumaReader\.exe" -or $openCommand -notmatch "%1") {
+if ($openCommand -notmatch '^"[^"]+Kainnne LumaReader\.exe" "%1"$') {
   throw "The Markdown Open With command is invalid: $openCommand"
 }
 Invoke-LumaReaderSmoke -Executable (Join-Path $installRoot "Kainnne LumaReader.exe") -Label "NSIS installed application"
@@ -58,6 +68,16 @@ if ($portableSignature.Status -ne "NotSigned") {
   throw "The Windows portable build must remain unsigned, but Authenticode reported $($portableSignature.Status)."
 }
 Invoke-LumaReaderSmoke -Executable $portable -Label "Portable x64 application"
+
+$uninstaller = Join-Path $installRoot "Uninstall Kainnne LumaReader.exe"
+$uninstall = Start-Process -FilePath $uninstaller -ArgumentList @("/S", "_?=$installRoot") -Wait -PassThru
+if ($uninstall.ExitCode -ne 0) { throw "Uninstallation failed." }
+foreach ($extension in @("md", "markdown", "mkd", "mdx")) {
+  if ((Get-Item "HKCU:\Software\Classes\.$extension").GetValue("") -ne $existingDefault) {
+    throw "Uninstallation changed the existing .$extension default."
+  }
+}
+$results += [pscustomobject]@{ label = "Default Markdown app remains user controlled"; installPreservedDefaults = $true; uninstallPreservedDefaults = $true }
 
 $results | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $distRoot "windows-smoke-results.json")
 $results | Format-Table -AutoSize

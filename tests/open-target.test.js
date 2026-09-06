@@ -37,10 +37,17 @@ test("finds the first valid Markdown target in a launch command", () => {
 });
 
 test("publishes Markdown file associations for Open With", () => {
-  assert.deepEqual(packageMetadata.build.fileAssociations, [{
+  assert.deepEqual(packageMetadata.build.mac.fileAssociations, [{
     ext: ["md", "markdown", "mkd", "mdx"],
     name: "Kainnne LumaReader Markdown",
     description: "Markdown document",
     role: "Editor",
+    rank: "Alternate",
   }]);
+});
+
+test("Windows uses opt-in Open With registration instead of automatic default associations", () => {
+  assert.equal(packageMetadata.build.fileAssociations, undefined);
+  assert.equal(packageMetadata.build.win.fileAssociations, undefined);
+  assert.equal(packageMetadata.build.nsis.include, "build/installer.nsh");
 });

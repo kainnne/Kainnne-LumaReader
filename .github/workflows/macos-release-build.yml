@@ -76,6 +76,7 @@ jobs:
           for extension in md markdown mkd mdx; do
             printf '%s' "$ASSOCIATIONS" | grep -F "\"${extension}\""
           done
+          test "$(plutil -extract CFBundleDocumentTypes.0.LSHandlerRank raw -o - "$APP_PATH/Contents/Info.plist")" = "Alternate"
           echo "Verified universal architectures: $ARCHITECTURES"
 
       - name: Smoke-test signed and notarized application

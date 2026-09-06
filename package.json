@@ -34,19 +34,6 @@
         ]
       }
     ],
-    "fileAssociations": [
-      {
-        "ext": [
-          "md",
-          "markdown",
-          "mkd",
-          "mdx"
-        ],
-        "name": "Kainnne LumaReader Markdown",
-        "description": "Markdown document",
-        "role": "Editor"
-      }
-    ],
     "asar": true,
     "electronFuses": {
       "runAsNode": false,
@@ -98,7 +85,21 @@
         "NSDesktopFolderUsageDescription": "Kainnne LumaReader needs access only when you choose a library located on the Desktop.",
         "NSDocumentsFolderUsageDescription": "Kainnne LumaReader needs access only when you choose a library located in Documents.",
         "NSDownloadsFolderUsageDescription": "Kainnne LumaReader needs access only when you choose a library located in Downloads."
-      }
+      },
+      "fileAssociations": [
+        {
+          "ext": [
+            "md",
+            "markdown",
+            "mkd",
+            "mdx"
+          ],
+          "name": "Kainnne LumaReader Markdown",
+          "description": "Markdown document",
+          "role": "Editor",
+          "rank": "Alternate"
+        }
+      ]
     },
     "win": {
       "icon": "build/icon.png",
@@ -113,7 +114,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Kainnne LumaReader"
+      "shortcutName": "Kainnne LumaReader",
+      "include": "build/installer.nsh"
     },
     "portable": {
       "artifactName": "Kainnne-LumaReader-${version}-Windows-${arch}-Portable.${ext}"
