@@ -250,7 +250,7 @@ async function chooseDocumentDirectory(context, { directory = "" } = {}) {
     return { selected: false, canceled: true, root: currentRoot, directory: "", displayPath: "", libraryChanged: false };
   }
 
-  const selectedDirectory = fs.realpathSync(path.resolve(result.filePaths[0]));
+  const selectedDirectory = fs.realpathSync.native(path.resolve(result.filePaths[0]));
   let root = currentRoot;
   let relativeDirectory = "";
   if (currentRoot && isInsideDirectory(currentRoot, selectedDirectory)) {

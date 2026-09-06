@@ -149,7 +149,7 @@ Example:
 </a>
 ```
 
-The public website deliberately routes primary macOS and Windows downloads through the existing Cloudflare Worker. Each route performs one atomic D1 increment and then redirects to the exact versioned GitHub Release asset. `GET /api/downloads` returns the combined public total; it does not store an IP address, user identity, filename, or document content. The counter starts at zero for v1.2.0. Do not test the production redirect by downloading it before launch, because that would create a false public count; validate redirect behavior in automated tests and validate the GitHub asset URL separately.
+The public website deliberately routes primary macOS and Windows downloads through the existing Cloudflare Worker. Each route performs one atomic D1 increment and then redirects to the exact versioned GitHub Release asset. `GET /api/downloads` returns the combined public total; it does not store an IP address, user identity, filename, or document content. The counter started at zero for v1.1.0 and continues across releases. Do not test the production redirect by downloading it before launch, because that would create a false public count; validate redirect behavior in automated tests and validate the GitHub asset URL separately.
 
 ## Agent release checklist
 

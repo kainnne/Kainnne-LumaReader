@@ -31,7 +31,7 @@ test('macOS open-file events queue independent windows; menu and IPC target the 
  assert.equal(windows.length,2);assert.notEqual(new URL(windows[0].url).origin,new URL(windows[1].url).origin);
  const event=w=>({sender:w.webContents,senderFrame:w.webContents.mainFrame});
  const rootA=handlers.get('library:get')(event(windows[0])),rootB=handlers.get('library:get')(event(windows[1]));
- assert.equal(rootA.root,fs.realpathSync(path.join(root,'a')));assert.equal(rootB.root,fs.realpathSync(path.join(root,'b')));
+ assert.equal(rootA.root,fs.realpathSync.native(path.join(root,'a')));assert.equal(rootB.root,fs.realpathSync.native(path.join(root,'b')));
  focused=windows[1];menu.find(item=>item.label==='File').submenu.find(item=>item.label==='Save Markdown').click();
  assert.equal(windows[0].messages.length,0);assert.deepEqual(windows[1].messages,[['editor:save-requested']]);
  const saved=await handlers.get('document:save')(event(windows[1]),{path:'same.md',text:'updated B'});assert.equal(saved.ok,true);assert.equal(fs.readFileSync(path.join(root,'a/same.md'),'utf8'),'a');assert.equal(fs.readFileSync(path.join(root,'b/same.md'),'utf8'),'updated B');

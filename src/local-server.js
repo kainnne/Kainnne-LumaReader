@@ -720,7 +720,8 @@ function publicDocumentTypes() {
 
 class LocalReaderService {
   constructor({ rendererRoot, libraryRoot = null, accessToken = null }) {
-    this.rendererRoot = fs.realpathSync(path.resolve(rendererRoot));
+    // Native realpath matches fs.promises.realpath, including Windows 8.3 aliases.
+    this.rendererRoot = fs.realpathSync.native(path.resolve(rendererRoot));
     this.libraryRoot = null;
     this.accessToken = accessToken;
     this.scanPromise = null;
@@ -736,7 +737,7 @@ class LocalReaderService {
       this.preflightCache.clear();
       return null;
     }
-    const resolved = fs.realpathSync(path.resolve(directory));
+    const resolved = fs.realpathSync.native(path.resolve(directory));
     const stat = fs.statSync(resolved);
     if (!stat.isDirectory()) throw new Error("The selected library is not a directory");
     this.libraryRoot = resolved;
@@ -772,7 +773,7 @@ class LocalReaderService {
     requireDocumentType(candidate);
     let realCandidate;
     try {
-      realCandidate = fs.realpathSync(candidate);
+      realCandidate = fs.realpathSync.native(candidate);
     } catch {
       throw new HttpError("Document not found", 404, "DOCUMENT_NOT_FOUND");
     }
@@ -783,7 +784,7 @@ class LocalReaderService {
   sourceToLocalPath(source) {
     const clean = String(source || "").trim();
     if (clean.startsWith("file://") || path.isAbsolute(clean)) {
-      const filePath = fs.realpathSync(clean.startsWith("file://") ? fileURLToPath(clean) : path.resolve(clean));
+      const filePath = fs.realpathSync.native(clean.startsWith("file://") ? fileURLToPath(clean) : path.resolve(clean));
       if (this.libraryRoot && isInside(this.libraryRoot, filePath)) return { filePath, sourceType: "project" };
       // Desktop sessions may read only the folder explicitly opened by the user.
       if (this.accessToken) throw new HttpError("Open this document in its own window", 403, "PATH_OUTSIDE_LIBRARY");
@@ -978,7 +979,7 @@ class LocalReaderService {
         continue;
       }
       try {
-        const realCandidate = fs.realpathSync(candidate);
+        const realCandidate = fs.realpathSync.native(candidate);
         if (!isInside(boundary, realCandidate)) {
           outside = true;
           continue;

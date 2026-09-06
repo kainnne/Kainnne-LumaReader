@@ -281,7 +281,7 @@ test("resolves website-root images through the nearest project public folder", a
   fs.writeFileSync(image, Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
   const mediaService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
 
-  assert.equal(mediaService.resolveMedia("/images/AboutMe/portrait.jpg", "WikiNB/wiki/AboutMe/about.md"), fs.realpathSync(image));
+  assert.equal(mediaService.resolveMedia("/images/AboutMe/portrait.jpg", "WikiNB/wiki/AboutMe/about.md"), fs.realpathSync.native(image));
   const query = new URLSearchParams({ path: "/images/AboutMe/portrait.jpg", from: "WikiNB/wiki/AboutMe/about.md" });
   const response = await dispatch(mediaService, `/api/media?${query}`);
   assert.equal(response.statusCode, 200);
@@ -298,7 +298,7 @@ test("keeps relative images local and rejects non-media assets", async (t) => {
   fs.writeFileSync(path.join(root, "docs", "assets", "secret.txt"), "text");
   const mediaService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: root });
 
-  assert.equal(mediaService.resolveMedia("assets/pixel.png", "docs/readme.md"), fs.realpathSync(path.join(root, "docs", "assets", "pixel.png")));
+  assert.equal(mediaService.resolveMedia("assets/pixel.png", "docs/readme.md"), fs.realpathSync.native(path.join(root, "docs", "assets", "pixel.png")));
   const query = new URLSearchParams({ path: "assets/secret.txt", from: "docs/readme.md" });
   const response = await dispatch(mediaService, `/api/media?${query}`);
   assert.equal(response.statusCode, 415);
@@ -323,7 +323,7 @@ test("keeps relative images portable across computers and Unicode folder names",
   fs.copyFileSync(path.join(originalRoot, relativeImage), path.join(movedRoot, relativeImage));
 
   const movedService = new LocalReaderService({ rendererRoot: path.join(repositoryRoot, "renderer"), libraryRoot: movedRoot });
-  assert.equal(movedService.resolveMedia("圖片/示例%20圖片.png", relativeDocument), fs.realpathSync(path.join(movedRoot, relativeImage)));
+  assert.equal(movedService.resolveMedia("圖片/示例%20圖片.png", relativeDocument), fs.realpathSync.native(path.join(movedRoot, relativeImage)));
   const query = new URLSearchParams({ path: "圖片/示例%20圖片.png", from: relativeDocument });
   const response = await dispatch(movedService, `/api/media?${query}`);
   assert.equal(response.statusCode, 200);

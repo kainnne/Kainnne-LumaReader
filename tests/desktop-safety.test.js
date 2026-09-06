@@ -25,7 +25,7 @@ test("each file launch resolves its parent, Unicode filename, and canonical syml
  const root=fixture(t);fs.mkdirSync(path.join(root,"子資料夾"));const file=path.join(root,"子資料夾","閱讀 筆記.md");fs.writeFileSync(file,"hello");
  const alias=path.join(root,"alias.md");fs.symlinkSync(file,alias);
  const manager=new DocumentWindows();const first=await manager.resolve(pathToFileURL(file).href),second=await manager.resolve(pathToFileURL(alias).href);
- assert.equal(first.root,fs.realpathSync(path.dirname(file)));assert.equal(first.path,"閱讀 筆記.md");assert.equal(first.key,second.key);
+ assert.equal(first.root,fs.realpathSync.native(path.dirname(file)));assert.equal(first.path,"閱讀 筆記.md");assert.equal(first.key,second.key);
  const context={window:{isDestroyed:()=>false}};manager.add(context,first.key);assert.equal(manager.find(second.key),context);
  manager.update(context,path.join(root,"other.md"));assert.equal(manager.find(first.key),undefined);manager.remove(context);assert.equal(manager.contexts.size,0);
 });
@@ -60,4 +60,10 @@ test("simultaneous stale saves from two windows cannot silently overwrite each o
 });
 test("scans stop at configured resource limits",async(t)=>{
  const root=fixture(t);for(let i=0;i<40;i++)fs.writeFileSync(path.join(root,`${i}.md`),"x");assert.equal((await scanDocuments(root,{maxFiles:7,statConcurrency:2})).length,7);assert.deepEqual(await scanDocuments(root,{totalTimeoutMs:0}),[]);
+});
+
+test("library roots use the same canonical paths as asynchronous filesystem operations", async (t) => {
+ const root = fixture(t);
+ const service = new LocalReaderService({ rendererRoot, libraryRoot: root });
+ assert.equal(service.getLibraryRoot(), await fsp.realpath(root));
 });

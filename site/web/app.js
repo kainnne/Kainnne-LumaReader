@@ -661,7 +661,7 @@
     return mermaidLibraryPromise;
   }
   async function renderMermaidDiagrams(root,requestId){
-    const nodes=[...root.querySelectorAll(".mermaid")];
+    const nodes=[...root.querySelectorAll(".mermaid")].filter((node,index)=>index<20&&node.textContent.length<=20000);
     if(!nodes.length)return;
     nodes.forEach((node)=>node.setAttribute("aria-busy","true"));
     try{
