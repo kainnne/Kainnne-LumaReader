@@ -3,7 +3,7 @@
 
   const ALL_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx", ".txt", ".log"]);
   const DEFAULT_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx"]);
-  const ONBOARDING_VERSION = 4;
+  const ONBOARDING_VERSION = 5;
   const STORAGE_FORMATS = "lumareader-text-formats-v2";
   const STORAGE_TOUR = "lumareader-onboarding-version";
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -20,8 +20,9 @@
       steps: [
         ["Open your documents", "Choose files or drag Markdown directly onto the reader. You can keep up to three documents open."],
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
-        ["Read your way", "Use vertical, horizontal, or paged reading. Both scroll directions remain available when the content needs them."],
+        ["Read your way", "Use vertical, horizontal, or paged reading. In vertical mode, text wraps to the available width, including while editing."],
         ["Make the toolbar yours", "Open Settings to switch light or dark mode, choose a palette, change language, or hide controls you do not use."],
+        ["Open Markdown from your desktop", "LumaReader Desktop can open and edit Markdown in separate windows. You can choose it as the default Markdown app yourself in Finder or Windows Settings."],
       ],
       step: "Step {current} of {total}",
       next: "Next",
@@ -38,8 +39,9 @@
       steps: [
         ["開啟文件", "選擇檔案，或直接將 Markdown 拖曳到閱讀器；一次最多可開啟 3 份文件。"],
         ["選擇檔案格式", "Markdown 預設開啟；需要時才將 .txt 或 .log 加入清單。"],
-        ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；內容需要時仍可橫向與縱向捲動。"],
+        ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；直式內文與編輯文字會隨視窗寬度自動換行。"],
         ["調整成你習慣的工具列", "從設定切換亮暗模式與色系，也能變更語言或收起不常用的功能。"],
+        ["直接從電腦開啟 Markdown", "LumaReader 桌面版可用獨立視窗開啟與編輯 Markdown；也能由你自行在 Finder 或 Windows 設定中，選為 Markdown 預設程式。"],
       ],
       step: "步驟 {current} / {total}",
       next: "下一步",
@@ -158,7 +160,7 @@
     return Number(preferences.onboardingVersion ?? localStorage.getItem(STORAGE_TOUR) ?? 0);
   }
 
-  const tourTargets = ["#choose-file", "#format-filter-toggle", "#reading-mode-toggle", "#palette-toggle"];
+  const tourTargets = ["#choose-file", "#format-filter-toggle", "#reading-mode-toggle", "#palette-toggle", "#choose-file"];
 
   function positionSpotlight(target) {
     if (!target || !els.spotlight) return;

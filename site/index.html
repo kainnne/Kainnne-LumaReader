@@ -31,7 +31,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
-    <script src="./app.js" defer></script>
+    <script src="./app.js?v=1.2.0" defer></script>
     <title>Kainnne LumaReader</title>
   </head>
   <body>
@@ -85,9 +85,7 @@
             <span class="web-entry-arrow" aria-hidden="true">↗</span>
           </a>
 
-          <p class="download-note" id="download-note" data-copy="download-note">
-            Free desktop download · Version 1.1.0 · macOS and Windows
-          </p>
+          <p class="download-note" id="download-note" data-copy="download-note">Free desktop download · Version 1.2.0 · macOS and Windows</p>
           <details class="download-activity" id="download-activity">
             <summary data-copy="download-activity-summary">Download activity</summary>
             <p id="download-activity-count" aria-live="polite" data-copy="download-activity-loading">Checking the count…</p>
@@ -121,8 +119,8 @@
             <p data-copy="solution-2-body">Choose a folder on your computer. Scanning, search, reading, preview, and editing run on the device.</p>
           </li>
           <li>
-            <strong data-copy="solution-3-title">Documents stay private</strong>
-            <p data-copy="solution-3-body">No account or document upload. LumaReader does not collect usage analytics, document content, or document telemetry.</p>
+            <strong data-copy="solution-3-title">You choose what to share</strong>
+            <p data-copy="solution-3-body">Reading and editing need no account or document upload. Creating a Web share link sends a temporary copy to the share service for 30 days; remote images may contact their hosts.</p>
           </li>
           <li>
             <strong data-copy="solution-4-title">Reading interface</strong>
@@ -135,35 +133,35 @@
         <div class="release-heading">
           <div>
             <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
-            <h2 id="release-title" data-copy="release-title">Version 1.1.0 update details</h2>
+            <h2 id="release-title" data-copy="release-title">Version 1.2.0 update details</h2>
           </div>
-          <time datetime="2026-08-31" data-copy="release-date">August 31, 2026</time>
+          <time datetime="2026-09-06" data-copy="release-date">September 6, 2026</time>
         </div>
         <div class="release-grid">
           <article>
             <span class="release-number">01</span>
             <div>
-              <h3 data-copy="release-1-title">Faster Markdown authoring</h3>
-              <p data-copy="release-1-body">Insert headings, links, lists, code, tables, and images without losing the editor position. Dropped images are stored beside the document and appear in preview immediately.</p>
+              <h3 data-copy="release-1-title">Open a file and start editing</h3>
+              <p data-copy="release-1-body">Open Markdown from Finder or Windows in its own editable window. The sidebar shows its folder, and opening another file keeps the first document’s unsaved edits in place.</p>
             </div>
           </article>
           <article>
             <span class="release-number">02</span>
             <div>
-              <h3 data-copy="release-2-title">Settings in one clear place</h3>
-              <p data-copy="release-2-body">The new gear opens appearance, palette, language, and toolbar visibility settings. Palette choices stay open while you compare them, and the first-launch guide now introduces Settings.</p>
+              <h3 data-copy="release-2-title">Text that fits your window</h3>
+              <p data-copy="release-2-body">Vertical reading, source view, and editing wrap long text to the available width on Desktop and Web. The live preview follows the wrapped editor.</p>
             </div>
           </article>
           <article>
             <span class="release-number">03</span>
             <div>
-              <h3 data-copy="release-3-title">Safer editing, polished PDF, and Open With</h3>
-              <p data-copy="release-3-body">Closing an edited document now asks before discarding changes. PDF pages use a softer layout and discreet footer, while installed apps can open Markdown from the system’s Open With menu.</p>
+              <h3 data-copy="release-3-title">A quieter toolbar, more careful file handling</h3>
+              <p data-copy="release-3-body">Source, Media, and Export PDF start hidden; enable them in Settings. Desktop adds file-save conflict checks and limits scanning and open windows. Default-app changes remain your choice in system settings.</p>
             </div>
           </article>
         </div>
         <div class="release-links">
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.1.0"><span data-copy="release-notes-link">Full v1.1.0 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.2.0"><span data-copy="release-notes-link">Full v1.2.0 release notes</span><span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
@@ -208,14 +206,14 @@
             <span class="feature-number">02</span>
             <div>
               <strong data-copy="feature-2-title">Folder library, search, and sidebar navigation</strong>
-              <p data-copy="feature-2-body">Choose one root folder and scan its nested files with a visible elapsed-time counter. Search opens every parent folder needed to reveal a match, then restores your previous folder state when cleared; the sidebar can be widened for long names or collapsed for focus.</p>
+              <p data-copy="feature-2-body">Each file opened from the desktop shows its containing folder in the sidebar. You can also choose a folder library, search filenames, reveal matching folders, and resize or collapse the sidebar. Large folder scans have time and file-count limits.</p>
             </div>
           </li>
           <li>
             <span class="feature-number">03</span>
             <div>
               <strong data-copy="feature-3-title">Vertical, horizontal, and paged reading modes</strong>
-              <p data-copy="feature-3-body">Use a full-width vertical page, horizontal reading, or paged navigation with left/right or up/down page turns. Both axes have draggable scrollbars, and text-size or layout changes keep you close to the same reading position.</p>
+              <p data-copy="feature-3-body">Use vertical, horizontal, or paged reading. Vertical text wraps to the available width; wide tables and code can scroll within their own blocks. Paged navigation supports left/right and up/down page turns.</p>
             </div>
           </li>
           <li>
@@ -236,7 +234,7 @@
             <span class="feature-number">06</span>
             <div>
               <strong data-copy="feature-6-title">Export the rendered document as PDF</strong>
-              <p data-copy="feature-6-body">The desktop app exports the reading view through the native system save dialog with an A4 print layout, print backgrounds, and support for headings, code, tables, diagrams, mathematics, and images.</p>
+              <p data-copy="feature-6-body">Enable Export PDF in Settings when needed. The desktop app saves the rendered document through the system save dialog with an A4 layout, including code, tables, diagrams, mathematics, and images.</p>
             </div>
           </li>
           <li>
@@ -250,7 +248,7 @@
             <span class="feature-number">08</span>
             <div>
               <strong data-copy="feature-8-title">Open Markdown from macOS or Windows</strong>
-              <p data-copy="feature-8-body">The installed app appears in the system Open With list for .md, .markdown, .mkd, and .mdx files. You can also choose LumaReader as the default Markdown app through Finder or Windows Settings.</p>
+              <p data-copy="feature-8-body">Installed builds appear in Open With for .md, .markdown, .mkd, and .mdx. Each file opens in an editable window, up to eight at a time; reopening the same file focuses its window. To make LumaReader your default, use Finder’s Get Info → Open with → Change All, or Windows Settings → Apps → Default apps. LumaReader does not change system defaults at launch.</p>
             </div>
           </li>
         </ol>

@@ -190,7 +190,7 @@
                 <label><span data-i18n="source">Source</span><input type="checkbox" data-toolbar-visibility="source" /></label>
                 <label><span data-i18n="media">Media</span><input type="checkbox" data-toolbar-visibility="media" /></label>
                 <label><span data-i18n="textSize">Text size</span><input type="checkbox" data-toolbar-visibility="textSize" checked /></label>
-                <label><span data-i18n="exportPdf">Export PDF</span><input type="checkbox" data-toolbar-visibility="exportPdf" checked /></label>
+                <label><span data-i18n="exportPdf">Export PDF</span><input type="checkbox" data-toolbar-visibility="exportPdf" /></label>
                 <button id="toolbar-reset" class="toolbar-reset" type="button" data-i18n="restoreToolbar">Restore default toolbar</button>
               </section>
             </div>
@@ -234,7 +234,7 @@
           </button>
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
-        <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="off" hidden></textarea>
+        <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="soft" hidden></textarea>
         <input id="editor-image-picker" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
         <div id="editor-image-drop" class="editor-image-drop" aria-hidden="true" hidden>
           <span aria-hidden="true">▧</span>
@@ -331,7 +331,7 @@
       <div class="onboarding-spotlight" aria-hidden="true"></div>
       <section class="onboarding-card">
         <div id="onboarding-progress" class="onboarding-progress" aria-label="Tour progress"></div>
-        <p id="onboarding-kicker" class="onboarding-kicker">Step 1 of 4</p>
+        <p id="onboarding-kicker" class="onboarding-kicker">Step 1 of 5</p>
         <h2 id="onboarding-title">Choose your library</h2>
         <p id="onboarding-copy">Start with a folder. LumaReader keeps your files on this device.</p>
         <div class="onboarding-actions">

@@ -7,12 +7,14 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const packageMetadata = require("../package.json");
 const { LocalReaderService } = require("./local-server");
-const { firstMarkdownSource, sourceFromFileArgument } = require("./open-target");
+const { markdownSources, sourceFromFileArgument } = require("./open-target");
+const { fileURLToPath, pathToFileURL } = require("node:url");
+const { DocumentWindows } = require("./document-windows");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
-const APP_ID = PREVIEW_BUILD ? "com.kainnne.lumareader.preview" : "com.kainnne.lumareader";
-const APP_TITLE = PREVIEW_BUILD ? "Kainnne LumaReader Preview" : "Kainnne LumaReader";
+const APP_ID = PREVIEW_BUILD ? "com.kainnne.lumareader.candidate" : "com.kainnne.lumareader";
+const APP_TITLE = PREVIEW_BUILD ? "LumaReader Candidate" : "Kainnne LumaReader";
 const PREFERENCE_KEYS = new Set([
   "appMode",
   "editorPreview",
@@ -42,15 +44,35 @@ app.setPath("userData", path.join(app.getPath("appData"), APP_TITLE));
 const singleInstance = app.requestSingleInstanceLock();
 if (!singleInstance) app.quit();
 
-let mainWindow = null;
-let readerService = null;
 let settingsPath = null;
 let settings = { libraryRoot: null, preferences: {} };
-let shutdownStarted = false;
-let readerOrigin = null;
-let pendingSource = null;
-const pendingCreateDestinations = new Map();
+let settingsWrite = Promise.resolve();
+let ready = false;
+const pendingSources = [];
+const contexts = new Map();
+const closingServices = new Set();
+const documents = new DocumentWindows({ maxWindows: 8 });
 const CREATE_DESTINATION_TTL_MS = 10 * 60 * 1000;
+let openQueue = Promise.resolve();
+
+function focusedContext() {
+  return contexts.get(BrowserWindow.getFocusedWindow()?.webContents.id) || contexts.values().next().value;
+}
+function contextFor(event) {
+  const context = contexts.get(event.sender.id);
+  if (!context || event.senderFrame !== event.sender.mainFrame) throw new Error("This request is not allowed.");
+  const url = new URL(event.senderFrame.url);
+  if (url.origin !== context.origin || !["/", "/index.html"].includes(url.pathname)) throw new Error("This request is not allowed.");
+  return context;
+}
+function handle(channel, callback) {
+  ipcMain.handle(channel, (event, ...args) => callback(contextFor(event), event, ...args));
+}
+function focusWindow(window) {
+  if (window.isMinimized()) window.restore();
+  window.show();
+  window.focus();
+}
 
 function sourceFromProtocol(value) {
   try {
@@ -62,29 +84,44 @@ function sourceFromProtocol(value) {
   }
 }
 
-function registerProtocol() {
-  if (process.defaultApp && process.argv[1]) {
-    app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
-  } else {
-    app.setAsDefaultProtocolClient(PROTOCOL);
+// OS associations are declared by the release bundle. Never rewrite them at launch.
+function openSource(source) {
+  if (typeof source !== "string" || !source) return false;
+  if (!ready) {
+    if (!pendingSources.includes(source) && pendingSources.length < 8) pendingSources.push(source);
+    return true;
   }
+  openQueue = openQueue.then(() => openDocumentWindow(source)).catch((error) => {
+    dialog.showErrorBox("Unable to open document", error.message || String(error));
+  });
+  return true;
 }
 
-function openSource(source) {
-  if (typeof source !== "string") return false;
-  pendingSource = source || null;
-  if (mainWindow && readerOrigin) {
-    if (pendingSource) {
-      const target = new URL(readerOrigin);
-      target.searchParams.set("source", pendingSource);
-      pendingSource = null;
-      mainWindow.loadURL(target.href);
-    }
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.show();
-    mainWindow.focus();
+function openEmptyWindow() {
+  openQueue = openQueue.then(() => {
+    const context = focusedContext();
+    return context ? focusWindow(context.window) : createWindow();
+  }).catch((error) => dialog.showErrorBox("Unable to open window", error.message));
+}
+
+async function openDocumentWindow(source) {
+  const target = await documents.resolve(source);
+  const existing = documents.find(target.key);
+  if (existing) { focusWindow(existing.window); return existing; }
+  if (contexts.size >= 8) throw new Error("Eight document windows are already open. Close a window before opening another document.");
+  return createWindow(target);
+}
+
+async function chooseFiles(context = focusedContext()) {
+  const result = await dialog.showOpenDialog(context?.window, {
+    title: "Open Markdown", properties: ["openFile", "multiSelections"],
+    filters: [{ name: "Markdown", extensions: ["md", "markdown", "mkd", "mdx"] }],
+  });
+  if (!result.canceled) {
+    if (result.filePaths.length > 8) throw new Error("Open up to eight Markdown files at a time.");
+    for (const filePath of result.filePaths) openFile(filePath);
   }
-  return true;
+  return { canceled: result.canceled };
 }
 
 function openProtocol(value) {
@@ -100,7 +137,7 @@ function openFile(value) {
 for (const argument of process.argv) {
   if (openProtocol(argument)) break;
 }
-if (!pendingSource) openSource(firstMarkdownSource(process.argv));
+if (!pendingSources.length) for (const source of markdownSources(process.argv)) openSource(source);
 
 app.on("open-url", (event, url) => {
   event.preventDefault();
@@ -157,12 +194,20 @@ async function loadSettings() {
   settings.libraryRoot = validDirectory(commandLineRoot) || validDirectory(environmentRoot) || settings.libraryRoot;
 }
 
-async function saveSettings() {
-  await fsp.mkdir(path.dirname(settingsPath), { recursive: true });
-  await fsp.writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+function saveSettings() {
+  const snapshot = `${JSON.stringify(settings, null, 2)}\n`;
+  const write = settingsWrite.catch(() => {}).then(async () => {
+    await fsp.mkdir(path.dirname(settingsPath), { recursive: true });
+    const temporary = `${settingsPath}.tmp`;
+    await fsp.writeFile(temporary, snapshot, "utf8");
+    await fsp.rename(temporary, settingsPath);
+  });
+  settingsWrite = write;
+  return write;
 }
 
-async function chooseLibrary({ automatic = false } = {}) {
+async function chooseLibrary(context = focusedContext(), { automatic = false } = {}) {
+  const { window: mainWindow, service: readerService } = context;
   const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
   const result = await dialog.showOpenDialog(window, {
     title: "Choose your document library",
@@ -176,13 +221,17 @@ async function chooseLibrary({ automatic = false } = {}) {
   }
   const selectedRoot = readerService.setLibraryRoot(result.filePaths[0]);
   settings.libraryRoot = selectedRoot;
+  context.preferences.lastDocumentPath = null;
+  context.documentPath = null;
+  documents.update(context, null);
   await saveSettings();
   const payload = { selected: true, root: selectedRoot, canceled: false, automatic };
   mainWindow?.webContents.send("library:changed", payload);
   return payload;
 }
 
-async function chooseDocumentDirectory({ directory = "" } = {}) {
+async function chooseDocumentDirectory(context, { directory = "" } = {}) {
+  const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
   const currentRoot = readerService.getLibraryRoot();
   let defaultPath = currentRoot || app.getPath("desktop");
@@ -229,9 +278,10 @@ function installMenu() {
     {
       label: "File",
       submenu: [
-        { label: "Change Document Library…", click: () => chooseLibrary() },
-        { label: "Save Markdown", accelerator: "CmdOrCtrl+S", click: () => mainWindow?.webContents.send("editor:save-requested") },
-        { label: "Export as PDF…", accelerator: "CmdOrCtrl+Shift+E", click: () => mainWindow?.webContents.send("document:export-pdf-requested") },
+        { label: "Open Markdown…", accelerator: "CmdOrCtrl+O", click: () => chooseFiles().catch((error) => dialog.showErrorBox("Unable to open document", error.message)) },
+        { label: "Change Document Library…", click: () => chooseLibrary().catch((error) => dialog.showErrorBox("Unable to choose folder", error.message)) },
+        { label: "Save Markdown", accelerator: "CmdOrCtrl+S", click: () => focusedContext()?.window.webContents.send("editor:save-requested") },
+        { label: "Export as PDF…", accelerator: "CmdOrCtrl+Shift+E", click: () => focusedContext()?.window.webContents.send("document:export-pdf-requested") },
         { type: "separator" },
         process.platform === "darwin" ? { role: "close" } : { role: "quit" },
       ],
@@ -252,9 +302,9 @@ function installMenu() {
     {
       label: "View",
       submenu: [
-        { label: "Larger Reader Text", accelerator: "CmdOrCtrl+Plus", click: () => mainWindow?.webContents.send("reader:font-size-requested", 1) },
-        { label: "Smaller Reader Text", accelerator: "CmdOrCtrl+-", click: () => mainWindow?.webContents.send("reader:font-size-requested", -1) },
-        { label: "Reset Reader Text", accelerator: "CmdOrCtrl+0", click: () => mainWindow?.webContents.send("reader:font-size-requested", 0) },
+        { label: "Larger Reader Text", accelerator: "CmdOrCtrl+Plus", click: () => focusedContext()?.window.webContents.send("reader:font-size-requested", 1) },
+        { label: "Smaller Reader Text", accelerator: "CmdOrCtrl+-", click: () => focusedContext()?.window.webContents.send("reader:font-size-requested", -1) },
+        { label: "Reset Reader Text", accelerator: "CmdOrCtrl+0", click: () => focusedContext()?.window.webContents.send("reader:font-size-requested", 0) },
       ],
     },
   ];
@@ -273,70 +323,113 @@ function pdfFileName(value) {
 
 function protectNavigation(window, origin) {
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//i.test(url) && !url.startsWith(origin)) shell.openExternal(url);
+    if (/^https?:\/\//i.test(url) && new URL(url).origin !== origin) void shell.openExternal(url);
     return { action: "deny" };
   });
   window.webContents.on("will-navigate", (event, url) => {
-    if (url.startsWith(origin)) return;
+    const destination = new URL(url);
+    if (destination.origin === origin && ["/", "/index.html"].includes(destination.pathname)) return;
     event.preventDefault();
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
   });
 }
 
-async function createWindow() {
-  readerOrigin = `http://127.0.0.1:${readerService.port}`;
-  mainWindow = new BrowserWindow({
-    width: 1360,
-    height: 880,
-    minWidth: 360,
-    minHeight: 520,
-    show: false,
-    backgroundColor: "#fff2f7",
-    icon: path.join(__dirname, "..", "build", "icon.png"),
-    title: APP_TITLE,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      webSecurity: true,
-    },
+async function createWindow(target = null) {
+  const accessToken = crypto.randomBytes(32).toString("hex");
+  const readerService = new LocalReaderService({
+    rendererRoot: path.join(__dirname, "..", "renderer"),
+    libraryRoot: target?.root || settings.libraryRoot,
+    accessToken,
   });
-  protectNavigation(mainWindow, readerOrigin);
-  mainWindow.once("ready-to-show", () => mainWindow.show());
-  mainWindow.on("closed", () => { mainWindow = null; });
-  const target = new URL(readerOrigin);
-  if (pendingSource) {
-    target.searchParams.set("source", pendingSource);
-    pendingSource = null;
+  await readerService.listen(0);
+  const origin = `http://127.0.0.1:${readerService.port}`;
+  let window;
+  try {
+    window = new BrowserWindow({
+      width: 1360, height: 880, minWidth: 360, minHeight: 520, show: false,
+      backgroundColor: "#fff2f7", icon: path.join(__dirname, "..", "build", "icon.png"), title: APP_TITLE,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"), contextIsolation: true,
+        nodeIntegration: false, sandbox: true, webSecurity: true,
+        partition: `lumareader-window-${crypto.randomUUID()}`,
+      },
+    });
+    const context = { window, service: readerService, origin, documentPath: target?.key || null,
+      pendingCreateDestinations: new Map(), preferences: { ...settings.preferences } };
+    if (target) context.preferences.lastDocumentPath = null;
+    contexts.set(window.webContents.id, context);
+    documents.add(context, target?.key || null);
+    const session = window.webContents.session;
+    session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
+    session.setPermissionCheckHandler(() => false);
+    session.webRequest.onBeforeSendHeaders({ urls: [`${origin}/*`] }, (details, callback) => {
+      callback({ requestHeaders: { ...details.requestHeaders, "X-LumaReader-Token": accessToken } });
+    });
+    protectNavigation(window, origin);
+    window.webContents.on("page-title-updated", (event) => event.preventDefault());
+    window.setTitle(target?.path ? `${target.path} — ${APP_TITLE}` : APP_TITLE);
+    window.webContents.on("will-prevent-unload", async () => {
+      const result = await dialog.showMessageBox(window, {
+        type: "warning", message: "This document has unsaved changes.",
+        detail: "Keep editing to save your changes, or close this window and discard them.",
+        buttons: ["Keep editing", "Discard and close"], defaultId: 0, cancelId: 0, noLink: true,
+      });
+      if (result.response === 1 && !window.isDestroyed()) window.destroy();
+    });
+    window.once("ready-to-show", () => window.show());
+    const contentsId = window.webContents.id;
+    window.on("closed", () => {
+      contexts.delete(contentsId);
+      documents.remove(context);
+      const closing = readerService.close().finally(() => closingServices.delete(closing));
+      closingServices.add(closing);
+    });
+    const url = new URL(origin);
+    if (target) url.searchParams.set("source", target.path || target.source);
+    await window.loadURL(url.href);
+    return context;
+  } catch (error) {
+    if (window && !window.isDestroyed()) window.destroy();
+    await readerService.close();
+    throw error;
   }
-  await mainWindow.loadURL(target.href);
 }
 
-ipcMain.handle("library:get", () => ({ selected: Boolean(settings.libraryRoot), root: settings.libraryRoot }));
-ipcMain.handle("library:choose", () => chooseLibrary());
-ipcMain.handle("document:choose-directory", async (event, payload) => {
+handle("library:get", (context) => ({ selected: Boolean(context.service.getLibraryRoot()), root: context.service.getLibraryRoot() }));
+handle("library:choose", (context) => chooseLibrary(context));
+handle("document:open", (context) => chooseFiles(context));
+handle("document:activated", (context, _event, documentPath) => {
+  try { documents.update(context, context.service.resolveProjectDocument(documentPath)); context.window.setTitle(`${path.basename(documentPath)} — ${APP_TITLE}`); } catch { documents.update(context, null); }
+  return true;
+});
+handle("document:choose-directory", async (context, event, payload) => {
+  const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { selected: false, canceled: true, code: "INVALID_SENDER" };
   }
-  return chooseDocumentDirectory(payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {});
+  return chooseDocumentDirectory(context, payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {});
 });
-ipcMain.handle("document:cancel-create", (event, destinationToken) => {
+handle("document:cancel-create", (context, event, destinationToken) => {
+  const { window: mainWindow, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) return false;
   if (typeof destinationToken === "string") pendingCreateDestinations.delete(destinationToken);
   return true;
 });
-ipcMain.handle("preferences:get", () => ({ ...settings.preferences }));
-ipcMain.handle("preferences:set", async (_event, patch) => {
-  if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...settings.preferences };
+handle("preferences:get", (context) => ({ ...context.preferences }));
+handle("preferences:set", async (context, _event, patch) => {
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...context.preferences };
   const serialized = JSON.stringify(patch);
   if (Buffer.byteLength(serialized, "utf8") > 16 * 1024) throw new Error("Preference update is too large");
   const safePatch = sanitizePreferences(patch);
-  settings.preferences = { ...settings.preferences, ...safePatch };
+  context.preferences = { ...context.preferences, ...safePatch };
+  const sharedPatch = { ...safePatch };
+  if (context.service.getLibraryRoot() !== settings.libraryRoot) delete sharedPatch.lastDocumentPath;
+  settings.preferences = { ...settings.preferences, ...sharedPatch };
   await saveSettings();
-  return { ...settings.preferences };
+  return { ...context.preferences };
 });
-ipcMain.handle("document:save", async (event, payload) => {
+handle("document:save", async (context, event, payload) => {
+  const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { ok: false, code: "INVALID_SENDER", message: "This save request is not allowed." };
   }
@@ -354,7 +447,8 @@ ipcMain.handle("document:save", async (event, payload) => {
     };
   }
 });
-ipcMain.handle("document:import-image", async (event, payload) => {
+handle("document:import-image", async (context, event, payload) => {
+  const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { ok: false, code: "INVALID_SENDER", message: "This image import is not allowed." };
   }
@@ -369,7 +463,8 @@ ipcMain.handle("document:import-image", async (event, payload) => {
     return { ok: false, code: error.code || "IMAGE_IMPORT_FAILED", message: error.message || "Unable to add this image." };
   }
 });
-ipcMain.handle("document:export-pdf", async (event, payload) => {
+handle("document:export-pdf", async (context, event, payload) => {
+  const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { ok: false, code: "INVALID_SENDER", message: "This PDF export request is not allowed." };
   }
@@ -397,7 +492,8 @@ ipcMain.handle("document:export-pdf", async (event, payload) => {
     return { ok: false, code: "PDF_EXPORT_FAILED", message: error.message || "Unable to export this document as PDF." };
   }
 });
-ipcMain.handle("document:create", async (event, payload) => {
+handle("document:create", async (context, event, payload) => {
+  const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { ok: false, code: "INVALID_SENDER", message: "This create request is not allowed." };
   }
@@ -437,48 +533,37 @@ ipcMain.handle("document:create", async (event, payload) => {
 });
 
 app.on("second-instance", (_event, commandLine) => {
-  for (const argument of commandLine) {
-    if (openProtocol(argument)) return;
-  }
-  const markdownSource = firstMarkdownSource(commandLine);
-  if (markdownSource) {
-    openSource(markdownSource);
-    return;
-  }
-  if (!mainWindow) return;
-  if (mainWindow.isMinimized()) mainWindow.restore();
-  mainWindow.show();
-  mainWindow.focus();
+  for (const argument of commandLine) { if (openProtocol(argument)) return; }
+  const sources = markdownSources(commandLine);
+  if (sources.length) { for (const source of sources) openSource(source); return; }
+  const context = focusedContext();
+  if (context) focusWindow(context.window);
+  else if (ready) openEmptyWindow();
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0 && readerService) createWindow();
+  if (ready && !contexts.size) openEmptyWindow();
 });
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
 
 app.whenReady().then(async () => {
+  if (!singleInstance) return;
   app.setAppUserModelId(APP_ID);
-  registerProtocol();
   await loadSettings();
-  readerService = new LocalReaderService({
-    rendererRoot: path.join(__dirname, "..", "renderer"),
-    libraryRoot: settings.libraryRoot,
-  });
-  const requestedPort = Number(process.argv.find((argument) => argument.startsWith("--reader-port="))?.slice("--reader-port=".length) || 0);
-  await readerService.listen(Number.isInteger(requestedPort) && requestedPort >= 0 ? requestedPort : 0);
   installMenu();
-  await createWindow();
+  ready = true;
+  if (pendingSources.length) {
+    for (const source of pendingSources.splice(0)) openSource(source);
+  } else openEmptyWindow();
 }).catch((error) => {
   dialog.showErrorBox(`${APP_TITLE} could not start`, error.stack || error.message || String(error));
   app.quit();
 });
 
+let shutdownStarted = false;
 app.on("will-quit", (event) => {
-  if (!readerService?.server?.listening || shutdownStarted) return;
+  if (shutdownStarted) return;
   event.preventDefault();
   shutdownStarted = true;
-  readerService.close().finally(() => app.exit(0));
+  Promise.allSettled([...closingServices, settingsWrite]).finally(() => app.exit(0));
 });

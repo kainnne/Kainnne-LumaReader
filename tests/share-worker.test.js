@@ -108,7 +108,7 @@ test("download redirects increment one platform atomically", async () => {
   const database = new FakeD1();
   const response = await handler.fetch(new Request("https://lumareader-share.example/d/macos"), { DOWNLOADS_DB: database });
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.1.0/Kainnne-LumaReader-1.1.0-macOS-universal.dmg");
+  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.2.0/Kainnne-LumaReader-1.2.0-macOS-universal.dmg");
   assert.equal(database.values.macos, 1);
   assert.equal(database.values.windows, 0);
 });

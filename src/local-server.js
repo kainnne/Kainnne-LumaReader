@@ -1,6 +1,8 @@
 "use strict";
 
 const http = require("node:http");
+const crypto = require("node:crypto");
+const saveQueues = new Map();
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
@@ -37,8 +39,10 @@ const IGNORED_DIRECTORIES = new Set([
   "release",
 ]);
 const DEFAULT_SCAN_LIMITS = Object.freeze({
-  maxDirectories: 2_000,
-  maxFiles: 20_000,
+  maxDirectories: 256,
+  totalTimeoutMs: 10_000,
+  statConcurrency: 16,
+  maxFiles: 2_000,
   pathResolutionTimeoutMs: 1_200,
   readDirectoryTimeoutMs: 1_200,
   statFileTimeoutMs: 1_200,
@@ -278,12 +282,14 @@ async function scanDocuments(root, options = {}) {
   const limits = { ...DEFAULT_SCAN_LIMITS, ...options };
   const resolvedRoot = await resolvePathWithin(root, limits.pathResolutionTimeoutMs);
   if (!resolvedRoot) throw new HttpError("The selected folder could not be scanned", 408, "LIBRARY_SCAN_TIMEOUT");
+  const deadline = Date.now() + limits.totalTimeoutMs;
   const records = [];
   const directories = [resolvedRoot];
   let directoryIndex = 0;
 
   while (
-    directoryIndex < directories.length
+    Date.now() < deadline
+    && directoryIndex < directories.length
     && directoryIndex < limits.maxDirectories
     && records.length < limits.maxFiles
   ) {
@@ -306,7 +312,8 @@ async function scanDocuments(root, options = {}) {
       files.push(absolute);
       if (records.length + files.length >= limits.maxFiles) break;
     }
-    await Promise.all(files.map(async (absolute) => {
+    for (let start = 0; start < files.length && Date.now() < deadline; start += limits.statConcurrency) {
+    await Promise.all(files.slice(start, start + limits.statConcurrency).map(async (absolute) => {
       try {
         const stat = await statFileWithin(absolute, limits.statFileTimeoutMs);
         if (!stat) return;
@@ -315,6 +322,7 @@ async function scanDocuments(root, options = {}) {
         // A disappearing file should not prevent the rest of the library from loading.
       }
     }));
+    }
   }
   return records.sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }));
 }
@@ -341,7 +349,7 @@ async function readDocument(filePath) {
   return { text: decodeUtf8(await fsp.readFile(filePath)), stat, type };
 }
 
-async function expandIncludes(text, baseDirectory, boundary, seen = new Set(), depth = 0) {
+async function expandIncludes(text, baseDirectory, boundary, seen = new Set(), depth = 0, budget = { bytes: LIMITS.markdownBytes, count: 64 }) {
   if (depth >= 6) return text;
   const output = [];
   for (const line of text.split(/\r?\n/)) {
@@ -357,6 +365,8 @@ async function expandIncludes(text, baseDirectory, boundary, seen = new Set(), d
       output.push(line);
       continue;
     }
+    if (budget.count <= 0 || budget.bytes <= 0) { output.push("> Include limit reached."); continue; }
+    budget.count -= 1;
     let candidate = path.resolve(baseDirectory, includePath);
     try {
       candidate = await fsp.realpath(candidate);
@@ -371,7 +381,9 @@ async function expandIncludes(text, baseDirectory, boundary, seen = new Set(), d
     try {
       const included = await readDocument(candidate);
       if (included.type.kind !== "markdown") throw new Error("Includes are Markdown-only");
-      output.push(await expandIncludes(included.text, path.dirname(candidate), boundary, new Set([...seen, candidate]), depth + 1));
+      budget.bytes -= Buffer.byteLength(included.text, "utf8");
+      if (budget.bytes < 0) throw new Error("Include size limit exceeded");
+      output.push(await expandIncludes(included.text, path.dirname(candidate), boundary, new Set([...seen, candidate]), depth + 1, budget));
     } catch {
       output.push(`> [!WARNING]\n> Include unavailable: \`${includePath}\``);
     }
@@ -707,9 +719,11 @@ function publicDocumentTypes() {
 }
 
 class LocalReaderService {
-  constructor({ rendererRoot, libraryRoot = null }) {
+  constructor({ rendererRoot, libraryRoot = null, accessToken = null }) {
     this.rendererRoot = fs.realpathSync(path.resolve(rendererRoot));
     this.libraryRoot = null;
+    this.accessToken = accessToken;
+    this.scanPromise = null;
     this.server = null;
     this.port = null;
     this.preflightCache = new Map();
@@ -768,8 +782,13 @@ class LocalReaderService {
 
   sourceToLocalPath(source) {
     const clean = String(source || "").trim();
-    if (clean.startsWith("file://")) return { filePath: fs.realpathSync(fileURLToPath(clean)), sourceType: "external" };
-    if (path.isAbsolute(clean)) return { filePath: fs.realpathSync(path.resolve(clean)), sourceType: "external" };
+    if (clean.startsWith("file://") || path.isAbsolute(clean)) {
+      const filePath = fs.realpathSync(clean.startsWith("file://") ? fileURLToPath(clean) : path.resolve(clean));
+      if (this.libraryRoot && isInside(this.libraryRoot, filePath)) return { filePath, sourceType: "project" };
+      // Desktop sessions may read only the folder explicitly opened by the user.
+      if (this.accessToken) throw new HttpError("Open this document in its own window", 403, "PATH_OUTSIDE_LIBRARY");
+      return { filePath, sourceType: "external" };
+    }
     return { filePath: this.resolveProjectDocument(clean), sourceType: "project" };
   }
 
@@ -782,7 +801,16 @@ class LocalReaderService {
   }
 
   async saveMarkdownDocument(rawPath, text, expectedModifiedNs = null) {
-    const filePath = this.resolveProjectDocument(rawPath);
+    const key = this.resolveProjectDocument(rawPath);
+    const previous = saveQueues.get(key) || Promise.resolve();
+    const pending = previous.catch(() => {}).then(() => this.writeMarkdownDocument(key, text, expectedModifiedNs));
+    saveQueues.set(key, pending);
+    try { return await pending; } finally { if (saveQueues.get(key) === pending) saveQueues.delete(key); }
+  }
+
+  async writeMarkdownDocument(filePath, text, expectedModifiedNs = null) {
+    // Recheck after the prior save completes, including changes to this window's folder.
+    if (this.resolveProjectDocument(path.relative(this.libraryRoot, filePath)) !== filePath) throw new HttpError("Document moved", 409, "DOCUMENT_CHANGED");
     const publicPath = path.relative(this.libraryRoot, filePath).split(path.sep).join("/");
     const { stat, type } = await statDocument(filePath);
     if (type.kind !== "markdown") {
@@ -805,13 +833,23 @@ class LocalReaderService {
         throw new HttpError("This document changed outside LumaReader. Reopen it before saving.", 409, "DOCUMENT_CHANGED");
       }
     }
+    const temporary = path.join(path.dirname(filePath), `.${path.basename(filePath)}.lumareader-${crypto.randomUUID()}.tmp`);
     try {
-      await fsp.writeFile(filePath, text, { encoding: "utf8", flag: "w" });
+      // Verify write permission before atomic replacement (a writable directory is insufficient).
+      await fsp.access(filePath, fs.constants.W_OK);
+      const handle = await fsp.open(temporary, "wx", stat.mode & 0o777);
+      try { await handle.writeFile(text, "utf8"); await handle.sync(); } finally { await handle.close(); }
+      const current = await fsp.stat(filePath);
+      if (current.mtimeMs !== stat.mtimeMs || current.size !== stat.size || current.ino !== stat.ino ||
+          await fsp.realpath(filePath) !== filePath) throw new HttpError("This document changed while saving", 409, "DOCUMENT_CHANGED");
+      await fsp.rename(temporary, filePath);
     } catch (error) {
       if (["EACCES", "EPERM", "EROFS"].includes(error.code)) {
         throw new HttpError("This document is read-only or LumaReader does not have permission to save it.", 403, "DOCUMENT_NOT_WRITABLE");
       }
       throw error;
+    } finally {
+      await fsp.unlink(temporary).catch(() => {});
     }
     return localPayload(filePath, "project", this.libraryRoot, publicPath, (target, targetType, targetStat) => this.preflightBinary(target, targetType, targetStat));
   }
@@ -964,6 +1002,13 @@ class LocalReaderService {
     return this.sourceToLocalPath(source).filePath;
   }
 
+  async scanLibrary() {
+    if (this.scanPromise) return this.scanPromise;
+    const pending = scanDocuments(this.libraryRoot);
+    this.scanPromise = pending;
+    try { return await pending; } finally { if (this.scanPromise === pending) this.scanPromise = null; }
+  }
+
   async handleApi(request, response, url) {
     if (url.pathname === "/api/health") {
       sendJson(response, { ok: true, app: APP_NAME, version: APP_VERSION, root: this.libraryRoot, selected: Boolean(this.libraryRoot) });
@@ -987,7 +1032,7 @@ class LocalReaderService {
         extensions: [...DOCUMENT_EXTENSIONS].sort(),
         types: publicDocumentTypes(),
         explicitlyUnsupported: [...EXPLICITLY_UNSUPPORTED_EXTENSIONS].sort(),
-        files: await scanDocuments(this.libraryRoot),
+        files: await this.scanLibrary(),
       });
       return true;
     }
@@ -1063,6 +1108,12 @@ class LocalReaderService {
       if (!["GET", "HEAD"].includes(request.method || "GET")) throw new HttpError("Method not allowed", 405, "METHOD_NOT_ALLOWED");
       const host = String(request.headers.host || "127.0.0.1").split(":")[0].toLowerCase();
       if (!["127.0.0.1", "localhost"].includes(host)) throw new HttpError("Host is not allowed", 403, "HOST_NOT_ALLOWED");
+      if (this.accessToken) {
+        const supplied = String(request.headers["x-lumareader-token"] || "");
+        if (Buffer.byteLength(supplied) !== Buffer.byteLength(this.accessToken) || !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(this.accessToken))) {
+          throw new HttpError("This reader session is private", 403, "SESSION_REQUIRED");
+        }
+      }
       const url = new URL(request.url, "http://127.0.0.1");
       if (url.pathname.startsWith("/api/")) {
         if (!await this.handleApi(request, response, url)) sendError(response, new HttpError("API endpoint not found", 404, "API_NOT_FOUND"));

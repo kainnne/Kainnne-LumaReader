@@ -3,7 +3,7 @@
 
   const ALL_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx", ".txt", ".log"]);
   const DEFAULT_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx"]);
-  const ONBOARDING_VERSION = 4;
+  const ONBOARDING_VERSION = 5;
   const STORAGE_FORMATS = "lumareader-text-formats-v2";
   const STORAGE_TOUR = "lumareader-onboarding-version";
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -18,10 +18,11 @@
       close: "Close format selector",
       footnote: "Markdown types are selected by default. Enable .txt or .log when needed.",
       steps: [
-        ["Choose your library", "Select the folder that contains your Markdown and text files."],
+        ["Choose your library", "Open a Markdown file to edit it in its own window with its folder in the sidebar, or choose a folder to browse."],
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
-        ["Read your way", "Use vertical, horizontal, or paged reading. Both scroll directions remain available when the content needs them."],
-        ["Make the toolbar yours", "Open Appearance & toolbar to switch light or dark mode, choose a palette, change language, or hide controls you do not use."],
+        ["Read your way", "Use vertical, horizontal, or paged reading. In vertical mode, text wraps to the available width, including while editing."],
+        ["Make the toolbar yours", "Open Appearance & toolbar to switch light or dark mode, choose a palette, change language, or hide controls you do not use. Source, Media, and Export PDF start hidden; enable them here when needed."],
+        ["Choose a default Markdown app", "You can choose LumaReader in Finder’s Get Info → Open with → Change All, or Windows Settings → Apps → Default apps. This is optional; LumaReader does not change your defaults at launch."],
       ],
       step: "Step {current} of {total}",
       next: "Next",
@@ -36,10 +37,11 @@
       close: "關閉格式選單",
       footnote: "預設選取 Markdown 類型；需要時再啟用 .txt 或 .log。",
       steps: [
-        ["選擇文件資料夾", "選取包含 Markdown 與文字檔案的資料夾。"],
+        ["選擇文件資料夾", "開啟 Markdown 後，可在獨立視窗編輯，左側會顯示檔案所在的資料夾；也能自行選取資料夾瀏覽。"],
         ["選擇檔案格式", "Markdown 預設開啟；需要時才將 .txt 或 .log 加入清單。"],
-        ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；內容需要時仍可橫向與縱向捲動。"],
-        ["調整成你習慣的工具列", "從「外觀與工具列」切換亮暗模式與色系，也能變更語言或收起不常用的功能。"],
+        ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；直式內文與編輯文字會隨視窗寬度自動換行。"],
+        ["調整成你習慣的工具列", "從「外觀與工具列」切換亮暗模式與色系，也能變更語言。Source、Media 與 Export PDF 預設收起，需要時可在這裡開啟。"],
+        ["自行選擇 Markdown 預設程式", "桌面版可設為 Markdown 預設程式：Mac 請到 Finder「取得資訊 → 打開方式 → 全部更改」；Windows 請到「設定 → 應用程式 → 預設應用程式」。由你自行選擇，LumaReader 不會在啟動時更改預設值。"],
       ],
       step: "步驟 {current} / {total}",
       next: "下一步",
@@ -157,7 +159,7 @@
     return Number(preferences.onboardingVersion ?? localStorage.getItem(STORAGE_TOUR) ?? 0);
   }
 
-  const tourTargets = ["#change-library", "#format-filter-toggle", "#reading-mode-toggle", "#palette-toggle"];
+  const tourTargets = ["#change-library", "#format-filter-toggle", "#reading-mode-toggle", "#palette-toggle", "#choose-file"];
 
   function positionSpotlight(target) {
     if (!target || !els.spotlight) return;

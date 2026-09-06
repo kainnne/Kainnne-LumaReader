@@ -31,4 +31,7 @@ function firstMarkdownSource(argumentsList, options) {
   return null;
 }
 
-module.exports = { MARKDOWN_EXTENSIONS, firstMarkdownSource, sourceFromFileArgument };
+function markdownSources(argumentsList, options) {
+  return [...new Set((Array.isArray(argumentsList) ? argumentsList : []).map((value) => sourceFromFileArgument(value, options)).filter(Boolean))];
+}
+module.exports = { MARKDOWN_EXTENSIONS, firstMarkdownSource, markdownSources, sourceFromFileArgument };

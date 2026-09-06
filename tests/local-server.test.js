@@ -230,10 +230,10 @@ test("blocks Markdown saves through traversal and out-of-library symlinks", asyn
   assert.equal(fs.readFileSync(path.join(outside, "outside.md"), "utf8"), "outside");
 });
 
-test("opens an explicit supported file URL without changing the library", async () => {
+test("opens a file URL inside the selected library as an editable project document", async () => {
   const source = pathToFileURL(path.join(fixtureRoot, "sample.mdx")).href;
   const data = await service.openSource(source);
-  assert.equal(data.sourceType, "external");
+  assert.equal(data.sourceType, "project");
   assert.equal(data.name, "sample.mdx");
   assert.equal(service.getLibraryRoot(), fixtureRoot);
 });

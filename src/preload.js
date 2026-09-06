@@ -5,6 +5,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("lumaDesktop", {
   isDesktop: true,
   platform: process.platform,
+  openDocuments: () => ipcRenderer.invoke("document:open"),
+  documentActivated: (path) => ipcRenderer.invoke("document:activated", path),
   chooseLibrary: () => ipcRenderer.invoke("library:choose"),
   chooseCreateDirectory: (payload) => ipcRenderer.invoke("document:choose-directory", payload),
   cancelCreateDocument: (destinationToken) => ipcRenderer.invoke("document:cancel-create", destinationToken),

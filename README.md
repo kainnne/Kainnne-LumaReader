@@ -4,11 +4,12 @@ Kainnne LumaReader is a local-first Markdown desktop app focused on calm typogra
 
 ## Project status
 
-Version 1.1.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build and an unsigned Windows x64 build. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
+Version 1.2.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build and an unsigned Windows x64 build. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
 
 ## Highlights
 
-- Native folder selection on first launch.
+- Open Markdown from the desktop directly into an editable window with its folder in the sidebar. Up to eight document windows can remain open; reopening a file focuses its existing window.
+- Choose a folder library when you want to browse more documents.
 - The selected library is remembered between launches.
 - A compact **Library** button changes the folder at any time.
 - Recursive discovery of `.md`, `.mkd`, `.mdx`, and `.markdown` files.
@@ -31,8 +32,11 @@ Version 1.1.0 is the current desktop release. The same local-first Electron code
 - Every palette colors the application frame and accents while keeping the central reading paper neutral white in light mode and neutral charcoal in dark mode for clear text contrast.
 - Eleven interface languages. Document content is never translated automatically.
 - Reader text, Markdown source, and editor text share the same size control through the toolbar or `Command` / `Ctrl` with `+` and `-`.
+- Soft wrapping for vertical reading, source view, and editing on Desktop and Web.
+- Source, Media, and Export PDF are hidden by default and can be enabled in Settings.
+- Bounded scans, per-window loopback credentials, and atomic saves with conflict detection.
 - Compact responsive controls and a persistent sidebar toggle.
-- Installed macOS and Windows builds register `.md`, `.markdown`, `.mkd`, and `.mdx` so LumaReader appears in the system **Open With** menu and can be chosen as the default Markdown app.
+- Installed macOS and Windows builds register `.md`, `.markdown`, `.mkd`, and `.mdx` so LumaReader appears in the system **Open With** menu and can be chosen as the default Markdown app by the user through system settings. The app does not rewrite OS defaults at launch.
 
 ## Web edition
 

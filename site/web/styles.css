@@ -2740,3 +2740,25 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
   .prose .copy-code { display: none; }
   .prose img.document-image { max-height: 230mm; box-shadow: none; }
 }
+
+/* Candidate: soft wrapping changes visual layout only; saved Markdown stays exact. */
+.source-editor { white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; }
+.reader-shell[data-mode="vertical"] .raw-source,
+.reader-shell[data-mode="paged"][data-page-direction="vertical"] .raw-source {
+  white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal;
+}
+.reader-shell[data-mode="vertical"] .content,
+.reader-shell[data-mode="vertical"] .raw-source,
+.reader-shell[data-mode="vertical"] .source-editor { min-width: 0; overflow-x: hidden; }
+.reader-shell[data-mode="vertical"] .prose :is(p, li, blockquote, h1, h2, h3, h4, h5, h6) {
+  max-width: 100%; overflow-wrap: anywhere; word-break: normal;
+}
+.prose pre, .table-wrap { max-width: 100%; min-width: 0; }
+body.editor-preview-enabled .source-editor {
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  overflow-x: hidden !important; overflow-y: auto !important;
+}
+body.editor-preview-enabled .source-editor::-webkit-scrollbar { width: 8px; }
+body.editor-preview-enabled .content { overflow-x: hidden !important; }
+
+.prose pre.large-document-preview { white-space: pre-wrap; overflow-wrap: anywhere; }
