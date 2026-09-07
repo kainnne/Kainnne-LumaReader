@@ -2415,11 +2415,23 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
   @page {
     size: A4;
     margin: 4mm 4mm 11mm;
+
+    /* Chromium paints page margins separately from the document canvas. */
+    @top-left-corner { content: ""; background: var(--print-page); }
+    @top-center { content: ""; background: var(--print-page); }
+    @top-right-corner { content: ""; background: var(--print-page); }
+    @left-middle { content: ""; background: var(--print-page); }
+    /* Cover Chromium's subpixel gap between the canvas and right margin. */
+    @right-middle { content: ""; background: var(--print-page); margin-left: -.3mm; }
+    @bottom-left-corner { content: ""; background: var(--print-page); }
+    @bottom-center { content: ""; background: var(--print-page); }
+    @bottom-right-corner { content: ""; background: var(--print-page); }
   }
 
   :root,
   :root.dark {
     color-scheme: light;
+    --print-page: color-mix(in srgb, var(--accent) 10%, #fff);
     --reader-paper: #fff;
     --reader-ink: #242126;
     --reader-muted: #68616a;
@@ -2428,14 +2440,17 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
   }
 
   html,
-  body { min-width: 0; background: #fff !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  body { min-width: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  html { background: var(--print-page) !important; }
+  body { background: transparent !important; isolation: isolate; }
   body::before {
     content: "";
     position: fixed;
-    z-index: 999;
+    z-index: -1;
     inset: 0;
     border: .7mm solid color-mix(in srgb, var(--accent) 44%, #fff);
     border-radius: 5.5mm;
+    background: var(--reader-paper);
     pointer-events: none;
   }
   .app { display: block !important; min-height: 0; }
@@ -2477,7 +2492,7 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
     columns: auto;
     border: 0;
     border-radius: 0;
-    background: #fff;
+    background: transparent;
     box-shadow: none;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;

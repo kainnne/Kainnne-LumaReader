@@ -2668,11 +2668,26 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
 }
 
 @media print {
-  @page { size: A4; margin: 14mm 15mm 16mm; }
+  @page {
+    size: A4;
+    margin: 14mm 15mm 16mm;
+
+    /* Chromium paints page margins separately from the document canvas. */
+    @top-left-corner { content: ""; background: var(--print-page); }
+    @top-center { content: ""; background: var(--print-page); }
+    @top-right-corner { content: ""; background: var(--print-page); }
+    @left-middle { content: ""; background: var(--print-page); }
+    /* Cover Chromium's subpixel gap between the canvas and right margin. */
+    @right-middle { content: ""; background: var(--print-page); margin-left: -.3mm; }
+    @bottom-left-corner { content: ""; background: var(--print-page); }
+    @bottom-center { content: ""; background: var(--print-page); }
+    @bottom-right-corner { content: ""; background: var(--print-page); }
+  }
 
   :root,
   :root.dark {
     color-scheme: light;
+    --print-page: color-mix(in srgb, var(--accent) 10%, #fff);
     --reader-paper: #fff;
     --reader-ink: #242126;
     --reader-muted: #68616a;
@@ -2682,6 +2697,7 @@ body.editor-preview-resizing { cursor: col-resize; user-select: none; }
 
   html,
   body { min-width: 0; background: #fff !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  html { background: var(--print-page) !important; }
   .app { display: block !important; min-height: 0; }
   .sidebar,
   .sidebar-toggle,
