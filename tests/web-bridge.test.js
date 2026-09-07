@@ -4,7 +4,7 @@ const path = require("node:path");
 const test = require("node:test");
 const vm = require("node:vm");
 
-function loadWebBridge(hash = "", remoteFetch = async () => new Response("Not found", { status: 404 })) {
+function loadWebBridge(hash = "", remoteFetch = async () => new Response("Not found", { status: 404 }), navigatorOptions = {}) {
   const storage = new Map();
   const location = { href: `https://example.test/web/${hash}`, origin: "https://example.test", pathname: "/web/", hash };
   const window = {
@@ -27,7 +27,7 @@ function loadWebBridge(hash = "", remoteFetch = async () => new Response("Not fo
     clearTimeout,
     console,
     location,
-    navigator: { language: "en" },
+    navigator: { language: "en", ...navigatorOptions },
     setTimeout,
     localStorage: {
       getItem(key) { return storage.get(key) ?? null; },
@@ -122,14 +122,14 @@ test("web sharing prefers the temporary Cloudflare short link", async () => {
   assert.equal(shared.url, "https://lumareader-share.chaos60649.workers.dev/s/Ab3xK9pq");
 });
 
-test("the default web example promotes Desktop in English and Traditional Chinese", async () => {
+test("the default web example offers an interface trial and direct Desktop downloads in both languages", async () => {
   const window = loadWebBridge();
   await window.lumaWeb.ready;
   const response = await window.fetch(`/api/file?path=${encodeURIComponent("LumaReader Web.md")}`);
   const document = await response.json();
 
   assert.match(document.text, /^# LumaReader Web\n/);
-  assert.match(document.text, /## Start with LumaReader Desktop \/ 建議先下載 LumaReader 桌面版/);
+  assert.match(document.text, /## Try the interface \/ 先體驗介面/);
   assert.match(document.text, /Download LumaReader Desktop \/ 下載 LumaReader 桌面版/);
   assert.match(document.text, /## Read your way \/ 用喜歡的方式閱讀/);
   assert.match(document.text, /不必將文件上傳到伺服器/);
@@ -158,4 +158,34 @@ test("the Desktop download action sits beside Share Markdown in the Web toolbar"
   assert.ok(sourceIndex > desktopIndex);
   assert.match(html.slice(desktopIndex, sourceIndex), /href="\.\.\/#download"/);
   assert.doesNotMatch(html.match(/<div class="brand-row">[\s\S]*?<\/div>/)?.[0] || "", /web-home-link/);
+});
+
+
+test("Web download links match the desktop platform without guessing on mobile or unsupported systems", async (t) => {
+  const cases = [
+    [{ platform: "MacIntel", userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", maxTouchPoints: 0 }, "macos"],
+    [{ platform: "Win32", userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }, "windows"],
+    [{ platform: "Linux x86_64", userAgent: "Mozilla/5.0 (X11; Linux x86_64)" }, "linux"],
+    [{ userAgentData: { platform: "macOS", mobile: false } }, "macos"],
+    [{ platform: "MacIntel", userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", maxTouchPoints: 5 }, null],
+    [{ platform: "Linux armv8l", userAgent: "Mozilla/5.0 (Linux; Android 16) Mobile" }, null],
+    [{ platform: "Linux aarch64", userAgent: "Mozilla/5.0 (X11; Linux aarch64)" }, null],
+    [{ platform: "Linux x86_64", userAgent: "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0)" }, null],
+    [{ platform: "iPhone", userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X)" }, null],
+    [{}, null],
+  ];
+  for (const [navigatorOptions, platform] of cases) {
+    await t.test(JSON.stringify(navigatorOptions), async () => {
+      const window = loadWebBridge("", undefined, navigatorOptions);
+      await window.lumaWeb.ready;
+      assert.equal(window.lumaWeb.preferredDesktopDownload?.platform ?? null, platform);
+      const response = await window.fetch(`/api/file?path=${encodeURIComponent("LumaReader Web.md")}`);
+      const document = await response.json();
+      const downloadSection = document.text.split("## Download LumaReader Desktop")[1];
+      assert.ok(downloadSection);
+      assert.doesNotMatch(document.text, /\(\.\.\/#download\)/);
+      const links = [...downloadSection.matchAll(/https:\/\/lumareader-share\.chaos60649\.workers\.dev\/d\/(macos|windows|linux)/g)].map((match) => match[1]);
+      assert.deepEqual(links, platform ? [platform] : ["macos", "windows", "linux"]);
+    });
+  }
 });

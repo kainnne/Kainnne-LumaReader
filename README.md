@@ -4,7 +4,7 @@ Kainnne LumaReader is a local-first Markdown desktop app focused on calm typogra
 
 ## Project status
 
-Version 1.2.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build and an unsigned Windows x64 build. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
+Version 1.3.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build, an unsigned Windows x64 build, and Linux x64 AppImage and Debian packages. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
 
 ## Highlights
 
@@ -26,7 +26,7 @@ Version 1.2.0 is the current desktop release. The same local-first Electron code
 - Selecting another document during editing displays a palette-matched reminder to save or exit editing first.
 - Exiting with unsaved edits opens a palette-matched confirmation before anything is discarded.
 - Create a new `.md` by choosing its destination folder first. LumaReader confirms the name and destination, never overwrites an existing file, refreshes the library immediately, then opens the new document directly in the editor.
-- Export the rendered reading view as an A4 PDF through the native save dialog. Print backgrounds, diagrams, mathematics, code, tables, and images are preserved.
+- Export the rendered reading view as an A4 PDF with a remembered company footer or no footer. Add manual page breaks with `<!-- lumareader:pagebreak -->`; see [PDF export](docs/PDF-EXPORT.md). Print backgrounds, diagrams, mathematics, code, tables, and images are preserved.
 - A compact Settings gear combines light/dark appearance, palette, interface language, and individual toolbar visibility. Palette selection stays open for side-by-side comparison; Vertical remains the default, while Paged supports both left/right and up/down navigation.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
 - Every palette colors the application frame and accents while keeping the central reading paper neutral white in light mode and neutral charcoal in dark mode for clear text contrast.
@@ -77,6 +77,7 @@ See [Development](docs/DEVELOPMENT.md), [Architecture](docs/ARCHITECTURE.md), [W
 ## Downloads
 
 - macOS: Universal DMG for Apple silicon and Intel Macs, signed with Developer ID and notarized by Apple.
+- Linux: x64 AppImage and `.deb`; see [Linux compatibility and installation](docs/LINUX.md).
 - Windows: x64 Setup and Portable builds. The Windows executables are intentionally unsigned, so Microsoft Defender SmartScreen may show an unrecognized-publisher notice.
 
 Release filenames, checksums, signing requirements, and the direct-download URL contract are documented in [Release Assets and Download Links](docs/RELEASE-ASSETS-AND-DOWNLOAD-LINKS.md).

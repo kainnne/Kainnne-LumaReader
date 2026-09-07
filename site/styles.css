@@ -138,20 +138,20 @@ h1 {
 }
 
 .download-panel {
-  width: min(720px, 100%);
+  width: min(860px, 100%);
   margin-top: 28px;
 }
 
 .download-actions {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .download-button {
-  min-height: 218px;
-  padding: 25px;
+  min-height: 204px;
+  padding: 23px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -170,6 +170,10 @@ h1 {
 .download-button-windows {
   background:
     linear-gradient(120deg, rgba(110, 168, 255, 0.5), rgba(183, 148, 255, 0.55) 54%, rgba(255, 143, 171, 0.42));
+}
+
+.download-button-linux {
+  background: linear-gradient(120deg, rgba(94, 234, 212, .5), rgba(110, 168, 255, .45) 65%, rgba(183, 148, 255, .4));
 }
 
 .download-button:is(:hover, :active) {
@@ -226,8 +230,8 @@ h1 {
   margin-top: 9px;
   padding: 0 10px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   color: #856a7b;
   font-size: 0.65rem;
   font-weight: 700;
@@ -235,43 +239,44 @@ h1 {
   text-align: center;
 }
 
+.download-specs a { display: inline-block; margin-top: 3px; text-decoration: underline; text-underline-offset: 3px; }
+.download-specs a:hover { color: var(--ink); }
+
 .web-entry {
   width: 100%;
-  min-height: 92px;
-  margin-top: 17px;
-  padding: 18px 22px;
+  min-height: 94px;
+  margin: 0 0 18px;
+  padding: 17px 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 25px;
-  background: linear-gradient(112deg, rgba(255, 255, 255, 0.55), rgba(234, 220, 255, 0.57), rgba(208, 242, 245, 0.5));
-  box-shadow: 0 16px 38px rgba(103, 59, 94, 0.13), inset 0 1px rgba(255, 255, 255, 0.72);
-  color: #402334;
+  gap: 19px;
+  border: 1px solid rgba(114, 73, 134, .3);
+  border-radius: 24px;
+  background: linear-gradient(112deg, #3e2e50, #513762 66%, #38445e);
+  box-shadow: 0 12px 28px rgba(72, 42, 80, .15), inset 0 1px rgba(255, 255, 255, .12);
+  color: #fff8ff;
   text-align: left;
-  transition: transform 0.24s ease, box-shadow 0.24s ease;
+  transition: transform .24s ease, box-shadow .24s ease;
 }
 
 .web-entry:is(:hover, :active) {
-  transform: translateY(-4px);
-  box-shadow: 0 21px 46px rgba(103, 59, 94, 0.19), inset 0 1px rgba(255, 255, 255, 0.78);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 38px rgba(72, 42, 80, .23), inset 0 1px rgba(255, 255, 255, .18);
 }
-
-.web-entry-copy { display: grid; gap: 3px; }
-.web-entry-copy small { color: #806475; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.13em; }
+.web-entry-icon { width: 66px; height: 54px; flex: none; color: #d8c7f1; }
+.web-entry-copy { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.web-entry-copy small { color: #d9c4ef; font-size: .56rem; font-weight: 800; letter-spacing: .13em; }
 .web-entry-copy strong { font: 700 1.05rem/1.35 "Comfortaa", sans-serif; }
-.web-entry-copy > span { color: #766270; font-size: 0.68rem; font-weight: 700; line-height: 1.5; }
-
+.web-entry-copy > span { color: #e5dcea; font-size: .69rem; font-weight: 600; line-height: 1.5; }
 .web-entry-arrow {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   flex: none;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, .24);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, .08);
   font-size: 1rem;
 }
 
@@ -680,6 +685,8 @@ footer {
 @media (max-width: 760px) {
   main { width: calc(100% - 28px); }
   .hero { min-height: 700px; padding: 58px 4px 66px; }
+  .download-button { padding: 18px; border-radius: 25px; }
+  .platform-trust { padding: 9px; font-size: .62rem; }
   .solution,
   .release,
   .web-edition { padding: 38px 30px; }
@@ -696,11 +703,18 @@ footer {
   .language-toggle { min-height: 38px; padding-inline: 11px; }
   .app-icon { width: 96px; height: 96px; border-radius: 23px; }
   .download-actions { grid-template-columns: 1fr; }
-  .download-specs { display: none; }
+  .download-specs { grid-template-columns: 1fr; gap: 6px; margin-top: 13px; }
+  .download-specs > span:not(:last-child) { display: none; }
   .hero-links { grid-template-columns: 1fr; }
-  .download-button { min-height: 190px; border-radius: 27px; }
-  .web-entry { min-height: 98px; padding: 17px 18px; border-radius: 23px; }
-  .web-entry-copy > span { max-width: 230px; }
+  .download-button { min-height: 112px; padding: 17px 18px; border-radius: 23px; flex-direction: row; align-items: center; gap: 12px; }
+  .button-copy { min-width: 112px; }
+  .button-copy strong { font-size: 1.55rem; }
+  .platform-trust { max-width: 190px; min-height: 58px; font-size: .64rem; }
+  .web-entry { min-height: 112px; padding: 16px; border-radius: 23px; gap: 12px; }
+  .web-entry-icon { width: 42px; height: 38px; }
+  .web-entry-copy strong { font-size: .89rem; }
+  .web-entry-copy > span { font-size: .66rem; }
+  .web-entry-arrow { width: 28px; height: 28px; }
   .solution,
   .release,
   .web-edition { padding: 30px 20px; border-radius: 26px; }

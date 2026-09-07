@@ -8,8 +8,9 @@ const SHARE_ID_PATTERN = /^[23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWX
 const SHARE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
 const SOCIAL_IMAGE = "https://lumareader.kainnne.com/icon.png";
 const DOWNLOADS = Object.freeze({
-  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.2.0/Kainnne-LumaReader-1.2.0-macOS-universal.dmg",
-  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.2.0/Kainnne-LumaReader-1.2.0-Windows-x64-Setup.exe",
+  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-macOS-universal.dmg",
+  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Windows-x64-Setup.exe",
+  linux: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.AppImage",
 });
 
 function corsHeaders(origin) {
@@ -158,13 +159,13 @@ async function downloadCounts(request, env) {
   if (!env.DOWNLOADS_DB) return json({ ok: false, error: "Download counter is unavailable" }, 503, cors);
   try {
     const result = await env.DOWNLOADS_DB.prepare(
-      "SELECT platform, count FROM download_counts WHERE platform IN ('macos', 'windows')",
+      "SELECT platform, count FROM download_counts WHERE platform IN ('macos', 'windows', 'linux')",
     ).all();
-    const platforms = { macos: 0, windows: 0 };
+    const platforms = { macos: 0, windows: 0, linux: 0 };
     for (const row of result.results || []) {
       if (Object.hasOwn(platforms, row.platform)) platforms[row.platform] = Number(row.count) || 0;
     }
-    return json({ ok: true, total: platforms.macos + platforms.windows, platforms }, 200, {
+    return json({ ok: true, total: platforms.macos + platforms.windows + platforms.linux, platforms }, 200, {
       ...cors,
       "Cache-Control": "no-store",
     });
@@ -183,6 +184,10 @@ async function recordDownload(platform, env) {
   } catch {
     return new Response("Download counter is unavailable", { status: 503 });
   }
+  return downloadRedirect(platform);
+}
+
+function downloadRedirect(platform) {
   return new Response(null, {
     status: 302,
     headers: { Location: DOWNLOADS[platform], "Cache-Control": "no-store" },
@@ -199,8 +204,10 @@ export default {
     }
     if (request.method === "POST" && url.pathname === "/api/shares") return createShare(request, env);
     if (request.method === "GET" && url.pathname === "/api/downloads") return downloadCounts(request, env);
-    if (request.method === "GET" && url.pathname === "/d/macos") return recordDownload("macos", env);
-    if (request.method === "GET" && url.pathname === "/d/windows") return recordDownload("windows", env);
+    const download = /^\/d\/(macos|windows|linux)$/.exec(url.pathname);
+    if (download && request.method === "GET") return recordDownload(download[1], env);
+    // HEAD verifies the release destination without recording a download.
+    if (download && request.method === "HEAD") return downloadRedirect(download[1]);
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "lumareader-share" }, 200, { "Cache-Control": "no-store" });
     const match = request.method === "GET" ? /^\/s\/([^/]+)$/.exec(url.pathname) : null;
     if (match) return openShare(request, env, match[1]);

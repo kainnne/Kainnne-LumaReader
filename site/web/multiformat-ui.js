@@ -22,7 +22,7 @@
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
         ["Read your way", "Use vertical, horizontal, or paged reading. In vertical mode, text wraps to the available width, including while editing."],
         ["Make the toolbar yours", "Open Settings to switch light or dark mode, choose a palette, change language, or hide controls you do not use."],
-        ["Open Markdown from your desktop", "LumaReader Desktop can open and edit Markdown in separate windows. You can choose it as the default Markdown app yourself in Finder or Windows Settings."],
+        ["Open Markdown from your desktop", "LumaReader Desktop opens and edits Markdown in separate windows. Choose it as your default yourself in Finder, Windows Settings, or your Linux file manager’s Open With / Properties settings. The app does not change system defaults."],
       ],
       step: "Step {current} of {total}",
       next: "Next",
@@ -41,7 +41,7 @@
         ["選擇檔案格式", "Markdown 預設開啟；需要時才將 .txt 或 .log 加入清單。"],
         ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；直式內文與編輯文字會隨視窗寬度自動換行。"],
         ["調整成你習慣的工具列", "從設定切換亮暗模式與色系，也能變更語言或收起不常用的功能。"],
-        ["直接從電腦開啟 Markdown", "LumaReader 桌面版可用獨立視窗開啟與編輯 Markdown；也能由你自行在 Finder 或 Windows 設定中，選為 Markdown 預設程式。"],
+        ["直接從電腦開啟 Markdown", "LumaReader 桌面版可用獨立視窗開啟與編輯 Markdown。預設程式由你自行在 Finder、Windows 設定，或 Linux 檔案管理員的「開啟方式／內容」中選擇；程式不會自動更改系統預設值。"],
       ],
       step: "步驟 {current} / {total}",
       next: "下一步",
@@ -73,6 +73,7 @@
 
   let selectedFormats = new Set(DEFAULT_FORMATS);
   let tourStep = -1;
+  let autoTourTimer = null;
   let preferences = {};
   let resolveReady;
   const ready = new Promise((resolve) => { resolveReady = resolve; });
@@ -193,7 +194,13 @@
     requestAnimationFrame(() => positionSpotlight(target));
   }
 
+  function cancelAutoTour() {
+    if (autoTourTimer !== null) clearTimeout(autoTourTimer);
+    autoTourTimer = null;
+  }
+
   function startTour({ step = 0 } = {}) {
+    cancelAutoTour();
     tourStep = Math.max(0, Math.min(tourTargets.length - 1, Number(step) || 0));
     els.onboarding.hidden = false;
     document.body.classList.add("tour-active");
@@ -201,6 +208,7 @@
   }
 
   function finishTour() {
+    cancelAutoTour();
     tourStep = -1;
     els.onboarding.hidden = true;
     document.body.classList.remove("tour-active");
@@ -247,7 +255,12 @@
     const detail = { formats: formatPayload() };
     document.dispatchEvent(new CustomEvent("luma:ui-ready", { detail }));
     resolveReady(detail);
-    if (savedTourVersion() < ONBOARDING_VERSION) setTimeout(() => startTour(), 280);
+    if (savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) {
+      autoTourTimer = setTimeout(() => {
+        autoTourTimer = null;
+        if (savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) startTour();
+      }, 280);
+    }
     return detail;
   }
 
