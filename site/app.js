@@ -81,8 +81,8 @@ const editions = {
     "footer-link": "More from Kainnne",
     "linux-action": "DOWNLOAD FOR",
     "linux-trust": "AppImage · Make executable to run",
-    "linux-spec": "64-bit Linux · AppImage",
-    "linux-deb": "Debian / Ubuntu · .deb download"
+    "linux-spec": "AppImage · Tested on Ubuntu 22.04 x64",
+    "linux-deb": "Ubuntu 22.04 / 24.04 · .deb download"
   },
   "zh": {
     "type": "MARKDOWN 閱讀器 · 桌面版＋網頁版",
@@ -166,8 +166,8 @@ const editions = {
     "footer-link": "更多 Kainnne 作品",
     "linux-action": "下載",
     "linux-trust": "AppImage · 設為可執行檔後開啟",
-    "linux-spec": "64 位元 Linux · AppImage",
-    "linux-deb": "Debian / Ubuntu · .deb 下載"
+    "linux-spec": "AppImage · 已驗證 Ubuntu 22.04 x64",
+    "linux-deb": "Ubuntu 22.04／24.04 請選 .deb"
   }
 };
 
