@@ -56,20 +56,13 @@ main {
 .product-home {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  color: var(--ink);
-  font-family: "Comfortaa", sans-serif;
-  font-size: 0.88rem;
-  font-weight: 700;
+  min-height: 44px;
 }
 
-.product-home-mark {
-  width: 14px;
-  height: 14px;
-  border-radius: 5px;
-  background: var(--brand-gradient);
-  box-shadow: 0 5px 13px rgba(111, 71, 135, 0.2);
-  transform: rotate(45deg);
+.product-home-logo {
+  display: block;
+  width: 154px;
+  height: auto;
 }
 
 .shimmer-button {
@@ -699,7 +692,6 @@ footer {
 
 @media (max-width: 560px) {
   .site-header { min-height: 74px; }
-  .product-home { font-size: 0.8rem; }
   .language-toggle { min-height: 38px; padding-inline: 11px; }
   .app-icon { width: 96px; height: 96px; border-radius: 23px; }
   .download-actions { grid-template-columns: 1fr; }
