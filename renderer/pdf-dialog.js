@@ -15,6 +15,7 @@
         dialog.querySelector(".pdf-footer-help").textContent = zh ? "顯示於每頁右下角；留白即可隱藏。匯出成功後會記住這個名稱。" : "Shown at the bottom right of each page. Leave blank to hide. Remembered after a successful export.";
         dialog.querySelector(".pdf-pagebreak-help").textContent = zh ? "需要指定換頁？在 Markdown 內獨立一行加入：" : "To start a new PDF page, add this on its own line in Markdown:";
         dialog.querySelector("[value=cancel]").textContent = zh ? "取消" : "Cancel";
+        dialog.querySelector("[value=cancel]").onclick = () => dialog.close("cancel");
         dialog.querySelector("[value=export]").textContent = zh ? "繼續匯出" : "Continue";
         input.value = typeof saved?.pdfFooterText === "string" ? saved.pdfFooterText : "LumaReader";
         dialog.returnValue = "cancel";

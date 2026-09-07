@@ -7,6 +7,8 @@ LumaReader 1.3.0 adds Linux x64 downloads in two formats:
 
 The app and its installers preserve an existing Markdown default. Choose a default reader yourself in your desktop environment's **Open With** or file-properties interface. LumaReader does not make that choice automatically.
 
+For Chinese, Japanese, or Korean text, the system needs an appropriate font, such as the distribution's Noto CJK package. The Ubuntu test environments include `fonts-noto-cjk`.
+
 ## Compatibility and sandboxing
 
 The release workflow builds once on Ubuntu 22.04, then installs the exact same `.deb` on Ubuntu 24.04. Both runs exercise the actual packaged interface: opening multiple Markdown files, editing and saving, authentication for the local server, PDF preferences, and automatic line wrapping. Tests also inspect renderer processes for active seccomp filters and `NoNewPrivs`, and check that installation and removal preserve existing MIME defaults. Xvfb provides an X11 display; these tests do not establish compatibility with every Linux distribution, Wayland session, graphics driver, or ARM device.

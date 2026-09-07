@@ -78,6 +78,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
           screen: { width: screen.width, height: screen.height, availWidth: screen.availWidth, availHeight: screen.availHeight },
           devicePixelRatio, visibilityState: document.visibilityState, hasFocus: document.hasFocus(),
           bodyClass: document.body.className, activeElement: describe(document.activeElement),
+          palette: describe(document.querySelector("#palette-menu")),
+          sourceCheckbox: describe(document.querySelector('[data-toolbar-visibility="source"]')),
           refresh: describe(refresh), refreshCenterHit: box ? describe(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)) : null,
           overlays: [...document.querySelectorAll('dialog[open], #onboarding, #boot-loader, .library-index-status, #sidebar-scrim')].map(describe),
           search: document.querySelector("#search")?.value,
@@ -145,7 +147,28 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     async function settleLayout() {
       await page.evaluate(async () => {
         await document.fonts?.ready;
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        // The app restores its reading anchor 240ms after a layout change.
+        // Two frames can finish before that restore scrolls and closes a menu.
+        // Observe actual geometry and scrolling until they remain quiet past
+        // that debounce, with a deadline instead of extending action timeouts.
+        const started = performance.now();
+        let stableSince = started, previous = "";
+        await new Promise((resolve, reject) => {
+          const sample = () => {
+            const now = performance.now();
+            const geometry = [innerWidth, innerHeight, scrollX, scrollY, document.documentElement.scrollHeight];
+            for (const selector of [".reader-bar", "#content", "#raw-source", "#source-editor"]) {
+              const element = document.querySelector(selector), rect = element.getBoundingClientRect();
+              geometry.push(rect.x, rect.y, rect.width, rect.height, element.scrollTop, element.scrollLeft);
+            }
+            const current = geometry.map((number) => Math.round(number * 100) / 100).join(",");
+            if (current !== previous) { previous = current; stableSince = now; }
+            if (now - stableSince >= 300) { resolve(); return; }
+            if (now - started >= 5000) { reject(new Error(`Layout did not settle: ${current}`)); return; }
+            requestAnimationFrame(sample);
+          };
+          requestAnimationFrame(sample);
+        });
       });
     }
     async function reloadDocument() {
@@ -323,6 +346,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     const widths = [1360, 900, 480];
     const wrapModes = [];
     await page.setViewportSize({ width: 1360, height: 880 });
+    await settleLayout();
     await page.locator("#palette-toggle").click();
     await page.locator('[data-toolbar-visibility="source"]').check();
     await page.keyboard.press("Escape");

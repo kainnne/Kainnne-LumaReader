@@ -35,7 +35,7 @@ jobs:
         run: |
           npm ci
           sudo apt-get update
-          sudo apt-get install -y xvfb dbus-x11 desktop-file-utils libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2
+          sudo apt-get install -y xvfb dbus-x11 fonts-noto-cjk desktop-file-utils libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2
 
       - name: Check and test source
         run: |
@@ -129,7 +129,7 @@ jobs:
         run: |
           npm ci
           sudo apt-get update
-          sudo apt-get install -y xvfb dbus-x11 desktop-file-utils
+          sudo apt-get install -y xvfb dbus-x11 fonts-noto-cjk desktop-file-utils
 
       - name: Prepare existing Markdown default for preservation tests
         run: node scripts/linux-smoke.js prepare

@@ -321,7 +321,7 @@
         <label for="pdf-footer-text"><span>Footer name</span><input id="pdf-footer-text" type="text" maxlength="120" value="LumaReader" autocomplete="organization" /></label>
         <p class="pdf-footer-help">Shown at the bottom right of each page. Leave blank to hide.</p>
         <details><summary>Markdown → PDF</summary><p class="pdf-pagebreak-help">To start a new PDF page, add this on its own line in Markdown:</p><code>&lt;!-- lumareader:pagebreak --&gt;</code></details>
-        <footer><button class="compact-button" value="cancel">Cancel</button><button class="compact-button primary-button" value="export">Continue</button></footer>
+        <footer><button class="compact-button" type="button" value="cancel">Cancel</button><button class="compact-button primary-button" type="submit" value="export">Continue</button></footer>
       </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
