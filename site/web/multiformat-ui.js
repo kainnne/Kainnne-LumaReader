@@ -73,6 +73,7 @@
 
   let selectedFormats = new Set(DEFAULT_FORMATS);
   let tourStep = -1;
+  let autoTourTimer = null;
   let preferences = {};
   let resolveReady;
   const ready = new Promise((resolve) => { resolveReady = resolve; });
@@ -193,7 +194,13 @@
     requestAnimationFrame(() => positionSpotlight(target));
   }
 
+  function cancelAutoTour() {
+    if (autoTourTimer !== null) clearTimeout(autoTourTimer);
+    autoTourTimer = null;
+  }
+
   function startTour({ step = 0 } = {}) {
+    cancelAutoTour();
     tourStep = Math.max(0, Math.min(tourTargets.length - 1, Number(step) || 0));
     els.onboarding.hidden = false;
     document.body.classList.add("tour-active");
@@ -201,6 +208,7 @@
   }
 
   function finishTour() {
+    cancelAutoTour();
     tourStep = -1;
     els.onboarding.hidden = true;
     document.body.classList.remove("tour-active");
@@ -247,7 +255,12 @@
     const detail = { formats: formatPayload() };
     document.dispatchEvent(new CustomEvent("luma:ui-ready", { detail }));
     resolveReady(detail);
-    if (savedTourVersion() < ONBOARDING_VERSION) setTimeout(() => startTour(), 280);
+    if (savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) {
+      autoTourTimer = setTimeout(() => {
+        autoTourTimer = null;
+        if (savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) startTour();
+      }, 280);
+    }
     return detail;
   }
 

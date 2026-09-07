@@ -84,6 +84,15 @@ jobs:
             dist/linux-defaults-results.json
             dist/linux-sha256.txt
 
+      - name: Upload Linux smoke failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Linux-Ubuntu-22.04-smoke-diagnostics
+          if-no-files-found: warn
+          retention-days: 7
+          path: dist/smoke-diagnostics/
+
   verify-ubuntu-24:
     needs: build-and-smoke-test
     runs-on: ubuntu-24.04
@@ -146,3 +155,12 @@ jobs:
           path: |
             dist/linux-installed-smoke-results.json
             dist/linux-defaults-results.json
+
+      - name: Upload Linux smoke failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Linux-Ubuntu-24.04-smoke-diagnostics
+          if-no-files-found: warn
+          retention-days: 7
+          path: dist/smoke-diagnostics/

@@ -49,6 +49,55 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
   let child, browser, output = "";
   const launchers = [];
   const startedAt = Date.now();
+  const apiEvents = [];
+  let currentStage = "starting application";
+  async function writeFailureDiagnostics(error) {
+    const name = `${process.platform}-${label}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 100);
+    const directory = path.resolve("dist", "smoke-diagnostics", `${name}-${startedAt}`);
+    await fs.mkdir(directory, { recursive: true });
+    const summary = { label, version, stage: currentStage, error: error.stack || String(error), apiEvents };
+    const capture = async (operation) => {
+      try { return await Promise.race([operation(), delay(4000).then(() => ({ diagnosticTimeout: true }))]); }
+      catch (failure) { return { diagnosticError: failure.message }; }
+    };
+    const openPages = browser?.contexts().flatMap((context) => context.pages()) || [];
+    summary.pages = [];
+    for (let index = 0; index < openPages.length; index += 1) {
+      const failedPage = openPages[index];
+      const details = await capture(() => failedPage.evaluate(() => {
+        const describe = (element) => {
+          if (!element) return null;
+          const bounds = element.getBoundingClientRect(), css = getComputedStyle(element);
+          return { tag: element.tagName, id: element.id, className: String(element.className), text: element.textContent?.slice(0, 180),
+            bounds: bounds.toJSON(), hidden: element.hidden, disabled: element.disabled, display: css.display,
+            visibility: css.visibility, pointerEvents: css.pointerEvents, position: css.position, zIndex: css.zIndex };
+        };
+        const refresh = document.querySelector("#refresh"), box = refresh?.getBoundingClientRect();
+        return {
+          url: location.href, innerWidth, innerHeight, outerWidth, outerHeight, screenX, screenY, scrollX, scrollY,
+          screen: { width: screen.width, height: screen.height, availWidth: screen.availWidth, availHeight: screen.availHeight },
+          devicePixelRatio, visibilityState: document.visibilityState, hasFocus: document.hasFocus(),
+          bodyClass: document.body.className, activeElement: describe(document.activeElement),
+          refresh: describe(refresh), refreshCenterHit: box ? describe(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)) : null,
+          overlays: [...document.querySelectorAll('dialog[open], #onboarding, #boot-loader, .library-index-status, #sidebar-scrim')].map(describe),
+          search: document.querySelector("#search")?.value,
+          documentTitle: document.querySelector("#file-name")?.textContent,
+          files: [...document.querySelectorAll(".file-button")].slice(0, 20).map((element) => ({ title: element.title, text: element.textContent })),
+        };
+      }));
+      const bounds = await capture(async () => {
+        const session = await failedPage.context().newCDPSession(failedPage);
+        try { return await session.send("Browser.getWindowForTarget"); } finally { await session.detach(); }
+      });
+      const screenshot = await capture(() => failedPage.screenshot({ path: path.join(directory, `page-${index}.png`), timeout: 3500 }).then(() => "saved"));
+      const markup = await capture(() => failedPage.content());
+      if (typeof markup === "string") await fs.writeFile(path.join(directory, `page-${index}.html`), markup);
+      summary.pages.push({ index, details, nativeWindow: bounds, screenshot });
+    }
+    await fs.writeFile(path.join(directory, "diagnostics.json"), JSON.stringify(summary, null, 2) + "\n");
+    await fs.writeFile(path.join(directory, "app-output.log"), output);
+    console.error(`[smoke] failure diagnostics: ${directory}`);
+  }
   try {
     await fs.mkdir(path.join(root, "folder-a", "assets"), { recursive: true });
     await fs.mkdir(path.dirname(second), { recursive: true });
@@ -73,6 +122,24 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     const page = pages()[0];
     assert.ok(page, "App has no document window");
     page.setDefaultTimeout(20000);
+    // Start with one explicit viewport on every runner. Later checks resize it deliberately.
+    await page.setViewportSize({ width: 1360, height: 880 });
+    await page.bringToFront();
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname !== "/api/files") return;
+      apiEvents.push({ event: "request", url: request.url(), at: Date.now() - startedAt });
+      if (apiEvents.length > 50) apiEvents.shift();
+    });
+    page.on("requestfailed", (request) => {
+      if (new URL(request.url()).pathname !== "/api/files") return;
+      apiEvents.push({ event: "failed", url: request.url(), failure: request.failure(), at: Date.now() - startedAt });
+      if (apiEvents.length > 50) apiEvents.shift();
+    });
+    page.on("response", (response) => {
+      if (new URL(response.url()).pathname !== "/api/files") return;
+      apiEvents.push({ event: "response", url: response.url(), status: response.status(), at: Date.now() - startedAt });
+      if (apiEvents.length > 50) apiEvents.shift();
+    });
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     async function settleLayout() {
@@ -101,12 +168,18 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       await page.waitForFunction(() => !document.querySelector(".library-index-status"));
     }
     async function refreshLibrary() {
-      const refreshed = page.waitForResponse((response) => {
-        const url = new URL(response.url());
-        return url.pathname === "/api/files" && url.searchParams.get("refresh") === "1";
-      });
-      await page.locator("#refresh").click();
-      assert.equal((await refreshed).status(), 200);
+      // Both promises must be handled immediately. Otherwise a response timeout
+      // escapes the catch/finally while click is still reporting an obstruction.
+      const [response, click] = await Promise.allSettled([
+        page.waitForResponse((response) => {
+          const url = new URL(response.url());
+          return url.pathname === "/api/files" && url.searchParams.get("refresh") === "1";
+        }),
+        page.locator("#refresh").click(),
+      ]);
+      if (click.status === "rejected") throw click.reason;
+      if (response.status === "rejected") throw response.reason;
+      assert.equal(response.value.status(), 200);
       await waitForLibraryScan();
     }
     async function assertWrap(selectors, context) {
@@ -166,7 +239,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     }, path.basename(first));
     assert.equal(media.status, 200); assert.equal(media.type, "image/png"); assert.deepEqual(Buffer.from(media.bytes), imageBytes);
 
-    console.log(`[smoke] ${label}: deep folders, filename search, and refresh`);
+    currentStage = "deep folders, filename search, and refresh";
+    console.log(`[smoke] ${label}: ${currentStage}`);
     const search = page.locator("#search");
     const nestedRow = page.locator(".file-button").filter({ hasText: nestedName });
     for (const query of [nestedName, "喜帖資料夾"]) {
@@ -186,17 +260,20 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     assert.match(await page.locator(".library-empty-hint").textContent(), /Refresh|重新整理|刷新/);
     await fs.mkdir(path.dirname(added), { recursive: true });
     await fs.writeFile(added, "# A file created after the first scan\n");
+    currentStage = "refresh discovers added file";
     await refreshLibrary();
     const addedRow = page.locator(".file-button").filter({ hasText: addedName });
     await addedRow.waitFor({ state: "visible" });
     await fs.unlink(added);
+    currentStage = "refresh removes deleted file";
     await refreshLibrary();
     await addedRow.waitFor({ state: "detached" });
     await page.locator(".library-empty-hint").waitFor({ state: "visible" });
     await search.fill("");
     await page.locator(".file-button.active").waitFor({ state: "visible" });
 
-    console.log(`[smoke] ${label}: toolbar and preview preference migrations`);
+    currentStage = "toolbar and preview preference migrations";
+    console.log(`[smoke] ${label}: ${currentStage}`);
     // A v1.2 preference record upgrades once; later explicit choices must survive.
     await page.evaluate(() => window.lumaDesktop.setPreferences({
       readerDefaultsVersion: 4, editorPreview: false, readingMode: "vertical",
@@ -220,7 +297,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     await page.waitForFunction(() => document.querySelector("#export-pdf").dataset.userHidden === "true");
     await page.keyboard.press("Escape");
 
-    console.log(`[smoke] ${label}: PDF footer prompt and cancellation`);
+    currentStage = "PDF footer prompt and cancellation";
+    console.log(`[smoke] ${label}: ${currentStage}`);
     const footerChoices = ["LumaReader", "時光設計公司", ""];
     for (const footer of footerChoices) {
       // The actual successful-export write is covered by main-process tests. Here
@@ -240,7 +318,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       assert.equal(await page.evaluate(async () => (await window.lumaDesktop.getPreferences()).pdfFooterText), footer);
     }
 
-    console.log(`[smoke] ${label}: long Chinese, ASCII, and URL wrapping`);
+    currentStage = "long Chinese, ASCII, and URL wrapping";
+    console.log(`[smoke] ${label}: ${currentStage}`);
     const widths = [1360, 900, 480];
     const wrapModes = [];
     await page.setViewportSize({ width: 1360, height: 880 });
@@ -285,6 +364,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       for (let i = 0; i < 150 && launcher.exitCode === null; i += 1) await delay(100);
       assert.notEqual(launcher.exitCode, null, "Second process did not hand off within 15 seconds");
     }
+    currentStage = "independent windows and exact save isolation";
     await forward(second);
     for (let i = 0; i < 100 && pages().length < 2; i += 1) await delay(100);
     const pageB = pages().find((item) => item !== page);
@@ -311,6 +391,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       elapsedSeconds: Math.round((Date.now() - startedAt) / 1000),
     };
   } catch (error) {
+    try { await writeFailureDiagnostics(error); }
+    catch (diagnosticError) { console.error("Unable to save smoke diagnostics:", diagnosticError.message); }
     if (output) process.stderr.write(output + "\n");
     throw error;
   } finally {
