@@ -46,15 +46,15 @@ async function main() {
     const target = "婚禮/比對資料/01-還沒寄出的喜帖-比對基準.md";
     const first = record("起始文件.md");
     const files = [first, record(target), ...Array.from({ length: 320 }, (_, i) => record(`婚禮/比對資料/筆記-${i}.md`)), ...Array.from({ length: 3_000 }, (_, i) => record(`資料-${i % 60}/子資料夾/文件-${i}.md`))];
-    let calls = 0, generation = 1, emptyStart = false;
+    let calls = 0, generation = 1, emptyStart = false, alwaysEmpty = false;
     await page.route("**/api/files?**", async (route) => {
       const url = new URL(route.request().url());
       calls += 1;
       if (url.searchParams.get("refresh") === "1") generation += 1;
       const firstBatch = calls === 1;
       const status = generation === 2 ? "partial" : generation > 2 ? "complete" : firstBatch ? "scanning" : calls === 2 ? "waiting" : "complete";
-      const records = generation > 2 ? [first] : generation === 2 ? [first] : firstBatch ? (emptyStart ? [] : [first]) : calls === 2 ? (emptyStart ? files : files.slice(1)) : [];
-      await route.fulfill({ json: { root: "/test-library", files: records, types: [], nextCursor: generation > 1 ? 1 : firstBatch ? (emptyStart ? 0 : 1) : files.length, reset: firstBatch || generation > 1, scan: { id: `scan-${generation}`, status, complete: status === "complete", hasMore: status === "scanning" || status === "waiting", filesFound: generation > 1 ? 1 : firstBatch ? (emptyStart ? 0 : 1) : files.length, retryAfterMs: 500, issues: generation === 2 ? [{ path: "雲端資料", code: "EACCES" }] : [] } } });
+      const records = alwaysEmpty ? [] : generation > 2 ? [first] : generation === 2 ? [first] : firstBatch ? (emptyStart ? [] : [first]) : calls === 2 ? (emptyStart ? files : files.slice(1)) : [];
+      await route.fulfill({ json: { root: "/test-library", files: records, types: [], nextCursor: alwaysEmpty ? 0 : generation > 1 ? 1 : firstBatch ? (emptyStart ? 0 : 1) : files.length, reset: firstBatch || generation > 1, scan: { id: `scan-${generation}`, status, complete: status === "complete", hasMore: status === "scanning" || status === "waiting", filesFound: alwaysEmpty ? 0 : generation > 1 ? 1 : firstBatch ? (emptyStart ? 0 : 1) : files.length, retryAfterMs: 500, issues: generation === 2 ? [{ path: "雲端資料", code: "EACCES" }] : [] } } });
     });
     await page.route("**/api/file?**", (route) => route.fulfill({ json: { ...first, sourceType: "project", text: "# Fixture", renderText: "# Fixture" } }));
     await page.route("**/api/meta?**", (route) => route.fulfill({ json: { modifiedNs: null } }));
@@ -91,6 +91,16 @@ async function main() {
     await page.waitForSelector('.library-index-status[data-status="waiting"]');
     await page.waitForSelector(".library-index-status", { state: "detached" });
     assert.match(await page.locator("#content").textContent(), /Choose a document|文件已準備好/, "An initially empty batch must later invite the user to choose indexed files");
+    alwaysEmpty = true; calls = 0; generation = 1;
+    await page.goto(`http://127.0.0.1:${server.address().port}/?empty-through-completion=1`);
+    await page.waitForSelector('.library-index-status[data-status="waiting"]');
+    assert.match(await page.locator(".library-empty-hint").textContent(), /scan is still running|仍在掃描/, "The temporary empty result should explain that scanning is ongoing");
+    await page.waitForSelector(".library-index-status", { state: "detached" });
+    const completedEmptyHint = await page.locator(".library-empty-hint").textContent();
+    assert.match(completedEmptyHint, /Refresh|重新整理/, "A completed empty scan must offer refresh guidance");
+    assert.doesNotMatch(completedEmptyHint, /scan is still running|仍在掃描/, "The last empty batch must clear the stale scanning hint");
+    assert.equal(await page.locator("#files-panel .file-button").count(), 0);
+    assert.equal(calls, 3, "An empty complete scan must stop polling");
     await page.goto(`http://127.0.0.1:${server.address().port}/web/`);
     await page.waitForSelector("#files-panel .file-remove-button");
     assert.equal(await page.locator("#files-panel .file-button").count(), 1);
@@ -118,7 +128,7 @@ async function main() {
     await page.waitForTimeout(200);
     assert.equal(await page.locator("#files-panel .file-button").count(), 0, "An empty session must not retain old indexed records");
     assert.deepEqual(errors, []);
-    console.log(JSON.stringify({ ok: true, fixtureDocuments: files.length, requests: calls, checked: ["incremental continuation", "waiting and partial status", "lazy folder DOM", "250-result paging", "folder expansion", "Chinese search", "refresh removal", "empty-state hint", "empty initial batch completion", "Web session create/remove/empty-index lifecycle"] }));
+    console.log(JSON.stringify({ ok: true, fixtureDocuments: files.length, requests: calls, checked: ["incremental continuation", "waiting and partial status", "lazy folder DOM", "250-result paging", "folder expansion", "Chinese search", "refresh removal", "empty-state hint", "empty initial batch completion", "empty final batch refresh hint", "Web session create/remove/empty-index lifecycle"] }));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));
