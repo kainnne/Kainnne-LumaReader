@@ -13,26 +13,37 @@
   const originalFetch = window.fetch.bind(window);
   const preferencesKey = "lumareader-web-preferences-v1";
 
+  const desktopDownloads = Object.freeze([
+    { platform: "macos", label: "macOS", url: `${SHARE_SERVICE_URL}/d/macos` },
+    { platform: "windows", label: "Windows", url: `${SHARE_SERVICE_URL}/d/windows` },
+    { platform: "linux", label: "Linux", url: `${SHARE_SERVICE_URL}/d/linux` },
+  ].map((entry) => Object.freeze(entry)));
+
+  function detectDesktopPlatform() {
+    const agent = String(navigator.userAgent || "");
+    const platform = String(navigator.userAgentData?.platform || navigator.platform || "");
+    const identity = `${platform} ${agent}`;
+    if (navigator.userAgentData?.mobile || /Android|iPhone|iPad|iPod|CrOS|Mobile/i.test(identity)) return null;
+    // iPadOS can advertise a desktop Mac user agent.
+    if (/Mac/i.test(platform) && navigator.maxTouchPoints > 1) return null;
+    if (/Windows|Win32|Win64/i.test(identity)) return "windows";
+    if (/Macintosh|MacIntel|MacPPC|Mac OS|macOS/i.test(identity)) return "macos";
+    if (/Linux/i.test(identity) && !/aarch64|arm|riscv|ppc|s390/i.test(identity)) return "linux";
+    return null;
+  }
+
+  const preferredDesktopDownload = desktopDownloads.find((entry) => entry.platform === detectDesktopPlatform()) || null;
+  const desktopDownloadMarkdown = preferredDesktopDownload
+    ? `[Download LumaReader Desktop for ${preferredDesktopDownload.label} / 下載 ${preferredDesktopDownload.label} 桌面版](${preferredDesktopDownload.url})`
+    : desktopDownloads.map((entry) => `[${entry.label}](${entry.url})`).join(" · ");
+
   const sample = `# LumaReader Web
-
-## Start with LumaReader Desktop / 建議先下載 LumaReader 桌面版
-
-**LumaReader Desktop is the main edition: the complete, local-first way to read, organize, edit, and export your Markdown library.**
-
-**LumaReader 桌面版是我們的主要服務：你可以在本機完整閱讀、整理、編輯並匯出 Markdown 資料庫。**
-
-- **Keep documents local.** Ordinary reading and editing do not require uploading your files to a server.<br>**文件留在本機。** 一般閱讀與編輯不必將文件上傳到伺服器，更適合私密筆記與工作資料。
-- **Open a complete library.** Select an entire Markdown folder and keep its structure, media, and related files together.<br>**完整開啟資料庫。** 可直接選擇整個 Markdown 資料夾，保留原有的目錄、媒體與相關檔案。
-- **Keep the full workflow.** Manage more documents, save locally, and export the rendered result as PDF.<br>**保留完整工作流程。** 管理更多文件、直接儲存到本機，並將排版完成的內容匯出為 PDF。
-- **No account required.** Your library stays under your control on this computer.<br>**不需建立帳號。** 文件資料庫仍由你保管，留在自己的電腦上。
-
-[Download LumaReader Desktop / 下載 LumaReader 桌面版](../#download)
 
 ## Try the interface / 先體驗介面
 
-Turn a Markdown file into a calm, focused reading space—right in your browser.
+Open a Markdown file or try editing this example. The Web edition holds up to three documents at a time.
 
-直接在瀏覽器裡，將 Markdown 文件變成舒適、專注的閱讀空間。
+開啟自己的 Markdown 檔案，或直接編輯這份示範文件。網頁版同時最多開啟 3 份文件。
 
 ## Read your way / 用喜歡的方式閱讀
 
@@ -78,6 +89,14 @@ Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
 
 *[MD]: Markdown
 [^web]: Ordinary reading and editing do not upload your document to a server. 一般閱讀與編輯不會將文件上傳到伺服器。
+
+## Download LumaReader Desktop / 下載 LumaReader 桌面版
+
+Open complete project folders, search file and folder names, save edits locally, and export PDFs with a custom footer and page breaks. Reading and editing do not require an account or uploading your documents.
+
+桌面版可直接開啟完整專案資料夾、搜尋檔名與資料夾、將修改儲存到本機，並匯出可自訂頁尾與分頁的 PDF。閱讀與編輯不需登入，也不必將文件上傳到伺服器。
+
+${desktopDownloadMarkdown}
 `;
 
   function extensionOf(name) {
@@ -445,7 +464,7 @@ Footnotes[^web], abbreviations, and :sparkles: Emoji are supported too.
     return result;
   });
 
-  window.lumaWeb = { chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
+  window.lumaWeb = { desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
   window.lumaDesktop = {
     isDesktop: false,
     platform: "web",

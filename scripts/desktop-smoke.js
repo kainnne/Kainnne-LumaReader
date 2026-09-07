@@ -35,7 +35,16 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "lumareader-release-smoke-"));
   const first = path.join(root, "folder-a", "閱讀 筆記.md");
   const second = path.join(root, "folder-b", "閱讀 筆記.md");
-  const text = "# Release smoke test\n\n" + "換行測試 Markdown text wraps with the window. ".repeat(160) + "\n\n![Image](assets/portable%20image.png)\n";
+  const nestedName = "01-還沒寄出的喜帖-比對基準.md";
+  const nestedParts = ["深入", "喜帖資料夾", ...Array.from({ length: 10 }, (_, index) => `L${String(index + 1).padStart(2, "0")}`)];
+  const nestedRelative = [...nestedParts, nestedName].join("/");
+  const nested = path.join(root, "folder-a", ...nestedParts, nestedName);
+  const addedName = "同步新增測試.md";
+  const added = path.join(root, "folder-a", "重新整理資料夾", addedName);
+  const longCjk = "這是一段沒有空格而且必須隨視窗寬度換行的中文內容".repeat(60);
+  const longAscii = "UnbrokenAsciiMarkdownToken".repeat(100);
+  const longUrl = "https://example.test/" + "long-url-segment".repeat(120);
+  const text = `# Release smoke test\n\n${longCjk}\n\n${longAscii}\n\n${longUrl}\n\n![Image](assets/portable%20image.png)\n`;
   const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1cAAAAASUVORK5CYII=", "base64");
   let child, browser, output = "";
   const launchers = [];
@@ -45,6 +54,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     await fs.mkdir(path.dirname(second), { recursive: true });
     await fs.writeFile(first, text);
     await fs.writeFile(second, "# Second document\n\nKeep unchanged.\n");
+    await fs.mkdir(path.dirname(nested), { recursive: true });
+    await fs.writeFile(nested, "# 喜帖比對基準\n\n深層中文文件必須出現在搜尋結果。\n");
     await fs.writeFile(path.join(root, "folder-a", "assets", "portable image.png"), imageBytes);
     const port = await reservePort();
     child = spawn(executable, [`--remote-debugging-port=${port}`, "--remote-debugging-address=127.0.0.1", first], { stdio: ["ignore", "pipe", "pipe"] });
@@ -64,10 +75,74 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     page.setDefaultTimeout(20000);
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
+    async function settleLayout() {
+      await page.evaluate(async () => {
+        await document.fonts?.ready;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+    }
+    async function reloadDocument() {
+      await page.reload();
+      await page.waitForSelector("#edit-document:not([hidden])");
+      await page.waitForFunction(() => !document.body.classList.contains("booting"));
+      await page.evaluate(async () => {
+        await window.LumaReaderUI.ready;
+        if (!document.querySelector("#onboarding").hidden) document.querySelector("#onboarding-skip").click();
+      });
+      await settleLayout();
+    }
+    async function waitForLibraryScan() {
+      await page.waitForFunction(async () => {
+        const response = await fetch("/api/files", { cache: "no-store" });
+        if (!response.ok) return false;
+        const data = await response.json();
+        return data.scan?.complete === true && !data.scan.hasMore;
+      }, null, { timeout: 20000, polling: 250 });
+      await page.waitForFunction(() => !document.querySelector(".library-index-status"));
+    }
+    async function refreshLibrary() {
+      const refreshed = page.waitForResponse((response) => {
+        const url = new URL(response.url());
+        return url.pathname === "/api/files" && url.searchParams.get("refresh") === "1";
+      });
+      await page.locator("#refresh").click();
+      assert.equal((await refreshed).status(), 200);
+      await waitForLibraryScan();
+    }
+    async function assertWrap(selectors, context) {
+      await settleLayout();
+      const sizes = await page.evaluate((selectors) => selectors.map((selector) => {
+        const element = document.querySelector(selector), style = getComputedStyle(element);
+        return { selector, width: element.clientWidth, scrollWidth: element.scrollWidth,
+          whiteSpace: style.whiteSpace, overflowWrap: style.overflowWrap,
+          wrap: element instanceof HTMLTextAreaElement ? element.wrap : null };
+      }), selectors);
+      for (const size of sizes) {
+        assert.ok(size.width > 0 && size.scrollWidth <= size.width + 2, `${context}: ${JSON.stringify(sizes)}`);
+        if (size.selector === "#source-editor" || size.selector === "#raw-source") {
+          assert.equal(size.whiteSpace, "pre-wrap", `${context}: ${JSON.stringify(size)}`);
+          assert.equal(size.overflowWrap, "anywhere", `${context}: ${JSON.stringify(size)}`);
+        }
+        if (size.selector === "#source-editor") assert.equal(size.wrap, "soft");
+      }
+    }
+    async function setPreview(enabled) {
+      // Click the label at desktop width: its text can overlap the checkbox at mobile widths.
+      await page.setViewportSize({ width: 1360, height: 880 });
+      const toggle = page.locator("#editor-preview-toggle");
+      if (await toggle.isChecked() !== enabled) await page.locator("#editor-preview-control").click();
+      await page.waitForFunction((value) => document.querySelector("#editor-preview-toggle").checked === value, enabled);
+      await page.waitForFunction(async (value) => (await window.lumaDesktop.getPreferences()).editorPreview === value, enabled);
+      await page.waitForFunction((value) => document.body.classList.contains("editor-preview-enabled") === value, enabled);
+      await settleLayout();
+    }
+
     await page.waitForSelector("#edit-document:not([hidden])");
     await page.evaluate(async () => { await window.LumaReaderUI.ready; window.LumaReaderUI.startTour({ step: 4 }); });
     assert.match(await page.locator("#onboarding-copy").textContent(), /default|預設/);
+    assert.match(await page.locator("#onboarding-copy").textContent(), /Linux/);
     await page.evaluate(() => document.querySelector("#onboarding-skip").click());
+    await waitForLibraryScan();
     const baseline = await page.evaluate(async () => ({
       health: await (await fetch("/api/health")).json(),
       files: await (await fetch("/api/files")).json(),
@@ -79,6 +154,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     assert.equal(baseline.health.version, version);
     assert.equal(baseline.health.selected, true);
     assert.ok(baseline.files.files.some((file) => file.path === path.basename(first)));
+    assert.ok(baseline.files.files.some((file) => file.path === nestedRelative), "The complete scan omitted the deep Chinese filename");
     assert.ok(baseline.root.includes("folder-a"));
     assert.equal(baseline.active, path.basename(first));
     assert.equal(baseline.node, "undefined");
@@ -90,37 +166,118 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     }, path.basename(first));
     assert.equal(media.status, 200); assert.equal(media.type, "image/png"); assert.deepEqual(Buffer.from(media.bytes), imageBytes);
 
-    // Exercise the real upgrade path, then verify a later explicit preference survives reload.
-    await page.evaluate(() => window.lumaDesktop.setPreferences({ readerDefaultsVersion: 4, toolbarVisibility: { exportPdf: true } }));
-    await page.reload();
-    await page.waitForSelector("#edit-document:not([hidden])");
+    console.log(`[smoke] ${label}: deep folders, filename search, and refresh`);
+    const search = page.locator("#search");
+    const nestedRow = page.locator(".file-button").filter({ hasText: nestedName });
+    for (const query of [nestedName, "喜帖資料夾"]) {
+      await search.fill(query);
+      await nestedRow.waitFor({ state: "visible" });
+      assert.equal(await nestedRow.getAttribute("title"), nestedRelative);
+      const folders = await nestedRow.evaluate((button) => {
+        const ancestors = []; let folder = button.closest("details.folder");
+        while (folder) { ancestors.push(folder.open); folder = folder.parentElement.closest("details.folder"); }
+        return ancestors;
+      });
+      assert.equal(folders.length, nestedParts.length);
+      assert.ok(folders.every(Boolean), "Search did not expand every ancestor of the matching document");
+    }
+    await search.fill(addedName);
+    await page.locator(".library-empty-hint").waitFor({ state: "visible" });
+    assert.match(await page.locator(".library-empty-hint").textContent(), /Refresh|重新整理|刷新/);
+    await fs.mkdir(path.dirname(added), { recursive: true });
+    await fs.writeFile(added, "# A file created after the first scan\n");
+    await refreshLibrary();
+    const addedRow = page.locator(".file-button").filter({ hasText: addedName });
+    await addedRow.waitFor({ state: "visible" });
+    await fs.unlink(added);
+    await refreshLibrary();
+    await addedRow.waitFor({ state: "detached" });
+    await page.locator(".library-empty-hint").waitFor({ state: "visible" });
+    await search.fill("");
+    await page.locator(".file-button.active").waitFor({ state: "visible" });
+
+    console.log(`[smoke] ${label}: toolbar and preview preference migrations`);
+    // A v1.2 preference record upgrades once; later explicit choices must survive.
+    await page.evaluate(() => window.lumaDesktop.setPreferences({
+      readerDefaultsVersion: 4, editorPreview: false, readingMode: "vertical",
+      toolbarVisibility: { source: false, media: false, exportPdf: true },
+    }));
+    await reloadDocument();
+    await page.waitForFunction(async () => {
+      const saved = await window.lumaDesktop.getPreferences();
+      return saved.readerDefaultsVersion === 6 && saved.editorPreview === true && saved.toolbarVisibility.exportPdf === false;
+    });
     await page.waitForFunction(() => document.querySelector("#export-pdf").dataset.userHidden === "true");
     await page.locator("#palette-toggle").click();
     const pdfCheckbox = page.locator('[data-toolbar-visibility="exportPdf"]');
     assert.equal(await pdfCheckbox.isChecked(), false);
     await pdfCheckbox.check();
     await page.waitForFunction(async () => (await window.lumaDesktop.getPreferences()).toolbarVisibility.exportPdf === true);
-    await page.reload();
+    await reloadDocument();
     await page.waitForSelector("#export-pdf:not([data-user-hidden])", { state: "visible" });
     await page.locator("#palette-toggle").click();
     await page.locator("#toolbar-reset").click();
     await page.waitForFunction(() => document.querySelector("#export-pdf").dataset.userHidden === "true");
     await page.keyboard.press("Escape");
-    await page.evaluate(() => document.querySelector("#onboarding-skip").click());
+
+    console.log(`[smoke] ${label}: PDF footer prompt and cancellation`);
+    const footerChoices = ["LumaReader", "時光設計公司", ""];
+    for (const footer of footerChoices) {
+      // The actual successful-export write is covered by main-process tests. Here
+      // only read preferences and cancel, so CI never opens an OS save dialog.
+      await page.evaluate((pdfFooterText) => window.lumaDesktop.setPreferences({ pdfFooterText }), footer);
+      await reloadDocument();
+      await page.evaluate(() => document.querySelector("#export-pdf").click());
+      await page.waitForSelector("#pdf-options-dialog[open]");
+      const input = page.locator("#pdf-footer-text");
+      assert.equal(await input.inputValue(), footer);
+      const selection = await input.evaluate((element) => ({ start: element.selectionStart, end: element.selectionEnd, focused: document.activeElement === element }));
+      assert.deepEqual(selection, { start: 0, end: footer.length, focused: true });
+      await input.fill("Cancelled footer must not be saved");
+      await page.locator('#pdf-options-dialog [value="cancel"]').click();
+      await page.waitForSelector("#pdf-options-dialog[open]", { state: "detached" });
+      await settleLayout();
+      assert.equal(await page.evaluate(async () => (await window.lumaDesktop.getPreferences()).pdfFooterText), footer);
+    }
+
+    console.log(`[smoke] ${label}: long Chinese, ASCII, and URL wrapping`);
+    const widths = [1360, 900, 480];
+    const wrapModes = [];
+    await page.setViewportSize({ width: 1360, height: 880 });
+    await page.locator("#palette-toggle").click();
+    await page.locator('[data-toolbar-visibility="source"]').check();
+    await page.keyboard.press("Escape");
+    for (const mode of ["rendered", "raw-source"]) {
+      if (mode === "raw-source") await page.locator("#source-view").click();
+      for (const width of widths) {
+        await page.setViewportSize({ width, height: 880 });
+        await assertWrap([mode === "rendered" ? "#content" : "#raw-source"], `${mode}/${width}`);
+      }
+      wrapModes.push(mode);
+      await page.setViewportSize({ width: 1360, height: 880 });
+    }
+    await page.locator("#source-view").click();
     await page.locator("#edit-document").click();
+    assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true, "The migrated editing preference must show live preview by default");
+    await setPreview(false);
+    // Nothing has been edited yet, so reload safely exercises persistent opt-out.
+    await reloadDocument();
+    await page.locator("#edit-document").click();
+    assert.equal(await page.locator("#editor-preview-toggle").isChecked(), false, "A later explicit preview opt-out must remain off");
+    await setPreview(true);
     const edited = text + "\nSaved from window A.\n";
     await page.locator("#source-editor").fill(edited);
-    const widths = [];
-    for (const width of [1360, 900, 480]) {
-      await page.setViewportSize({ width, height: 880 });
-      await delay(250);
-      const sizes = await page.evaluate(() => ["#source-editor", "#content"].map((selector) => {
-        const element = document.querySelector(selector);
-        return { width: element.clientWidth, scrollWidth: element.scrollWidth };
-      }));
-      for (const size of sizes) assert.ok(size.width > 0 && size.scrollWidth <= size.width + 2, JSON.stringify(sizes));
-      widths.push(width);
+    await page.waitForFunction(() => document.querySelector("#content").textContent.includes("Saved from window A."));
+    for (const enabled of [true, false]) {
+      await setPreview(enabled);
+      for (const width of widths) {
+        await page.setViewportSize({ width, height: 880 });
+        await assertWrap(enabled ? ["#source-editor", "#content"] : ["#source-editor"], `editor-preview-${enabled}/${width}`);
+        assert.equal(await page.locator("#source-editor").inputValue(), edited, "Soft wrapping must not insert characters into the saved Markdown");
+      }
+      wrapModes.push(enabled ? "editor-with-preview" : "editor-without-preview");
     }
+    await setPreview(true);
     async function forward(file) {
       const launcher = spawn(executable, [file], { stdio: "ignore" });
       launchers.push(launcher);
@@ -142,7 +299,17 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     assert.equal(await fs.readFile(second, "utf8"), "# Second document\n\nKeep unchanged.\n");
     await forward(first); await delay(400); assert.equal(pages().length, 2);
     assert.deepEqual(pageErrors, []);
-    return { label, version, markdownScanned: true, markdownOpened: true, relativeImageOpened: true, loopbackAuthentication: true, independentEditableWindows: true, exactSaveIsolation: true, duplicateFocused: true, pdfHiddenDefaultAndPreferencePersisted: true, manualDefaultAppGuidance: true, wrappingWidths: widths, elapsedSeconds: Math.round((Date.now() - startedAt) / 1000) };
+    return {
+      label, version, markdownScanned: true, markdownOpened: true, relativeImageOpened: true,
+      loopbackAuthentication: true, independentEditableWindows: true, exactSaveIsolation: true, duplicateFocused: true,
+      deepChineseFilenameSearch: true, folderNameSearchExpandsAncestors: true, indexedFolderDepth: nestedParts.length,
+      refreshFindsAddedAndRemovesDeletedFiles: true, emptySearchSuggestsRefresh: true,
+      pdfHiddenDefaultAndPreferencePersisted: true, editorPreviewDefaultMigrated: true, editorPreviewExplicitOptOutPersisted: true,
+      pdfFooterDialogRestoresSavedChoice: true, pdfFooterInputSelected: true, pdfCancelPreservesPreference: true,
+      pdfFooterChoices: footerChoices, manualDefaultAppGuidance: true,
+      longChineseAsciiAndUrlWrap: true, softWrapPreservesExactText: true, wrappingWidths: widths, wrappingModes: wrapModes,
+      elapsedSeconds: Math.round((Date.now() - startedAt) / 1000),
+    };
   } catch (error) {
     if (output) process.stderr.write(output + "\n");
     throw error;

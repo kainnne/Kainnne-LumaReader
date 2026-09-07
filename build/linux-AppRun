@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Keep Chromium's sandbox enabled. Unsupported hosts must fail to launch instead
+# of silently adding a flag that disables the sandbox.
+app_directory="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
+export LD_LIBRARY_PATH="${app_directory}/usr/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+export XDG_DATA_DIRS="${app_directory}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+exec "${app_directory}/kainnne-lumareader" "$@"

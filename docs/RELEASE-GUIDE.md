@@ -6,7 +6,8 @@ This is the operator sequence for LumaReader desktop releases. Public binaries a
 
 - macOS: Universal (`arm64` + `x86_64`), Developer ID Application signed, Hardened Runtime enabled, notarized, and stapled.
 - Windows: x64 Setup and Portable packages, intentionally unsigned. The website and release notes must disclose the possible SmartScreen warning.
-- Both platforms: run the packaged application, select the release fixture, scan and open Markdown, and terminate cleanly before publication.
+- Linux: x64 AppImage and `.deb`; build on Ubuntu 22.04 and verify the same `.deb` on Ubuntu 24.04. Preserve Chromium sandboxing and existing MIME defaults.
+- All platforms: run the packaged application, select the release fixture, scan and open Markdown, and terminate cleanly before publication.
 
 ## GitHub Actions credentials
 
@@ -26,10 +27,11 @@ Do not paste secret values into issues, pull requests, documentation, release no
 2. Run `npm ci`, `npm run check`, and `npm test` from a clean checkout.
 3. Dispatch `Windows release build`; inspect the unpacked, installed, Portable, API, unsigned-signature, and checksum evidence.
 4. Dispatch `macOS signed release build`; inspect the Developer ID, Universal architecture, strict signature, staple, Gatekeeper, API, and checksum evidence.
-5. Download both workflow artifacts. Install the macOS DMG and Windows Setup/Portable build on the available test environments for the final visual interaction pass.
-6. Create the matching Git tag and draft GitHub Release. Upload the exact verified assets plus final SHA-256 checksums.
-7. Publish the Release only after both platform gates pass. Publishing triggers the Pages workflow.
-8. Verify both direct download buttons at desktop and mobile widths in a signed-out session.
+5. Dispatch `Linux release build`; inspect both package UI checks, renderer sandbox checks, default preservation, and the Ubuntu 24.04 compatibility job.
+6. Dispatch `Publish validated release` with the version, exact source SHA, and all three successful run IDs. It verifies the source commit and expected assets, creates final checksums, and publishes the tag and release without overwriting an existing release.
+7. Apply pending D1 migrations for download counters before deploying the download Worker. For 1.3.0, `0002_linux_download_counts.sql` preserves the existing totals and adds Linux. Export the database before applying it.
+8. Deploy the Worker, then dispatch the Pages workflow if the release event did not trigger it. Verify the live page and use `HEAD /d/{platform}` to inspect download redirects without incrementing counters.
+9. Verify desktop and mobile layout, public assets, and SHA-256 hashes. Local app replacement is a separate, backed-up operation after packaged validation; do not reset OS association databases or terminate unrelated processes.
 
 ## Local packaging commands
 

@@ -1,6 +1,7 @@
 "use strict";
 
 const http = require("node:http");
+const { LibraryIndex } = require("./library-index");
 const crypto = require("node:crypto");
 const saveQueues = new Map();
 const fs = require("node:fs");
@@ -38,16 +39,6 @@ const IGNORED_DIRECTORIES = new Set([
   "node_modules",
   "release",
 ]);
-const DEFAULT_SCAN_LIMITS = Object.freeze({
-  maxDirectories: 256,
-  totalTimeoutMs: 10_000,
-  statConcurrency: 16,
-  maxFiles: 2_000,
-  pathResolutionTimeoutMs: 1_200,
-  readDirectoryTimeoutMs: 1_200,
-  statFileTimeoutMs: 1_200,
-});
-
 const STATIC_MIME_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
   [".html", "text/html; charset=utf-8"],
@@ -235,96 +226,22 @@ function publicFileRecord(root, filePath, stat) {
   };
 }
 
-async function readDirectoryWithin(directory, timeoutMs) {
-  let timeout;
-  try {
-    return await Promise.race([
-      fsp.readdir(directory, { withFileTypes: true }).catch(() => []),
-      new Promise((resolve) => {
-        timeout = setTimeout(() => resolve(null), timeoutMs);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timeout);
-  }
+function createLibraryIndex(root, limits = {}) {
+  return new LibraryIndex(root, { isDocument, publicFileRecord, ignoredDirectories: IGNORED_DIRECTORIES, limits });
 }
 
-async function resolvePathWithin(candidate, timeoutMs) {
-  let timeout;
-  try {
-    return await Promise.race([
-      fsp.realpath(candidate).catch(() => null),
-      new Promise((resolve) => {
-        timeout = setTimeout(() => resolve(null), timeoutMs);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function statFileWithin(filePath, timeoutMs) {
-  let timeout;
-  try {
-    return await Promise.race([
-      fsp.stat(filePath).catch(() => null),
-      new Promise((resolve) => {
-        timeout = setTimeout(() => resolve(null), timeoutMs);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
+// Retain the bounded one-shot utility for callers that only need a small list.
+// The desktop HTTP endpoint uses the resumable LibraryIndex instead.
 async function scanDocuments(root, options = {}) {
-  if (!root) return [];
-  const limits = { ...DEFAULT_SCAN_LIMITS, ...options };
-  const resolvedRoot = await resolvePathWithin(root, limits.pathResolutionTimeoutMs);
-  if (!resolvedRoot) throw new HttpError("The selected folder could not be scanned", 408, "LIBRARY_SCAN_TIMEOUT");
-  const deadline = Date.now() + limits.totalTimeoutMs;
-  const records = [];
-  const directories = [resolvedRoot];
-  let directoryIndex = 0;
-
-  while (
-    Date.now() < deadline
-    && directoryIndex < directories.length
-    && directoryIndex < limits.maxDirectories
-    && records.length < limits.maxFiles
-  ) {
-    const directory = directories[directoryIndex++];
-    const entries = await readDirectoryWithin(directory, limits.readDirectoryTimeoutMs);
-    if (!entries) continue;
-    const files = [];
-    for (const entry of entries) {
-      if (entry.name.startsWith(".") || entry.isSymbolicLink()) continue;
-      const absolute = path.join(directory, entry.name);
-      if (entry.isDirectory()) {
-        if (
-          !IGNORED_DIRECTORIES.has(entry.name)
-          && !entry.name.endsWith(".app")
-          && directories.length < limits.maxDirectories
-        ) directories.push(absolute);
-        continue;
-      }
-      if (!entry.isFile() || !isDocument(absolute)) continue;
-      files.push(absolute);
-      if (records.length + files.length >= limits.maxFiles) break;
-    }
-    for (let start = 0; start < files.length && Date.now() < deadline; start += limits.statConcurrency) {
-    await Promise.all(files.slice(start, start + limits.statConcurrency).map(async (absolute) => {
-      try {
-        const stat = await statFileWithin(absolute, limits.statFileTimeoutMs);
-        if (!stat) return;
-        records.push(publicFileRecord(resolvedRoot, absolute, stat));
-      } catch {
-        // A disappearing file should not prevent the rest of the library from loading.
-      }
-    }));
-    }
-  }
-  return records.sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }));
+  const index = createLibraryIndex(root, {
+    sliceMs: options.totalTimeoutMs ?? 10_000,
+    operationsPerSlice: 500_000,
+    ...(options.maxDirectories === undefined ? {} : { maxDirectories: options.maxDirectories }),
+    ...(options.maxFiles === undefined ? {} : { maxFiles: options.maxFiles }),
+    concurrency: Math.min(4, Math.max(1, options.statConcurrency || 4)),
+  });
+  try { return (await index.advance()).files; }
+  finally { index.dispose(); }
 }
 
 async function statDocument(filePath) {
@@ -726,7 +643,7 @@ class LocalReaderService {
     this.rendererRoot = fs.realpathSync.native(path.resolve(rendererRoot));
     this.libraryRoot = null;
     this.accessToken = accessToken;
-    this.scanPromise = null;
+    this.libraryIndex = null;
     this.server = null;
     this.port = null;
     this.preflightCache = new Map();
@@ -734,6 +651,8 @@ class LocalReaderService {
   }
 
   setLibraryRoot(directory) {
+    this.libraryIndex?.dispose();
+    this.libraryIndex = null;
     if (!directory) {
       this.libraryRoot = null;
       this.preflightCache.clear();
@@ -1011,11 +930,21 @@ class LocalReaderService {
     return this.sourceToLocalPath(source).filePath;
   }
 
-  async scanLibrary() {
-    if (this.scanPromise) return this.scanPromise;
-    const pending = scanDocuments(this.libraryRoot);
-    this.scanPromise = pending;
-    try { return await pending; } finally { if (this.scanPromise === pending) this.scanPromise = null; }
+  async scanLibrary({ refresh = false, cursor = null, scanId = null } = {}) {
+    // A second refresh shares any current scan, including stalled filesystem
+    // calls. It must never start another parallel crawl of the same library.
+    if (!this.libraryIndex || (refresh && !this.libraryIndex.snapshot({ includeFiles: false }).scan.hasMore)) {
+      this.libraryIndex?.dispose();
+      this.libraryIndex = createLibraryIndex(this.libraryRoot);
+    }
+    const index = this.libraryIndex;
+    const result = await index.advance({ includeFiles: cursor === null });
+    const nextCursor = index.orderedFiles.length;
+    if (cursor !== null) {
+      const valid = scanId === index.id && Number.isSafeInteger(cursor) && cursor >= 0 && cursor <= nextCursor;
+      return { ...result, files: index.orderedFiles.slice(valid ? cursor : 0), nextCursor, reset: !valid };
+    }
+    return { ...result, nextCursor, reset: true };
   }
 
   async handleApi(request, response, url) {
@@ -1041,7 +970,11 @@ class LocalReaderService {
         extensions: [...DOCUMENT_EXTENSIONS].sort(),
         types: publicDocumentTypes(),
         explicitlyUnsupported: [...EXPLICITLY_UNSUPPORTED_EXTENSIONS].sort(),
-        files: await this.scanLibrary(),
+        ...await this.scanLibrary({
+          refresh: url.searchParams.get("refresh") === "1",
+          cursor: url.searchParams.has("cursor") ? Number(url.searchParams.get("cursor")) : null,
+          scanId: url.searchParams.get("scanId"),
+        }),
       });
       return true;
     }
@@ -1147,6 +1080,7 @@ class LocalReaderService {
   }
 
   close() {
+    this.libraryIndex?.dispose();
     return new Promise((resolve) => {
       if (!this.server) {
         resolve();

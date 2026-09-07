@@ -10,10 +10,10 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <meta
       name="description"
-      content="Kainnne LumaReader — a polished Markdown reader for desktop and web, with local-first editing, rich rendering, and multiple reading modes."
+      content="Kainnne LumaReader — read and edit local Markdown project files in a clear, customizable interface. Available for macOS, Windows, Linux, and the web."
     />
     <meta property="og:title" content="Kainnne LumaReader" />
-    <meta property="og:description" content="A polished Markdown reader for desktop and web, with local-first editing, rich rendering, and multiple reading modes." />
+    <meta property="og:description" content="Read and edit local Markdown project files in a clear, customizable interface. Available for macOS, Windows, Linux, and the web." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://lumareader.kainnne.com/" />
     <meta property="og:image" content="https://lumareader.kainnne.com/icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:image:alt" content="LumaReader application icon" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Kainnne LumaReader" />
-    <meta name="twitter:description" content="A polished Markdown reader for desktop and web, with local-first editing, rich rendering, and multiple reading modes." />
+    <meta name="twitter:description" content="Read and edit local Markdown project files in a clear, customizable interface. Available for macOS, Windows, Linux, and the web." />
     <meta name="twitter:image" content="https://lumareader.kainnne.com/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,7 +31,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
-    <script src="./app.js?v=1.2.0" defer></script>
+    <script src="./app.js?v=1.3.0" defer></script>
     <title>Kainnne LumaReader</title>
   </head>
   <body>
@@ -54,6 +54,16 @@
         <h1 id="page-title">LumaReader</h1>
 
         <div class="download-panel" id="download">
+          <a class="web-entry shimmer-button" href="./web/">
+            <svg class="web-entry-icon" viewBox="0 0 72 58" fill="none" aria-hidden="true"><rect x="1" y="1" width="70" height="56" rx="9" stroke="currentColor" stroke-width="2"/><path d="M2 14h68M22 15v41M31 25h28M31 33h22M31 41h26M9 25h6M9 33h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="8" r="2" fill="currentColor"/><circle cx="18" cy="8" r="2" fill="currentColor"/></svg>
+            <span class="web-entry-copy">
+              <small data-copy="web-entry-label">NO INSTALLATION</small>
+              <strong data-copy="web-entry-title">Try the reading interface in your browser</strong>
+              <span data-copy="web-entry-body">Open up to 3 documents. Get Desktop for folder libraries and PDF export.</span>
+            </span>
+            <span class="web-entry-arrow" aria-hidden="true">↗</span>
+          </a>
+
           <div class="download-actions" aria-label="Desktop downloads">
             <a class="download-button download-button-macos shimmer-button" href="https://lumareader-share.chaos60649.workers.dev/d/macos" data-download="macOS">
               <span class="button-copy">
@@ -69,27 +79,23 @@
               </span>
               <span class="platform-trust"><span class="trust-mark trust-mark-warning" aria-hidden="true">!</span><span data-copy="windows-trust">Unsigned · SmartScreen or “Unknown publisher” may appear</span></span>
             </a>
+            <a class="download-button download-button-linux shimmer-button" href="https://lumareader-share.chaos60649.workers.dev/d/linux" data-download="Linux">
+              <span class="button-copy"><small data-copy="linux-action">DOWNLOAD FOR</small><strong>Linux</strong></span>
+              <span class="platform-trust"><span class="trust-mark" aria-hidden="true">↓</span><span data-copy="linux-trust">AppImage · Make executable to run</span></span>
+            </a>
           </div>
 
           <div class="download-specs" aria-label="Installer formats">
             <span data-copy="macos-spec">Universal app · Apple silicon + Intel · DMG</span>
             <span data-copy="windows-spec">64-bit Windows · Setup installer</span>
+            <span><span data-copy="linux-spec">64-bit Linux · AppImage</span><br /><a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.deb" data-copy="linux-deb">Debian / Ubuntu · .deb download</a></span>
           </div>
 
-          <a class="web-entry shimmer-button" href="./web/">
-            <span class="web-entry-copy">
-              <small data-copy="web-entry-label">USE IN YOUR BROWSER</small>
-              <strong data-copy="web-entry-title">Open LumaReader Web</strong>
-              <span data-copy="web-entry-body">Try the full reading interface with up to three documents.</span>
-            </span>
-            <span class="web-entry-arrow" aria-hidden="true">↗</span>
-          </a>
-
-          <p class="download-note" id="download-note" data-copy="download-note">Free desktop download · Version 1.2.0 · macOS and Windows</p>
+          <p class="download-note" id="download-note" data-copy="download-note">Free desktop download · Version 1.3.0 · macOS, Windows, and Linux</p>
           <details class="download-activity" id="download-activity">
             <summary data-copy="download-activity-summary">Download activity</summary>
             <p id="download-activity-count" aria-live="polite" data-copy="download-activity-loading">Checking the count…</p>
-            <small data-copy="download-activity-note">macOS and Windows are counted together from version 1.1.0.</small>
+            <small data-copy="download-activity-note">Desktop downloads counted since v1.1.0; Linux included from v1.3.0.</small>
           </details>
         </div>
 
@@ -106,25 +112,25 @@
       <section class="solution" aria-labelledby="solution-title">
         <div class="solution-heading">
           <p class="section-label" data-copy="solution-label">WHAT IT SOLVES</p>
-          <h2 id="solution-title" data-copy="solution-title">Markdown reading, local processing, and a designed interface.</h2>
-          <p data-copy="solution-lead">LumaReader turns files in an ordinary folder into rendered documents while keeping reading, search, and editing on your computer.</p>
+          <h2 id="solution-title" data-copy="solution-title">Local Markdown reading and editing for individual developers.</h2>
+          <p data-copy="solution-lead">Open project documentation and development notes from their existing folders. Read them in a clear layout or edit beside a live preview, with your files on your own computer.</p>
         </div>
         <ul class="solution-grid">
           <li>
-            <strong data-copy="solution-1-title">Markdown presentation</strong>
-            <p data-copy="solution-1-body">Headings, tables, code, mathematics, and diagrams are rendered as a complete reading layout instead of raw markup.</p>
+            <strong data-copy="solution-1-title">Work from your project folders</strong>
+            <p data-copy="solution-1-body">Open a Markdown file or choose a folder. Keep the existing structure, search file and folder names, and switch between documents in the sidebar.</p>
           </li>
           <li>
-            <strong data-copy="solution-2-title">Runs locally</strong>
-            <p data-copy="solution-2-body">Choose a folder on your computer. Scanning, search, reading, preview, and editing run on the device.</p>
+            <strong data-copy="solution-2-title">A comfortable reading layout</strong>
+            <p data-copy="solution-2-body">Read headings, tables, code, and diagrams as a formatted document. Adjust text size, reading mode, palette, and light or dark appearance to suit your screen.</p>
           </li>
           <li>
-            <strong data-copy="solution-3-title">You choose what to share</strong>
-            <p data-copy="solution-3-body">Reading and editing need no account or document upload. Creating a Web share link sends a temporary copy to the share service for 30 days; remote images may contact their hosts.</p>
+            <strong data-copy="solution-3-title">Edit beside the result</strong>
+            <p data-copy="solution-3-body">Keep Markdown source and its preview together. Text wraps to the editor width, and the preview follows your editing position.</p>
           </li>
           <li>
-            <strong data-copy="solution-4-title">Reading interface</strong>
-            <p data-copy="solution-4-body">Clear typography, three reading modes, light and dark appearances, and 22 palettes provide practical layout choices.</p>
+            <strong data-copy="solution-4-title">Keep control of your documents</strong>
+            <p data-copy="solution-4-body">Reading and editing need no account or document upload. Creating a Web share link sends a temporary copy to the share service for 30 days; remote images may contact their hosts.</p>
           </li>
         </ul>
       </section>
@@ -133,35 +139,35 @@
         <div class="release-heading">
           <div>
             <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
-            <h2 id="release-title" data-copy="release-title">Version 1.2.0 update details</h2>
+            <h2 id="release-title" data-copy="release-title">Version 1.3.0 update details</h2>
           </div>
-          <time datetime="2026-09-06" data-copy="release-date">September 6, 2026</time>
+          <time datetime="2026-09-07" data-copy="release-date">September 7, 2026</time>
         </div>
         <div class="release-grid">
           <article>
             <span class="release-number">01</span>
             <div>
-              <h3 data-copy="release-1-title">Open a file and start editing</h3>
-              <p data-copy="release-1-body">Open Markdown from Finder or Windows in its own editable window. The sidebar shows its folder, and opening another file keeps the first document’s unsaved edits in place.</p>
+              <h3 data-copy="release-1-title">Find files and folders</h3>
+              <p data-copy="release-1-body">Search document and folder names together, with matching folders expanded. Folder scanning and refresh feedback help you tell whether a scan is complete or a file could not be read.</p>
             </div>
           </article>
           <article>
             <span class="release-number">02</span>
             <div>
-              <h3 data-copy="release-2-title">Text that fits your window</h3>
-              <p data-copy="release-2-body">Vertical reading, source view, and editing wrap long text to the available width on Desktop and Web. The live preview follows the wrapped editor.</p>
+              <h3 data-copy="release-2-title">PDF footers and page breaks</h3>
+              <p data-copy="release-2-body">Set a company name for the PDF footer, keep LumaReader, or leave it blank. Desktop remembers your choice. Add &lt;!-- lumareader:pagebreak --&gt; on its own line to start the next PDF page.</p>
             </div>
           </article>
           <article>
             <span class="release-number">03</span>
             <div>
-              <h3 data-copy="release-3-title">A quieter toolbar, more careful file handling</h3>
-              <p data-copy="release-3-body">Source, Media, and Export PDF start hidden; enable them in Settings. Desktop adds file-save conflict checks and limits scanning and open windows. Default-app changes remain your choice in system settings.</p>
+              <h3 data-copy="release-3-title">Linux and a better preview layout</h3>
+              <p data-copy="release-3-body">Linux x64 joins macOS and Windows with an AppImage download. The editor wraps text beside the preview, and Web offers a direct download for your desktop platform.</p>
             </div>
           </article>
         </div>
         <div class="release-links">
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.2.0"><span data-copy="release-notes-link">Full v1.2.0 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.3.0"><span data-copy="release-notes-link">Full v1.3.0 release notes</span><span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
@@ -185,9 +191,7 @@
         <div class="overview-heading">
           <p class="section-label" data-copy="overview-label">DETAILED FEATURES</p>
           <h2 id="overview-title" data-copy="overview-title">LumaReader feature details</h2>
-          <p class="overview-lead" data-copy="overview-lead">
-            Supported formats, folder navigation, reading modes, rendering, editing, and interface settings are listed below.
-          </p>
+          <p class="overview-lead" data-copy="overview-lead">Supported formats, folder navigation, reading modes, rendering, editing, and interface settings are listed below.</p>
         </div>
 
         <ol class="feature-list">
@@ -206,7 +210,7 @@
             <span class="feature-number">02</span>
             <div>
               <strong data-copy="feature-2-title">Folder library, search, and sidebar navigation</strong>
-              <p data-copy="feature-2-body">Each file opened from the desktop shows its containing folder in the sidebar. You can also choose a folder library, search filenames, reveal matching folders, and resize or collapse the sidebar. Large folder scans have time and file-count limits.</p>
+              <p data-copy="feature-2-body">Each desktop document shows its containing folder in the sidebar. Search file and folder names together to expand matching results, refresh the library, and check scanning or read-access notices when something is missing.</p>
             </div>
           </li>
           <li>
@@ -234,7 +238,7 @@
             <span class="feature-number">06</span>
             <div>
               <strong data-copy="feature-6-title">Export the rendered document as PDF</strong>
-              <p data-copy="feature-6-body">Enable Export PDF in Settings when needed. The desktop app saves the rendered document through the system save dialog with an A4 layout, including code, tables, diagrams, mathematics, and images.</p>
+              <p data-copy="feature-6-body">Enable Export PDF in Settings. The desktop app exports an A4 PDF with code, tables, diagrams, mathematics, and images. Before saving, set a footer name or leave it blank; your choice is remembered. Put &lt;!-- lumareader:pagebreak --&gt; on its own line for a page break.</p>
             </div>
           </li>
           <li>
@@ -247,8 +251,8 @@
           <li>
             <span class="feature-number">08</span>
             <div>
-              <strong data-copy="feature-8-title">Open Markdown from macOS or Windows</strong>
-              <p data-copy="feature-8-body">Installed builds appear in Open With for .md, .markdown, .mkd, and .mdx. Each file opens in an editable window, up to eight at a time; reopening the same file focuses its window. To make LumaReader your default, use Finder’s Get Info → Open with → Change All, or Windows Settings → Apps → Default apps. LumaReader does not change system defaults at launch.</p>
+              <strong data-copy="feature-8-title">Open Markdown in the desktop app</strong>
+              <p data-copy="feature-8-body">On macOS and Windows, choose LumaReader from Open With for .md, .markdown, .mkd, and .mdx. On Linux, run the AppImage and open a file or folder inside the app. Each file opens in an editable window, up to eight at a time. Default-app choices remain in your operating system settings.</p>
             </div>
           </li>
         </ol>

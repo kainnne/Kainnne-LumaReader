@@ -1,7 +1,7 @@
 {
   "name": "kainnne-lumareader",
-  "version": "1.2.0",
-  "description": "A local-first Markdown and plain-text reader for macOS and Windows.",
+  "version": "1.3.0",
+  "description": "A local Markdown reader and editor for macOS, Windows and Linux.",
   "main": "src/main.js",
   "private": true,
   "license": "MIT",
@@ -10,11 +10,12 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check src/open-target.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check src/open-target.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js && node --check src/library-index.js && node --check src/pdf-export.js && node --check renderer/library-search.js && node --check renderer/pdf-tools.js && node --check renderer/pdf-dialog.js",
     "pack:mac": "electron-builder --mac --universal --dir --publish never",
     "pack:mac:unsigned": "electron-builder --mac --universal --dir --publish never -c.mac.identity=- -c.mac.hardenedRuntime=false -c.mac.notarize=false -c.mac.forceCodeSigning=false",
     "dist:mac": "electron-builder --mac dmg zip --universal --publish never",
-    "dist:win": "electron-builder --win nsis portable --x64 --publish never"
+    "dist:win": "electron-builder --win nsis portable --x64 --publish never",
+    "dist:linux": "electron-builder --linux AppImage deb --x64 --publish never"
   },
   "devDependencies": {
     "electron": "43.3.0",
@@ -66,7 +67,11 @@
       "renderer/vendor/highlight/**/*",
       "build/icon.png",
       "docs/THIRD-PARTY-NOTICES.md",
-      "package.json"
+      "package.json",
+      "renderer/library-search.js",
+      "renderer/pdf-tools.js",
+      "renderer/pdf-dialog.js",
+      "renderer/library-ui.css"
     ],
     "mac": {
       "icon": "build/icon.icns",
@@ -119,6 +124,38 @@
     },
     "portable": {
       "artifactName": "Kainnne-LumaReader-${version}-Windows-${arch}-Portable.${ext}"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Office",
+      "executableName": "kainnne-lumareader",
+      "artifactName": "Kainnne-LumaReader-${version}-Linux-x64.${ext}",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "mimeTypes": [
+        "text/markdown",
+        "text/x-markdown"
+      ],
+      "extraFiles": [
+        {
+          "from": "build/linux-AppRun",
+          "to": "AppRun"
+        }
+      ],
+      "syncDesktopName": true
+    },
+    "deb": {
+      "maintainer": "Kaine Zhu <chaos60649@gmail.com>"
+    },
+    "appImage": {
+      "executableArgs": []
+    },
+    "toolsets": {
+      "appimage": "1.0.3"
     }
-  }
+  },
+  "homepage": "https://lumareader.kainnne.com/",
+  "desktopName": "kainnne-lumareader.desktop"
 }

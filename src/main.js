@@ -10,6 +10,7 @@ const { LocalReaderService } = require("./local-server");
 const { markdownSources, sourceFromFileArgument } = require("./open-target");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const { DocumentWindows } = require("./document-windows");
+const { normalizeFooterText, pdfOptions } = require("./pdf-export");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
@@ -18,6 +19,7 @@ const APP_TITLE = PREVIEW_BUILD ? "LumaReader Candidate" : "Kainnne LumaReader";
 const PREFERENCE_KEYS = new Set([
   "appMode",
   "editorPreview",
+  "pdfFooterText",
   "editorSplitRatio",
   "fontSize",
   "formatSelections",
@@ -415,7 +417,7 @@ handle("document:cancel-create", (context, event, destinationToken) => {
   if (typeof destinationToken === "string") pendingCreateDestinations.delete(destinationToken);
   return true;
 });
-handle("preferences:get", (context) => ({ ...context.preferences }));
+handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText) }));
 handle("preferences:set", async (context, _event, patch) => {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...context.preferences };
   const serialized = JSON.stringify(patch);
@@ -477,16 +479,12 @@ handle("document:export-pdf", async (context, event, payload) => {
   });
   if (result.canceled || !result.filePath) return { ok: false, canceled: true };
   try {
-    const pdf = await mainWindow.webContents.printToPDF({
-      printBackground: true,
-      preferCSSPageSize: true,
-      pageSize: "A4",
-      margins: { top: 0, bottom: 0, left: 0, right: 0 },
-      displayHeaderFooter: true,
-      headerTemplate: "<span></span>",
-      footerTemplate: '<div style="box-sizing:border-box;width:100%;padding:0 11px 0 0;text-align:right;color:#8b858c;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:5.5px;font-weight:600;letter-spacing:.08em;opacity:.13;transform:translateY(6px);">Kainnne LumaReader</div>',
-    });
+    const footerText = normalizeFooterText(typeof payload?.footerText === "string" ? payload.footerText : settings.preferences.pdfFooterText);
+    const pdf = await mainWindow.webContents.printToPDF(pdfOptions(footerText));
     await fsp.writeFile(result.filePath, pdf);
+    context.preferences.pdfFooterText = footerText;
+    settings.preferences = { ...settings.preferences, pdfFooterText: footerText };
+    await saveSettings();
     return { ok: true, filePath: result.filePath };
   } catch (error) {
     return { ok: false, code: "PDF_EXPORT_FAILED", message: error.message || "Unable to export this document as PDF." };
