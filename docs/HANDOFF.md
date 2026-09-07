@@ -2,7 +2,7 @@
 
 ## Current boundary
 
-Kainnne LumaReader 1.1.0 is the current desktop release baseline. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS and Windows binaries are published as GitHub Release assets and remain excluded from Git history.
+This branch contains the Kainnne LumaReader 1.3.0 release source. Check GitHub Releases for the currently published version. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS, Windows, and Linux binaries are published as GitHub Release assets and remain excluded from Git history.
 
 ## Validated baseline
 
@@ -46,13 +46,9 @@ The existing `.gitignore` enforces the main build and dependency exclusions.
 
 ## Release order
 
-1. Run `npm ci`, `npm run check`, and `npm test`.
-2. Run the Windows build workflow and inspect its smoke-test evidence.
-3. Run the `macOS signed release build` workflow on `macos-15` after its five repository secrets are configured.
-4. Inspect its signature, Universal architecture, staple, Gatekeeper, folder scan/open, and shutdown evidence; then install the downloaded DMG on the release Mac for the final visual/editing pass.
-5. Generate SHA-256 checksums from the final artifacts.
-6. Publish the tag and GitHub Release matching the version in `package.json`.
-7. Deploy the website and verify both direct-download buttons from the public site.
+Follow [Release Guide](RELEASE-GUIDE.md) for the maintained sequence. All three platform build workflows must pass on the same source SHA before the publish workflow receives their run IDs. Linux includes AppImage and installed `.deb` checks on Ubuntu 22.04, plus the exact same `.deb` on Ubuntu 24.04. Publish validated release assets before deploying the download Worker and GitHub Pages, then verify download redirects with `HEAD` to avoid adding test counts.
+
+For 1.3.0, [PDF Export](PDF-EXPORT.md) defines the remembered footer and standalone `<!-- lumareader:pagebreak -->` syntax; [Linux](LINUX.md) defines supported formats and sandbox requirements. The library index scans incrementally with a shared four-operation I/O pool and explicit incomplete-scan status. Search covers normalized filenames and folder paths and renders results in batches.
 
 The release Mac currently runs macOS 26.5.2 (25F84), where local package rehearsals reproduced an operating-system regression that synthesizes `com.apple.provenance` / Finder metadata during signing and makes `codesign` reject Electron bundles. Do not weaken signing or entitlements to bypass it. The target acceptance build therefore runs on GitHub's isolated `macos-15` runner; the resulting notarized artifact is downloaded back to the release Mac for final install and UI verification.
 
@@ -62,6 +58,6 @@ The four local crash reports from 2026-08-12 23:42–23:45 came from failed `/pr
 
 The application should remain a polished, intuitive, local-first Markdown reader. Interface text may be localized, but Markdown content must never be translated automatically. The selected library remains under user control, and the local service must continue to bind only to the loopback interface.
 
-Future desktop releases should preserve one shared codebase and produce separate macOS and Windows download artifacts from that source. Those artifacts belong in GitHub Releases, not in the Git repository. Browser work should continue to reuse the renderer while keeping the intentionally narrower persistence and export boundary documented in `docs/WEB-EDITION.md`.
+Future desktop releases should preserve one shared codebase and produce separate macOS, Windows, and Linux download artifacts from that source. Those artifacts belong in GitHub Releases, not in the Git repository. Browser work should continue to reuse the renderer while keeping the intentionally narrower persistence and export boundary documented in `docs/WEB-EDITION.md`.
 
-The account-free Web share and download-counter service is maintained in `cloudflare/lumareader-share/`. Deploy it with Wrangler after tests pass; its production `SHARE_LINKS` binding points to the `lumareader-share-links` KV namespace and `DOWNLOADS_DB` points to the download-count D1 database. Do not remove the 30-day share TTL or the exact reader-origin validation. The unchanged built-in sample must continue to bypass KV, and client-side sharing must retain the self-contained long-link fallback so a Worker outage does not disable sharing. Download redirects increment macOS or Windows atomically and expose only their combined total to the website; no user identity or document data belongs in that database.
+The account-free Web share and download-counter service is maintained in `cloudflare/lumareader-share/`. Deploy it with Wrangler after tests pass; its production `SHARE_LINKS` binding points to the `lumareader-share-links` KV namespace and `DOWNLOADS_DB` points to the download-count D1 database. Do not remove the 30-day share TTL or the exact reader-origin validation. The unchanged built-in sample must continue to bypass KV, and client-side sharing must retain the self-contained long-link fallback so a Worker outage does not disable sharing. Download redirects increment macOS, Windows, or Linux AppImage totals atomically and expose only their combined total to the website; no user identity or document data belongs in that database.

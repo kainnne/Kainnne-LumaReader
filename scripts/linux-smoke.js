@@ -66,13 +66,43 @@ async function readProcesses() {
   return processes;
 }
 
-function belongsToThisTest(item, processes) {
+function belongsToThisTest(item, processes, ownerPid = process.pid) {
   const seen = new Set();
   for (let parent = item.parent; parent && !seen.has(parent); parent = processes.get(parent)?.parent) {
-    if (parent === process.pid) return true;
+    if (parent === ownerPid) return true;
     seen.add(parent);
   }
   return false;
+}
+
+function hasProcessSwitch(item, name, value = null) {
+  const prefix = `--${name}`;
+  if (item.args.length !== 1) {
+    return item.args.some((argument) => value === null
+      ? argument === prefix || argument.startsWith(`${prefix}=`)
+      : argument === `${prefix}=${value}`);
+  }
+  // Chromium setproctitle rewrites argv into one space-separated title. On
+  // modern Linux /proc/PID/cmdline then contains "title\0", not a NUL between
+  // each argument. Preserve the raw title for executable/ownership checks.
+  // https://chromium.googlesource.com/chromium/src/+/refs/tags/138.0.7158.1/base/process/set_process_title_linux_unittest.cc
+  const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const switchPattern = value === null
+    ? `${escape(prefix)}(?:=[^\\s]*)?`
+    : `${escape(prefix)}=${escape(value)}`;
+  return new RegExp(`(?:^|\\s)${switchPattern}(?=\\s|$)`).test(item.args[0]);
+}
+
+function inspectSandboxProcesses(processes, observed, renderers, ownerPid = process.pid) {
+  for (const item of processes.values()) {
+    if (!belongsToThisTest(item, processes, ownerPid) || !item.args[0]?.includes("kainnne-lumareader")) continue;
+    observed.set(item.pid, item);
+    assert.ok(!["no-sandbox", "disable-setuid-sandbox", "disable-seccomp-filter-sandbox"].some((name) => hasProcessSwitch(item, name)), `Sandbox-disabled process: ${JSON.stringify(item.args)}`);
+    if (!hasProcessSwitch(item, "type", "renderer")) continue;
+    assert.match(item.status, /^Seccomp:\s+2$/m, "The renderer must run with a seccomp filter.");
+    assert.match(item.status, /^NoNewPrivs:\s+1$/m, "The renderer must prevent privilege escalation.");
+    renderers.set(item.pid, item);
+  }
 }
 
 async function runWithSandboxChecks(executable, label) {
@@ -82,15 +112,7 @@ async function runWithSandboxChecks(executable, label) {
   let sampling = Promise.resolve();
   async function sample() {
     const processes = await readProcesses();
-    for (const item of processes.values()) {
-      if (!belongsToThisTest(item, processes) || !item.args[0]?.includes("kainnne-lumareader")) continue;
-      observed.set(item.pid, item);
-      assert.ok(!item.args.some((argument) => /^--(?:no-sandbox|disable-setuid-sandbox|disable-seccomp-filter-sandbox)(?:=|$)/.test(argument)), `Sandbox-disabled process: ${JSON.stringify(item.args)}`);
-      if (!item.args.includes("--type=renderer")) continue;
-      assert.match(item.status, /^Seccomp:\s+2$/m, "The renderer must run with a seccomp filter.");
-      assert.match(item.status, /^NoNewPrivs:\s+1$/m, "The renderer must prevent privilege escalation.");
-      renderers.set(item.pid, item);
-    }
+    inspectSandboxProcesses(processes, observed, renderers);
   }
   const timer = setInterval(() => {
     sampling = sampling.then(sample).catch((error) => { samplingError ||= error; });
@@ -98,6 +120,15 @@ async function runWithSandboxChecks(executable, label) {
   try {
     const result = await runPackagedSmoke(executable, label);
     await sampling;
+    if (samplingError || renderers.size === 0) {
+      const observations = [...observed.values()].slice(-8).map((item) => ({
+        pid: item.pid, parent: item.parent, argumentFields: item.args.length,
+        command: item.args.join(" ").slice(0, 400),
+        seccomp: item.status.match(/^Seccomp:\s+(\d+)/m)?.[1],
+        noNewPrivileges: item.status.match(/^NoNewPrivs:\s+(\d+)/m)?.[1],
+      }));
+      console.error(`[sandbox] Owned CI process samples: ${JSON.stringify(observations)}`);
+    }
     if (samplingError) throw samplingError;
     assert.ok(renderers.size > 0, "No sandboxed renderer process was observed during the UI test.");
     await verifyDefaults();
@@ -181,4 +212,5 @@ async function main() {
   }
 }
 
-main().catch((error) => { console.error(error); process.exitCode = 1; });
+if (require.main === module) main().catch((error) => { console.error(error); process.exitCode = 1; });
+module.exports = { hasProcessSwitch, belongsToThisTest, inspectSandboxProcesses };

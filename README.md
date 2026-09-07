@@ -4,7 +4,7 @@ Kainnne LumaReader is a local-first Markdown desktop app focused on calm typogra
 
 ## Project status
 
-Version 1.3.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build an unsigned Windows x64 build, and Linux x64 AppImage and Debian packages. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
+Version 1.3.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build, an unsigned Windows x64 build, and Linux x64 AppImage and Debian packages. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
 
 ## Highlights
 

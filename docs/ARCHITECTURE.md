@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kainnne LumaReader uses Electron so the same application code can run on macOS and Windows without requiring Python, a system web server, or a separately installed runtime.
+Kainnne LumaReader uses Electron so the same application code can run on macOS, Windows, and Linux without requiring Python, a system web server, or a separately installed runtime.
 
 The application has four boundaries:
 
@@ -21,14 +21,16 @@ No HTTP route can change the library root. This prevents an unrelated web page f
 
 The service binds to the loopback interface on an operating-system-assigned port. It supports:
 
-- recursive scanning of the selected root;
+- incremental recursive scanning of the selected root with a shared four-operation I/O pool, metadata-only batches, and explicit incomplete, unavailable, or limited scan status;
 - Markdown (`.md`, `.markdown`, `.mkd`, `.mdx`), plain text (`.txt`), and logs (`.log`);
-- one-off local files chosen through the native file picker without changing the saved library;
+- Markdown files opened in an editable document window rooted at their containing folder, with a maximum of eight windows and existing-window focus for duplicate opens;
 - local relative image, audio, and video paths;
 - per-format document limits and bounded media sizes;
 - include expansion with depth, loop, and boundary protection;
 - live-refresh metadata;
 - static renderer assets.
+
+`/api/files` returns scan progress and cursor-based file deltas. The renderer caches normalized search keys, matches filenames and folder paths, expands matching ancestors, and lazily renders folder contents and result batches. Refresh starts a new scan after the current scan has completed; slow filesystem calls retain their I/O slots instead of spawning overlapping retries.
 
 Generated folders, hidden folders, application bundles, dependency folders, and version-control internals are excluded from library scanning.
 
@@ -48,11 +50,11 @@ Markdown output is sanitized with an explicit element and attribute allowlist. M
 
 ## System file associations
 
-Electron Builder declares `.md`, `.markdown`, `.mkd`, and `.mdx` as editable document types in packaged macOS and Windows builds. Launch arguments and macOS `open-file` events are normalized into explicit `file://` sources, then opened through the same bounded document-service path as a file chosen from the app. Registration makes LumaReader available in **Open With**; the operating system and user retain control of the default application.
+Electron Builder declares `.md`, `.markdown`, `.mkd`, and `.mdx` as editable document types in packaged macOS and Windows builds. Launch arguments and macOS `open-file` events are normalized into explicit `file://` sources, then opened through the same bounded document-service path as a file chosen from the app. Linux Debian packages advertise the Markdown MIME types through a desktop entry; the portable AppImage can open files from inside the app. Registration makes LumaReader available in **Open With**; the operating system and user retain control of the default application.
 
 ## Persistence
 
-The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, toolbar visibility, desktop sidebar state, editing-preview visibility, and editor split ratio are stored by the renderer. Users can therefore change the library without losing visual preferences.
+The selected library path is stored by the main process. Reading mode, palette, theme, font size, interface language, toolbar visibility, desktop sidebar state, editing-preview visibility, and editor split ratio are stored by the renderer. Users can therefore change the library without losing visual preferences. A successful native PDF save persists the selected footer globally, including an intentionally blank footer. Each export reads the latest preference so already-open windows use the same value; cancellation or a failed write does not change it.
 
 ## Web edition boundary
 
@@ -64,4 +66,4 @@ Users can remove a document from the session through the sidebar after a confirm
 
 Drag-and-drop feeds the same in-memory import path as the file picker and therefore preserves the three-document limit. Images dropped specifically onto the editor remain browser-local assets and are referenced through portable relative Markdown paths. Sharing serializes the current Markdown name and text, compresses it when the browser supports `CompressionStream`, and first builds a complete `#share=` reader URL. The browser sends that URL plus a derived title and excerpt to the isolated `lumareader-share` Cloudflare Worker. The Worker validates the exact LumaReader origin and path, stores the record in KV with a 30-day TTL, and returns an eight-character short path. Its public GET page emits document-specific Open Graph metadata before redirecting to the complete reader URL. If the Worker fails, the browser exposes the complete fragment URL directly; opening either form reconstructs and sanitizes the Markdown locally. The unchanged built-in sample bypasses the Worker and reuses `/web/`.
 
-The same Worker owns two versioned download redirect routes. Each route performs one atomic D1 increment for `macos` or `windows` before redirecting to the corresponding GitHub Release asset. The public count endpoint sums those two rows and returns no visitor identifier, request history, or document information.
+The same Worker owns three versioned download redirect routes. Each `GET` route performs one atomic D1 increment for `macos`, `windows`, or `linux` before redirecting to the corresponding GitHub Release asset. The Linux route downloads the AppImage; the secondary `.deb` link goes directly to GitHub. `HEAD` validates a redirect without incrementing its count. The public count endpoint sums those three rows and returns no visitor identifier, request history, or document information.

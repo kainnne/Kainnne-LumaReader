@@ -4,10 +4,10 @@ This file tells future agents how to name, store, and link LumaReader installers
 
 ## Current version
 
-- Current version: `1.2.0`
+- Current version: `1.3.0`
 - Source of truth: `package.json` → `version`
-- Git tag: `v1.2.0`
-- Release title: `Kainnne LumaReader 1.2.0`
+- Git tag: `v1.3.0`
+- Release title: `Kainnne LumaReader 1.3.0`
 
 Before every release, these values must match:
 
@@ -19,21 +19,23 @@ package.json version = Git tag without "v" = installer version = release version
 
 Every public installer filename must include the version, platform, architecture, and package type.
 
-Use these names for version `1.2.0`:
+Use these names for version `1.3.0`:
 
 ```text
-Kainnne-LumaReader-1.2.0-macOS-universal.dmg
-Kainnne-LumaReader-1.2.0-macOS-universal.zip
-Kainnne-LumaReader-1.2.0-Windows-x64-Setup.exe
-Kainnne-LumaReader-1.2.0-Windows-x64-Portable.exe
-Kainnne-LumaReader-1.2.0-SHA256SUMS.txt
+Kainnne-LumaReader-1.3.0-macOS-universal.dmg
+Kainnne-LumaReader-1.3.0-macOS-universal.zip
+Kainnne-LumaReader-1.3.0-Windows-x64-Setup.exe
+Kainnne-LumaReader-1.3.0-Windows-x64-Portable.exe
+Kainnne-LumaReader-1.3.0-Linux-x64.AppImage
+Kainnne-LumaReader-1.3.0-Linux-x64.deb
+Kainnne-LumaReader-1.3.0-SHA256SUMS.txt
 ```
 
 Rules:
 
 - Use `macOS`, not `mac` or `osx`.
 - Use `Windows`, not `win`.
-- Use `universal` for the combined Apple silicon and Intel macOS build; use `x64` for Windows.
+- Use `universal` for the combined Apple silicon and Intel macOS build; use `x64` for Windows and Linux. Linux filenames keep `x64` even when package metadata uses `amd64`.
 - Use `Setup` for the Windows installer and `Portable` for the standalone build.
 - Keep capitalization and separators exactly consistent.
 - The build workflows read the version from `package.json`; update the release notes and website links for every new version.
@@ -46,7 +48,7 @@ Rules:
 4. Upload the installers and checksum file as **GitHub Release assets**.
 5. Publish the Release after installation and launch tests pass.
 
-Do not commit `dist/`, `.dmg`, `.exe`, `.zip`, or portable builds into the Git repository. The repository stores source code; GitHub Releases stores downloadable executables.
+Do not commit `dist/`, `.dmg`, `.exe`, `.zip`, `.AppImage`, `.deb`, or portable builds into the Git repository. The repository stores source code; GitHub Releases stores downloadable executables.
 
 ## Apple Developer Program and macOS validation
 
@@ -116,11 +118,13 @@ A version-specific direct-download link uses this pattern:
 https://github.com/kainnne/Kainnne-LumaReader/releases/download/{TAG}/{FILENAME}
 ```
 
-Examples for version `1.2.0`:
+Examples for version `1.3.0`:
 
 ```text
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.2.0/Kainnne-LumaReader-1.2.0-macOS-universal.dmg
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.2.0/Kainnne-LumaReader-1.2.0-Windows-x64-Setup.exe
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-macOS-universal.dmg
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Windows-x64-Setup.exe
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.AppImage
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.deb
 ```
 
 Because filenames include the version, the website links must be updated for every release. Do not use an old filename with `/releases/latest/download/`; GitHub requires the filename to exactly match an asset in the latest Release.
@@ -137,8 +141,9 @@ The download buttons are defined in `site/index.html`.
 
 - macOS should download the primary macOS DMG directly.
 - Windows should download the x64 Setup executable directly.
+- Linux should offer the x64 AppImage directly and a separate `.deb` download for Ubuntu 22.04 / 24.04. See [Linux compatibility](LINUX.md).
 - Keep the GitHub button linked to the repository.
-- Remove `Coming soon` only after the matching Release is public and both direct URLs return the files.
+- Remove `Coming soon` only after the matching Release is public and all direct URLs return the files.
 - The current macOS release is Universal, so the website needs only one macOS button.
 
 Example:
@@ -149,13 +154,13 @@ Example:
 </a>
 ```
 
-The public website deliberately routes primary macOS and Windows downloads through the existing Cloudflare Worker. Each route performs one atomic D1 increment and then redirects to the exact versioned GitHub Release asset. `GET /api/downloads` returns the combined public total; it does not store an IP address, user identity, filename, or document content. The counter started at zero for v1.1.0 and continues across releases. Do not test the production redirect by downloading it before launch, because that would create a false public count; validate redirect behavior in automated tests and validate the GitHub asset URL separately.
+The public website deliberately routes primary macOS, Windows, and Linux AppImage downloads through the existing Cloudflare Worker. Each `GET` route performs one atomic D1 increment and then redirects to the exact versioned GitHub Release asset. `GET /api/downloads` returns the combined public total; it does not store an IP address, user identity, filename, or document content. The counter started at zero for v1.1.0 and continues across releases. Do not test the production redirect by downloading it before launch, because that would create a false public count; use `HEAD /d/{platform}` to check the production redirect without incrementing the counter, and validate the GitHub asset URL separately. The secondary `.deb` link goes directly to GitHub and is not counted by this Worker.
 
 ## Agent release checklist
 
 1. Read the version from `package.json`; never guess it.
 2. Confirm the Git tag and Release use the same version.
-3. Build and test each installer on its target operating system.
+3. Build and test each installer on its target operating system using the same source SHA. Linux must pass both Ubuntu jobs; do not disable the sandbox to make a test pass.
 4. Rename the artifacts consistently and generate SHA-256 checksums.
 5. Upload assets to GitHub Releases, not to the repository tree.
 6. Verify every direct-download URL in a signed-out browser.
