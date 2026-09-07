@@ -33,9 +33,7 @@
   }
 
   const preferredDesktopDownload = desktopDownloads.find((entry) => entry.platform === detectDesktopPlatform()) || null;
-  const desktopDownloadMarkdown = preferredDesktopDownload
-    ? `[Download LumaReader Desktop for ${preferredDesktopDownload.label} / 下載 ${preferredDesktopDownload.label} 桌面版](${preferredDesktopDownload.url})`
-    : desktopDownloads.map((entry) => `[${entry.label}](${entry.url})`).join(" · ");
+  const desktopDownloadMarkdown = desktopDownloads.map((entry) => `[${entry.label}](${entry.url})`).join(" · ");
 
   const sample = `# LumaReader Web
 
@@ -96,7 +94,11 @@ Open complete project folders, search file and folder names, save edits locally,
 
 桌面版可直接開啟完整專案資料夾、搜尋檔名與資料夾、將修改儲存到本機，並匯出可自訂頁尾與分頁的 PDF。閱讀與編輯不需登入，也不必將文件上傳到伺服器。
 
+Choose your operating system / 選擇你的作業系統：
+
 ${desktopDownloadMarkdown}
+
+[LumaReader home / 返回 LumaReader 首頁](https://lumareader.kainnne.com/)
 `;
 
   function extensionOf(name) {
