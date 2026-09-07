@@ -147,21 +147,7 @@ test("sharing the unchanged built-in example reuses the permanent Web address", 
   assert.equal(shared.url, "https://example.test/web/");
 });
 
-test("the Desktop download action sits beside Share Markdown in the Web toolbar", () => {
-  const html = fs.readFileSync(path.join(__dirname, "../site/web/index.html"), "utf8");
-  const shareIndex = html.indexOf('id="share-document"');
-  const desktopIndex = html.indexOf('id="desktop-download"');
-  const sourceIndex = html.indexOf('id="source-view"');
-
-  assert.ok(shareIndex >= 0);
-  assert.ok(desktopIndex > shareIndex);
-  assert.ok(sourceIndex > desktopIndex);
-  assert.match(html.slice(desktopIndex, sourceIndex), /href="\.\.\/#download"/);
-  assert.doesNotMatch(html.match(/<div class="brand-row">[\s\S]*?<\/div>/)?.[0] || "", /web-home-link/);
-});
-
-
-test("Web download links match the desktop platform without guessing on mobile or unsupported systems", async (t) => {
+test("Web detects the preferred platform while the demo always offers all operating systems and the homepage", async (t) => {
   const cases = [
     [{ platform: "MacIntel", userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", maxTouchPoints: 0 }, "macos"],
     [{ platform: "Win32", userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }, "windows"],
@@ -185,7 +171,9 @@ test("Web download links match the desktop platform without guessing on mobile o
       assert.ok(downloadSection);
       assert.doesNotMatch(document.text, /\(\.\.\/#download\)/);
       const links = [...downloadSection.matchAll(/https:\/\/lumareader-share\.chaos60649\.workers\.dev\/d\/(macos|windows|linux)/g)].map((match) => match[1]);
-      assert.deepEqual(links, platform ? [platform] : ["macos", "windows", "linux"]);
+      assert.deepEqual(links, ["macos", "windows", "linux"]);
+      assert.match(downloadSection, /Choose your operating system \/ 選擇你的作業系統/);
+      assert.match(downloadSection, /\[LumaReader home \/ 返回 LumaReader 首頁\]\(https:\/\/lumareader\.kainnne\.com\/\)/);
     });
   }
 });

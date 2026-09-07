@@ -923,7 +923,6 @@
   $("#change-library")?.addEventListener("click",changeLibrary);
   newMarkdownButtonEl.addEventListener("click",openNewMarkdownDialog);newMarkdownNameEl.addEventListener("input",()=>{showNewMarkdownError("");updateNewMarkdownDialog();});newMarkdownFormEl.addEventListener("submit",createMarkdownDocument);$("#new-markdown-cancel").addEventListener("click",closeNewMarkdownDialog);newMarkdownDialogEl.addEventListener("cancel",(event)=>{event.preventDefault();if(state.creatingDocument)return;closeNewMarkdownDialog();});
   sessionDialogCancelEl.addEventListener("click",()=>{state.pendingWebFiles=[];closeSessionDialog();});sessionDialogConfirmEl.addEventListener("click",()=>{if(state.sessionDialogPath)removeWebDocument(state.sessionDialogPath);});sessionDialogEl.addEventListener("cancel",(event)=>{event.preventDefault();state.pendingWebFiles=[];closeSessionDialog();});
-  bindDesktopDownload($("#desktop-download"));
   bindDesktopDownload(sessionDesktopLinkEl);
   shareButtonEl.addEventListener("click",shareCurrentMarkdown);$("#share-link-copy").addEventListener("click",copyShareLink);$("#share-dialog-close").addEventListener("click",closeShareDialog);shareDialogEl.addEventListener("cancel",(event)=>{event.preventDefault();closeShareDialog();});
   $("#choose-file").addEventListener("click",chooseWebFiles);$("#file-picker").addEventListener("change",async(event)=>{await openUploadedFile(event.target.files);event.target.value="";});
