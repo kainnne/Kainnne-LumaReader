@@ -108,7 +108,7 @@ test("download redirects increment one platform atomically", async () => {
   const database = new FakeD1();
   const response = await handler.fetch(new Request("https://lumareader-share.example/d/macos"), { DOWNLOADS_DB: database });
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-macOS-universal.dmg");
+  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.1/Kainnne-LumaReader-1.3.1-macOS-universal.dmg");
   assert.equal(database.values.macos, 1);
   assert.equal(database.values.windows, 0);
 });
@@ -125,7 +125,7 @@ test("Linux downloads increment Linux only and use the published AppImage name",
   const database = new FakeD1({ macos: 41, windows: 23, linux: 12 });
   const response = await handler.fetch(new Request("https://lumareader-share.example/d/linux"), { DOWNLOADS_DB: database });
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.AppImage");
+  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.1/Kainnne-LumaReader-1.3.1-Linux-x64.AppImage");
   assert.deepEqual(database.values, { macos: 41, windows: 23, linux: 13 });
 });
 
@@ -135,7 +135,7 @@ test("download HEAD requests check all platform destinations without changing co
   for (const platform of ["macos", "windows", "linux"]) {
     const response = await handler.fetch(new Request(`https://lumareader-share.example/d/${platform}`, { method: "HEAD" }), { DOWNLOADS_DB: database });
     assert.equal(response.status, 302);
-    assert.match(response.headers.get("Location"), /releases\/download\/v1\.3\.0\//);
+    assert.match(response.headers.get("Location"), /releases\/download\/v1\.3\.1\//);
     assert.equal(await response.text(), "");
   }
   assert.deepEqual(database.values, { macos: 41, windows: 23, linux: 12 });

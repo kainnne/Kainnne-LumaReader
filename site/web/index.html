@@ -27,8 +27,8 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=1.3.0" />
-  <link rel="stylesheet" href="library-ui.css?v=1.3.0" />
+  <link rel="stylesheet" href="styles.css?v=1.3.1" />
+  <link rel="stylesheet" href="library-ui.css?v=1.3.1" />
 </head>
 <body class="booting">
   <div id="boot-loader" class="boot-loader" role="status" aria-live="polite" aria-label="Loading LumaReader Web">
@@ -325,7 +325,10 @@
     <dialog id="pdf-options-dialog" class="pdf-options-dialog" aria-labelledby="pdf-options-title">
       <form method="dialog">
         <h2 id="pdf-options-title">Export PDF</h2>
+        <label class="pdf-option-check"><input id="pdf-include-footer" type="checkbox" /><span>Add footer name</span></label>
         <label for="pdf-footer-text"><span>Footer name</span><input id="pdf-footer-text" type="text" maxlength="120" value="LumaReader" autocomplete="organization" /></label>
+        <label class="pdf-option-check"><input id="pdf-color-frame" type="checkbox" /><span>Add palette-colored frame</span></label>
+        <p class="pdf-style-help">Leave both unchecked for plain white pages without a footer.</p>
         <p class="pdf-footer-help">Shown at the bottom right of each page. Leave blank to hide.</p>
         <details><summary>Markdown → PDF</summary><p class="pdf-pagebreak-help">To start a new PDF page, add this on its own line in Markdown:</p><code>&lt;!-- lumareader:pagebreak --&gt;</code></details>
         <footer><button class="compact-button" type="button" value="cancel">Cancel</button><button class="compact-button primary-button" type="submit" value="export">Continue</button></footer>
@@ -361,15 +364,15 @@
   <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=1.3.0"></script>
-  <script src="reader-utils.js?v=1.3.0"></script>
+  <script src="web-bridge.js?v=1.3.1"></script>
+  <script src="reader-utils.js?v=1.3.1"></script>
   <script src="adapters/core.js?v=1.2.0"></script>
   <script src="adapters/plain-text.js?v=1.2.0"></script>
   <script src="adapters/index.js?v=1.2.0"></script>
-  <script src="library-search.js?v=1.3.0"></script>
-  <script src="pdf-tools.js?v=1.3.0"></script>
-  <script src="pdf-dialog.js?v=1.3.0"></script>
-  <script src="app.js?v=1.3.0"></script>
-  <script src="multiformat-ui.js?v=1.3.0"></script>
+  <script src="library-search.js?v=1.3.1"></script>
+  <script src="pdf-tools.js?v=1.3.1"></script>
+  <script src="pdf-dialog.js?v=1.3.1"></script>
+  <script src="app.js?v=1.3.1"></script>
+  <script src="multiformat-ui.js?v=1.3.1"></script>
 </body>
 </html>

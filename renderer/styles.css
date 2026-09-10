@@ -2547,7 +2547,7 @@ body.editor-preview-enabled .content { overflow-x: hidden !important; }
 .pdf-options-dialog::backdrop { background: #1b172750; }
 .pdf-options-dialog h2 { margin: 0 0 20px; font-size: 20px; }
 .pdf-options-dialog label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; }
-.pdf-options-dialog input { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--reader-line); border-radius: 10px; padding: 12px; background: var(--reader-paper); color: var(--reader-ink); font: inherit; }
+.pdf-options-dialog input[type="text"] { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--reader-line); border-radius: 10px; padding: 12px; background: var(--reader-paper); color: var(--reader-ink); font: inherit; }
 .pdf-options-dialog p, .pdf-options-dialog details { color: var(--reader-muted); font-size: 12px; line-height: 1.7; }
 .pdf-options-dialog details code { overflow-wrap: anywhere; }
 .pdf-options-dialog footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
@@ -2560,4 +2560,12 @@ body.editor-preview-enabled .prose :is(p, li, blockquote, h1, h2, h3, h4, h5, h6
 @media print {
   .pdf-options-dialog, .prose .luma-page-break { display: none !important; }
   .prose > .luma-start-page { break-before: page; page-break-before: always; padding-top: 5mm; }
+}
+
+.pdf-options-dialog .pdf-option-check { display: flex; align-items: center; gap: 10px; margin: 16px 0; cursor: pointer; }
+.pdf-option-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent-strong); }
+.pdf-options-dialog input:disabled { opacity: .55; }
+@media print {
+  :root[data-pdf-frame="plain"] { --print-page: #fff; }
+  :root[data-pdf-frame="plain"] body::before { display: none; }
 }

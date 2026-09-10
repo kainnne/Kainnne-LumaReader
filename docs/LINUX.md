@@ -1,6 +1,6 @@
 # LumaReader on Linux
 
-LumaReader 1.3.0 adds Linux x64 downloads in two formats:
+LumaReader 1.3.1 provides Linux x64 downloads in two formats:
 
 - **Debian package (`.deb`)** for Ubuntu 22.04 and 24.04. Install it with the distribution's package installer. It adds a launcher and makes LumaReader available in **Open With**.
 - **AppImage** for a portable copy. Give the downloaded file permission to run as a program, then open it. The release pipeline tests this format on Ubuntu 22.04 using extraction mode.
@@ -18,7 +18,7 @@ Ubuntu 24.04 restricts unprivileged user namespaces. The `.deb` uses electron-bu
 AppImage mounting depends on the host's FUSE support. If mounting is unavailable on a compatible host, the AppImage runtime also supports extraction mode:
 
 ```sh
-APPIMAGE_EXTRACT_AND_RUN=1 ./Kainnne-LumaReader-1.3.0-Linux-x64.AppImage
+APPIMAGE_EXTRACT_AND_RUN=1 ./Kainnne-LumaReader-1.3.1-Linux-x64.AppImage
 ```
 
 Extraction mode still requires a working Chromium sandbox. LumaReader's AppImage launcher preserves the sandbox and does not silently turn it off when the host disallows it. If the app cannot start because sandbox support is unavailable, use the `.deb` on a supported distribution instead of disabling the sandbox. [AppImage troubleshooting](https://docs.appimage.org/user-guide/troubleshooting/fuse.html), [Electron process sandboxing](https://www.electronjs.org/docs/latest/tutorial/sandbox/)

@@ -4,7 +4,7 @@ Kainnne LumaReader is a local-first Markdown desktop app focused on calm typogra
 
 ## Project status
 
-Version 1.3.0 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build, an unsigned Windows x64 build, and Linux x64 AppImage and Debian packages. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
+Version 1.3.1 is the current desktop release. The same local-first Electron codebase produces a signed and notarized Universal macOS build, an unsigned Windows x64 build, and Linux x64 AppImage and Debian packages. A session-based web edition is available at [lumareader.kainnne.com/web/](https://lumareader.kainnne.com/web/). Public installers belong in [GitHub Releases](https://github.com/kainnne/Kainnne-LumaReader/releases); generated binaries are not committed to the repository.
 
 ## Highlights
 
@@ -20,13 +20,13 @@ Version 1.3.0 is the current desktop release. The same local-first Electron code
 - KaTeX mathematics and Mermaid diagrams, including flowcharts and Gantt charts.
 - Syntax highlighting, raw source preview, document outline, media preview, and live refresh.
 - In-place raw Markdown editing with a compact toolbar action and native `Command+S` / `Ctrl+S` save. Saving confirms in place; the reader returns only when the user exits editing.
-- An Insert menu adds headings, emphasis, links, quotes, code, tasks, tables, and images without moving the editor viewport. Dropped images are copied to a portable document-adjacent asset folder and appear in preview immediately.
+- An Insert menu adds headings, emphasis, links, quotes, code, tasks, tables, and images with native undo/redo and a visible selection while choosing formats. Preview reflow does not move the source while typing. Dropped images are copied to a portable document-adjacent asset folder and appear in preview immediately.
 - Optional live comparison preview while editing, with a draggable split, source-led synchronized scrolling, and one shared scrollbar at the far right.
 - Editing opens with live preview enabled. If the rendered side extends past the source at the end of a highly styled document, a deliberate **Show bottom** action reveals the remaining preview without changing the normal synchronization behavior.
 - Selecting another document during editing displays a palette-matched reminder to save or exit editing first.
 - Exiting with unsaved edits opens a palette-matched confirmation before anything is discarded.
 - Create a new `.md` by choosing its destination folder first. LumaReader confirms the name and destination, never overwrites an existing file, refreshes the library immediately, then opens the new document directly in the editor.
-- Export the rendered reading view as an A4 PDF with a remembered company footer or no footer. Add manual page breaks with `<!-- lumareader:pagebreak -->`; see [PDF export](docs/PDF-EXPORT.md). Print backgrounds, diagrams, mathematics, code, tables, and images are preserved.
+- Export the rendered reading view as an A4 PDF with optional, remembered footer and palette-colored frame settings. Both options start off for plain white pages. Add manual page breaks with `<!-- lumareader:pagebreak -->`; see [PDF export](docs/PDF-EXPORT.md). Print backgrounds, diagrams, mathematics, code, tables, and images are preserved.
 - A compact Settings gear combines light/dark appearance, palette, interface language, and individual toolbar visibility. Palette selection stays open for side-by-side comparison; Vertical remains the default, while Paged supports both left/right and up/down navigation.
 - Twenty-two visual palettes with light and dark appearances, including neutral Studio White and Graphite business themes.
 - Every palette colors the application frame and accents while keeping the central reading paper neutral white in light mode and neutral charcoal in dark mode for clear text contrast.
@@ -40,7 +40,7 @@ Version 1.3.0 is the current desktop release. The same local-first Electron code
 
 ## Web edition
 
-The web edition reuses the complete reader interface without requiring an account. It can open, drag in, or create up to three Markdown or plain-text documents, remove individual documents, and edit with the same preview, Settings, Insert, image, and synchronized-scrolling controls. Its bilingual built-in sample explains the local-first Desktop workflow, and a highlighted Desktop download action sits beside **Share this Markdown** in the toolbar. Sharing creates an eight-character Cloudflare short link with a document-specific social preview. Share records expire after 30 days; the unchanged built-in sample reuses the permanent `/web/` address without consuming storage. Ordinary document content stays in browser memory, and no durable cloud library, file download, folder library, or PDF export is provided. When the browser grants a writable file handle, saving can update the original local file directly.
+The web edition reuses the complete reader interface without requiring an account. It can open, drag in, or create up to three Markdown or plain-text documents, remove individual documents, and edit with the same preview, Settings, Insert, image, and synchronized-scrolling controls. Its bilingual built-in sample explains the local-first Desktop workflow, and its footer provides macOS, Windows, and Linux downloads plus a link back to the homepage. Sharing creates an eight-character Cloudflare short link with a document-specific social preview. Share records expire after 30 days; the unchanged built-in sample reuses the permanent `/web/` address without consuming storage. Ordinary document content stays in browser memory, and no durable cloud library, file download, folder library, or PDF export is provided. When the browser grants a writable file handle, saving can update the original local file directly.
 
 Implementation boundaries and manual acceptance checks are documented in [Web Edition](docs/WEB-EDITION.md).
 
