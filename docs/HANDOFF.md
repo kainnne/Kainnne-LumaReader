@@ -2,7 +2,7 @@
 
 ## Current boundary
 
-This branch contains the Kainnne LumaReader 1.3.0 release source. Check GitHub Releases for the currently published version. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS, Windows, and Linux binaries are published as GitHub Release assets and remain excluded from Git history.
+This branch contains the Kainnne LumaReader 1.3.1 release source. Check GitHub Releases for the currently published version. The repository stores source, tests, packaging configuration, release automation, and documentation. macOS, Windows, and Linux binaries are published as GitHub Release assets and remain excluded from Git history.
 
 ## Validated baseline
 
@@ -48,7 +48,7 @@ The existing `.gitignore` enforces the main build and dependency exclusions.
 
 Follow [Release Guide](RELEASE-GUIDE.md) for the maintained sequence. All three platform build workflows must pass on the same source SHA before the publish workflow receives their run IDs. Linux includes AppImage and installed `.deb` checks on Ubuntu 22.04, plus the exact same `.deb` on Ubuntu 24.04. Publish validated release assets before deploying the download Worker and GitHub Pages, then verify download redirects with `HEAD` to avoid adding test counts.
 
-For 1.3.0, [PDF Export](PDF-EXPORT.md) defines the remembered footer and standalone `<!-- lumareader:pagebreak -->` syntax; [Linux](LINUX.md) defines supported formats and sandbox requirements. The library index scans incrementally with a shared four-operation I/O pool and explicit incomplete-scan status. Search covers normalized filenames and folder paths and renders results in batches.
+For 1.3.1, [PDF Export](PDF-EXPORT.md) defines the remembered footer and standalone `<!-- lumareader:pagebreak -->` syntax; [Linux](LINUX.md) defines supported formats and sandbox requirements. The library index scans incrementally with a shared four-operation I/O pool and explicit incomplete-scan status. Search covers normalized filenames and folder paths and renders results in batches.
 
 The release Mac currently runs macOS 26.5.2 (25F84), where local package rehearsals reproduced an operating-system regression that synthesizes `com.apple.provenance` / Finder metadata during signing and makes `codesign` reject Electron bundles. Do not weaken signing or entitlements to bypass it. The target acceptance build therefore runs on GitHub's isolated `macos-15` runner; the resulting notarized artifact is downloaded back to the release Mac for final install and UI verification.
 

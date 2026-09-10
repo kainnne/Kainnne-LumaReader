@@ -4,10 +4,10 @@ This file tells future agents how to name, store, and link LumaReader installers
 
 ## Current version
 
-- Current version: `1.3.0`
+- Current version: `1.3.1`
 - Source of truth: `package.json` → `version`
-- Git tag: `v1.3.0`
-- Release title: `Kainnne LumaReader 1.3.0`
+- Git tag: `v1.3.1`
+- Release title: `Kainnne LumaReader 1.3.1`
 
 Before every release, these values must match:
 
@@ -19,16 +19,16 @@ package.json version = Git tag without "v" = installer version = release version
 
 Every public installer filename must include the version, platform, architecture, and package type.
 
-Use these names for version `1.3.0`:
+Use these names for version `1.3.1`:
 
 ```text
-Kainnne-LumaReader-1.3.0-macOS-universal.dmg
-Kainnne-LumaReader-1.3.0-macOS-universal.zip
-Kainnne-LumaReader-1.3.0-Windows-x64-Setup.exe
-Kainnne-LumaReader-1.3.0-Windows-x64-Portable.exe
-Kainnne-LumaReader-1.3.0-Linux-x64.AppImage
-Kainnne-LumaReader-1.3.0-Linux-x64.deb
-Kainnne-LumaReader-1.3.0-SHA256SUMS.txt
+Kainnne-LumaReader-1.3.1-macOS-universal.dmg
+Kainnne-LumaReader-1.3.1-macOS-universal.zip
+Kainnne-LumaReader-1.3.1-Windows-x64-Setup.exe
+Kainnne-LumaReader-1.3.1-Windows-x64-Portable.exe
+Kainnne-LumaReader-1.3.1-Linux-x64.AppImage
+Kainnne-LumaReader-1.3.1-Linux-x64.deb
+Kainnne-LumaReader-1.3.1-SHA256SUMS.txt
 ```
 
 Rules:
@@ -118,13 +118,13 @@ A version-specific direct-download link uses this pattern:
 https://github.com/kainnne/Kainnne-LumaReader/releases/download/{TAG}/{FILENAME}
 ```
 
-Examples for version `1.3.0`:
+Examples for version `1.3.1`:
 
 ```text
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-macOS-universal.dmg
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Windows-x64-Setup.exe
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.AppImage
-https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.0/Kainnne-LumaReader-1.3.0-Linux-x64.deb
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.1/Kainnne-LumaReader-1.3.1-macOS-universal.dmg
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.1/Kainnne-LumaReader-1.3.1-Windows-x64-Setup.exe
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.1/Kainnne-LumaReader-1.3.1-Linux-x64.AppImage
+https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.3.1/Kainnne-LumaReader-1.3.1-Linux-x64.deb
 ```
 
 Because filenames include the version, the website links must be updated for every release. Do not use an old filename with `/releases/latest/download/`; GitHub requires the filename to exactly match an asset in the latest Release.

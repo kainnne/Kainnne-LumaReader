@@ -20,6 +20,8 @@ const PREFERENCE_KEYS = new Set([
   "appMode",
   "editorPreview",
   "pdfFooterText",
+  "pdfIncludeFooter",
+  "pdfColorFrame",
   "editorSplitRatio",
   "fontSize",
   "formatSelections",
@@ -417,7 +419,7 @@ handle("document:cancel-create", (context, event, destinationToken) => {
   if (typeof destinationToken === "string") pendingCreateDestinations.delete(destinationToken);
   return true;
 });
-handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText) }));
+handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText), pdfIncludeFooter: settings.preferences.pdfIncludeFooter === true, pdfColorFrame: settings.preferences.pdfColorFrame === true }));
 handle("preferences:set", async (context, _event, patch) => {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...context.preferences };
   const serialized = JSON.stringify(patch);
@@ -480,10 +482,13 @@ handle("document:export-pdf", async (context, event, payload) => {
   if (result.canceled || !result.filePath) return { ok: false, canceled: true };
   try {
     const footerText = normalizeFooterText(typeof payload?.footerText === "string" ? payload.footerText : settings.preferences.pdfFooterText);
-    const pdf = await mainWindow.webContents.printToPDF(pdfOptions(footerText));
+    const pdfIncludeFooter = typeof payload?.includeFooter === "boolean" ? payload.includeFooter : settings.preferences.pdfIncludeFooter === true;
+    const pdfColorFrame = typeof payload?.colorFrame === "boolean" ? payload.colorFrame : settings.preferences.pdfColorFrame === true;
+    const pdf = await mainWindow.webContents.printToPDF(pdfOptions(footerText, { includeFooter: pdfIncludeFooter }));
     await fsp.writeFile(result.filePath, pdf);
-    context.preferences.pdfFooterText = footerText;
-    settings.preferences = { ...settings.preferences, pdfFooterText: footerText };
+    const pdfPreferences = { pdfFooterText: footerText, pdfIncludeFooter, pdfColorFrame };
+    Object.assign(context.preferences, pdfPreferences);
+    settings.preferences = { ...settings.preferences, ...pdfPreferences };
     await saveSettings();
     return { ok: true, filePath: result.filePath };
   } catch (error) {

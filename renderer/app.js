@@ -174,7 +174,7 @@
     sidebarCollapsed:localStorage.getItem("lumareader-sidebar-collapsed")==="true",sidebarWidth:Number(localStorage.getItem("lumareader-sidebar-width")||320),
     enabledExtensions:new Set(MARKDOWN_EXTENSIONS), typeCatalog:new Map(), documentKind:"markdown", activeAdapter:null,
     documentRequestId:0, documentAbortController:null, libraryRefreshId:0,libraryScanId:0,libraryScanTimer:null,libraryScanStartedAt:0,
-    imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")!=="false",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],editorViewportAfterInsert:null,
+    imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")!=="false",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],editorPreviewScrollIntent:false,
     toolbarVisibility:storedToolbarVisibility(),languagePromptSeen:localStorage.getItem("lumareader-language-prompt-seen")==="true",lastDocumentPath:localStorage.getItem("lumareader-last-document")||"",importingImages:false,
     creatingDocument:false,choosingCreateDirectory:false,createDirectory:"",createDirectoryPath:"",createDestinationToken:""
   };
@@ -256,16 +256,17 @@
     pdfExportBusy=true;
     const previousView=state.view,button=$("#export-pdf");
     try{
-      const footerText=await window.LumaPdfDialog.open(state.language);
-      if(footerText===null)return;
+      const pdfSettings=await window.LumaPdfDialog.open(state.language);
+      if(pdfSettings===null)return;
+      document.documentElement.dataset.pdfFrame=pdfSettings.colorFrame?"color":"plain";
       if(previousView!=="rendered")setView("rendered");
       document.body.classList.add("pdf-exporting");button.disabled=true;showToast(t("exportingPdf"));
       await waitForPdfAssets();
-      const result=await window.lumaDesktop.exportPdf({name:state.currentName||state.currentPath,footerText});
+      const result=await window.lumaDesktop.exportPdf({name:state.currentName||state.currentPath,...pdfSettings});
       if(result?.ok)showToast(t("pdfExported"));
       else if(!result?.canceled)showToast(result?.message||t("pdfExportFailed"));
     }catch(error){showToast(error.message||t("pdfExportFailed"));}
-    finally{pdfExportBusy=false;document.body.classList.remove("pdf-exporting");button.disabled=false;if(state.view!==previousView)setView(previousView);}
+    finally{delete document.documentElement.dataset.pdfFrame;pdfExportBusy=false;document.body.classList.remove("pdf-exporting");button.disabled=false;if(state.view!==previousView)setView(previousView);}
   }
 
   function toolbarVisibilityTargets(){return{
@@ -374,7 +375,7 @@
     if(state.mode==="vertical")block.scrollIntoView({block:"start",behavior:"auto"});else if(usesVerticalAxis())contentEl.scrollTop=Math.max(0,block.offsetTop-parseFloat(getComputedStyle(contentEl).paddingTop||0));else contentEl.scrollLeft=Math.max(0,block.offsetLeft-parseFloat(getComputedStyle(contentEl).paddingLeft||0));
     updatePagination();
   }
-  function scheduleLayoutRefresh(position=captureReadingPosition()){requestAnimationFrame(()=>{updatePagination();clearTimeout(scheduleLayoutRefresh.timer);scheduleLayoutRefresh.timer=setTimeout(()=>{if(!dropdownPairs().some(([menu])=>!menu.hidden))restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();},240);});}
+  function scheduleLayoutRefresh(position=captureReadingPosition()){requestAnimationFrame(()=>{updatePagination();clearTimeout(scheduleLayoutRefresh.timer);scheduleLayoutRefresh.timer=setTimeout(()=>{if(!state.editing&&!dropdownPairs().some(([menu])=>!menu.hidden))restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();},240);});}
   function toggleSidebar(){const position=captureReadingPosition();if(isNarrow()){sidebarEl.classList.toggle("open");document.body.classList.toggle("sidebar-open",sidebarEl.classList.contains("open"));}else{state.sidebarCollapsed=!state.sidebarCollapsed;localStorage.setItem("lumareader-sidebar-collapsed",String(state.sidebarCollapsed));persistPreferences({sidebarCollapsed:state.sidebarCollapsed});}updateSidebarToggle();scheduleLayoutRefresh(position);}
   function closeSidebarOnNarrow(){if(!isNarrow())return;sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");updateSidebarToggle();}
   function disposeActiveAdapter(){state.activeAdapter?.dispose?.();state.activeAdapter=null;contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");document.body.removeAttribute("data-document-kind");}
@@ -447,8 +448,12 @@
   }
   function scheduleEditorScrollMapRefresh({sync=true}={}){cancelAnimationFrame(state.editorScrollMapFrame);state.editorScrollMapFrame=requestAnimationFrame(()=>{state.editorScrollMapFrame=null;if(!editorPreviewIsActive())return;rebuildEditorScrollMap();if(sync)syncEditorPreviewFromSource();else updateEditorPreviewEndAction();});}
   function syncEditorPreviewFromSource(){if(!editorPreviewIsActive()||state.editorScrollSyncing==="preview")return;cancelAnimationFrame(state.editorScrollFrame);state.editorScrollFrame=requestAnimationFrame(()=>{if(!editorPreviewIsActive())return;state.editorScrollSyncing="source";const previewMax=Math.max(0,contentEl.scrollHeight-contentEl.clientHeight),fallback=previewMax*scrollRatioFor(sourceEditorEl);contentEl.scrollTop=state.editorSourceToPreview.length>1?window.LumaReaderUtils.mapByAnchors(sourceEditorEl.scrollTop,state.editorSourceToPreview):fallback;state.editorScrollFrame=requestAnimationFrame(()=>{state.editorScrollSyncing=false;updateEditorPreviewEndAction();});});}
-  function syncEditorSourceFromPreview(){if(!editorPreviewIsActive()||state.editorScrollSyncing)return;state.editorScrollSyncing="preview";const sourceMax=Math.max(0,sourceEditorEl.scrollHeight-sourceEditorEl.clientHeight),fallback=sourceMax*scrollRatioFor(contentEl);sourceEditorEl.scrollTop=state.editorPreviewToSource.length>1?window.LumaReaderUtils.mapByAnchors(contentEl.scrollTop,state.editorPreviewToSource):fallback;state.editorScrollFrame=requestAnimationFrame(()=>{state.editorScrollSyncing=false;syncEditorPreviewFromSource();});}
-  async function renderEditorPreview(){if(!editorPreviewIsActive())return;const viewport=state.editorViewportAfterInsert;state.editorViewportAfterInsert=null;await renderDocument(false,state.documentRequestId,sourceEditorEl.value);if(editorPreviewIsActive()){contentEl.hidden=false;scheduleEditorScrollMapRefresh();if(viewport)settleEditorViewport(viewport);}}
+  function syncEditorSourceFromPreview(){if(!editorPreviewIsActive()||state.editorScrollSyncing||!state.editorPreviewScrollIntent)return;state.editorScrollSyncing="preview";const sourceMax=Math.max(0,sourceEditorEl.scrollHeight-sourceEditorEl.clientHeight),fallback=sourceMax*scrollRatioFor(contentEl);sourceEditorEl.scrollTop=state.editorPreviewToSource.length>1?window.LumaReaderUtils.mapByAnchors(contentEl.scrollTop,state.editorPreviewToSource):fallback;state.editorScrollFrame=requestAnimationFrame(()=>{state.editorScrollSyncing=false;syncEditorPreviewFromSource();});}
+  async function renderEditorPreview(){
+    if(!editorPreviewIsActive())return;
+    await renderDocument(false,state.documentRequestId,sourceEditorEl.value);
+    if(editorPreviewIsActive()){contentEl.hidden=false;scheduleEditorScrollMapRefresh();}
+  }
   function scheduleEditorPreview(immediate=false){clearTimeout(state.editorPreviewTimer);if(!editorPreviewIsActive())return;state.editorPreviewTimer=setTimeout(()=>renderEditorPreview().catch((error)=>console.warn("Unable to render the editor preview",error)),immediate?0:180);}
   function updateEditorPreviewLayout({render=false}={}){
     const active=editorPreviewIsActive();editorPreviewControlEl.hidden=!state.editing;editorPreviewToggleEl.checked=state.editorPreview;editorPreviewToggleEl.disabled=state.saving;editorPreviewResizerEl.hidden=!active;editorPreviewEndEl.hidden=true;document.body.classList.toggle("editor-preview-enabled",active);applyEditorSplitRatio();
@@ -480,7 +485,7 @@
     updateEditorPreviewLayout();
     updateToolbarTooltips();
   }
-  function resetEditorState(){clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorViewportAfterInsert=null;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
+  function resetEditorState(){clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
   function blockWhileEditing(){if(!state.editing)return false;showEditingBlockedNotice();return true;}
   function beginEditing(){
     if(!canEditCurrentDocument()){showToast(t("editUnavailable"));return;}
@@ -515,20 +520,37 @@
     if(!position)return;
     sourceEditorEl.scrollTop=position.sourceTop;sourceEditorEl.scrollLeft=position.sourceLeft;contentEl.scrollTop=position.previewTop;contentEl.scrollLeft=position.previewLeft;window.scrollTo({left:position.windowX,top:position.windowY,behavior:"auto"});if(document.activeElement===sourceEditorEl&&Number.isInteger(position.selectionStart)&&Number.isInteger(position.selectionEnd))sourceEditorEl.setSelectionRange(position.selectionStart,position.selectionEnd);
   }
-  function settleEditorViewport(position){restoreEditorViewport(position);requestAnimationFrame(()=>restoreEditorViewport(position));}
+  // Native text insertion joins typing, paste and formatting in the browser's
+  // undo history. Assigning .value or setRangeText would bypass that history.
+  function replaceEditorText(text,selectionStart,selectionEnd){
+    const before=sourceEditorEl.value;
+    let start=0,end=before.length,newEnd=text.length;
+    while(start<end&&start<newEnd&&before[start]===text[start])start++;
+    while(end>start&&newEnd>start&&before[end-1]===text[newEnd-1]){end--;newEnd--;}
+    const viewport=captureEditorViewport();
+    state.editorPreviewScrollIntent=false;
+    sourceEditorEl.focus({preventScroll:true});
+    if(before!==text){
+      sourceEditorEl.setSelectionRange(start,end);
+      if(!document.execCommand("insertText",false,text.slice(start,newEnd))){
+        sourceEditorEl.setSelectionRange(selectionStart,selectionEnd);
+        showToast(state.language.startsWith("zh")?"目前無法插入格式，請在原文中手動加入 Markdown 語法。":"Formatting is unavailable here; enter the Markdown syntax in the source.");return;
+      }
+    }
+    sourceEditorEl.setSelectionRange(selectionStart,selectionEnd);
+    restoreEditorViewport(viewport);
+  }
   function applyEditorCommand(command){
     if(!state.editing)return;
     if(command==="image"){editorImagePickerEl.click();return;}
-    const viewport=captureEditorViewport();
     const result=window.LumaReaderUtils.applyMarkdownCommand(sourceEditorEl.value,sourceEditorEl.selectionStart,sourceEditorEl.selectionEnd,command,{text:t("editorTextPlaceholder"),link:t("editorLinkPlaceholder")});
-    viewport.selectionStart=result.selectionStart;viewport.selectionEnd=result.selectionEnd;state.editorViewportAfterInsert=viewport;sourceEditorEl.value=result.text;sourceEditorEl.focus({preventScroll:true});sourceEditorEl.setSelectionRange(result.selectionStart,result.selectionEnd);sourceEditorEl.dispatchEvent(new Event("input",{bubbles:true}));settleEditorViewport(viewport);
+    replaceEditorText(result.text,result.selectionStart,result.selectionEnd);
     closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);
   }
   function imageAltText(name){return String(name||"").replace(/\.[^.]+$/,"").replace(/[-_]+/g," ").trim()||t("insertImage");}
   function insertEditorMarkdown(markdown){
-    const viewport=captureEditorViewport();
     const start=sourceEditorEl.selectionStart,end=sourceEditorEl.selectionEnd,before=sourceEditorEl.value.slice(0,start),after=sourceEditorEl.value.slice(end),prefix=before&&!before.endsWith("\n")?"\n":"",suffix=after&&!after.startsWith("\n")?"\n":"",replacement=`${prefix}${markdown}${suffix}`;
-    sourceEditorEl.setRangeText(replacement,start,end,"end");viewport.selectionStart=sourceEditorEl.selectionStart;viewport.selectionEnd=sourceEditorEl.selectionEnd;state.editorViewportAfterInsert=viewport;sourceEditorEl.focus({preventScroll:true});sourceEditorEl.dispatchEvent(new Event("input",{bubbles:true}));settleEditorViewport(viewport);
+    replaceEditorText(before+replacement+after,start+replacement.length,start+replacement.length);
   }
   async function importEditorImages(fileList){
     if(!state.editing||state.importingImages||!window.lumaDesktop?.importImage)return;
@@ -811,6 +833,8 @@
   readingModeToggleEl.addEventListener("click",()=>toggleToolbarMenu(readingModeMenuEl,readingModeToggleEl));
   paletteToggleEl.addEventListener("click",()=>toggleToolbarMenu(paletteMenuEl,paletteToggleEl));
   languageToggleEl.addEventListener("click",()=>toggleToolbarMenu(languageMenuEl,languageToggleEl));
+  // Keep the native selection painted while pointer users choose a format.
+  editorInsertToggleEl.addEventListener("pointerdown",(event)=>{if(state.editing&&event.button===0)event.preventDefault();});
   editorInsertToggleEl.addEventListener("click",()=>toggleToolbarMenu(editorInsertMenuEl,editorInsertToggleEl));
   document.addEventListener("click",(event)=>{const path=event.composedPath();const insideControl=path.some((node)=>node instanceof Element&&(node.matches(".toolbar-select-button,.appearance-button")||node.classList.contains("toolbar-menu")));if(!insideControl)closeToolbarMenus();});
   languageEl.addEventListener("change",()=>applyLanguage(languageEl.value,{fromUser:true}));settingsLanguageEl.addEventListener("change",()=>applyLanguage(settingsLanguageEl.value,{fromUser:true}));
@@ -853,8 +877,18 @@
   sidebarResizerEl.addEventListener("dblclick",()=>{applySidebarWidth(320,{save:true});scheduleLayoutRefresh();});
   sidebarResizerEl.addEventListener("keydown",(event)=>{if(!["ArrowLeft","ArrowRight","Home"].includes(event.key))return;event.preventDefault();applySidebarWidth(event.key==="Home"?320:state.sidebarWidth+(event.key==="ArrowRight"?16:-16),{save:true});scheduleLayoutRefresh();});
   sourceEditorEl.addEventListener("input",()=>{state.editorDirty=sourceEditorEl.value!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();scheduleEditorPreview();});
-  sourceEditorEl.addEventListener("beforeinput",(event)=>{if(event.isTrusted)state.editorViewportAfterInsert=null;});
-  sourceEditorEl.addEventListener("keydown",(event)=>{const command=event.metaKey||event.ctrlKey,key=event.key.toLowerCase();if(command&&!event.shiftKey&&key==="b"){event.preventDefault();applyEditorCommand("bold");return;}if(command&&!event.shiftKey&&key==="k"){event.preventDefault();applyEditorCommand("link");return;}if(event.key!=="Tab"||command||event.altKey)return;event.preventDefault();const start=sourceEditorEl.selectionStart,end=sourceEditorEl.selectionEnd;sourceEditorEl.setRangeText("  ",start,end,"end");sourceEditorEl.dispatchEvent(new Event("input",{bubbles:true}));});
+  sourceEditorEl.addEventListener("beforeinput",()=>{state.editorPreviewScrollIntent=false;});
+  sourceEditorEl.addEventListener("compositionstart",()=>{state.editorPreviewScrollIntent=false;});
+  // Only a user gesture in the preview may move the source. Layout/anchoring
+  // scroll events during rendering must never feed back into the textarea.
+  contentEl.addEventListener("pointerdown",(event)=>{if(editorPreviewIsActive()&&(event.pointerType==="touch"||event.offsetX>=contentEl.clientWidth))state.editorPreviewScrollIntent=true;});
+  contentEl.addEventListener("keydown",(event)=>{if(["ArrowUp","ArrowDown","PageUp","PageDown","Home","End"," "].includes(event.key))state.editorPreviewScrollIntent=true;});
+  function endPreviewScrollGesture(){requestAnimationFrame(()=>requestAnimationFrame(()=>{state.editorPreviewScrollIntent=false;}));}
+  window.addEventListener("pointerup",endPreviewScrollGesture);
+  window.addEventListener("pointercancel",endPreviewScrollGesture);
+  sourceEditorEl.addEventListener("pointerdown",()=>{state.editorPreviewScrollIntent=false;});
+
+  sourceEditorEl.addEventListener("keydown",(event)=>{const command=event.metaKey||event.ctrlKey,key=event.key.toLowerCase();if(command&&!event.shiftKey&&key==="b"){event.preventDefault();applyEditorCommand("bold");return;}if(command&&!event.shiftKey&&key==="k"){event.preventDefault();applyEditorCommand("link");return;}if(event.key!=="Tab"||command||event.altKey)return;event.preventDefault();const start=sourceEditorEl.selectionStart,end=sourceEditorEl.selectionEnd;replaceEditorText(sourceEditorEl.value.slice(0,start)+"  "+sourceEditorEl.value.slice(end),start+2,start+2);});
   let editorDragDepth=0;
   sourceEditorEl.addEventListener("dragenter",(event)=>{if(!state.editing||![...(event.dataTransfer?.items||[])].some((item)=>item.kind==="file"))return;event.preventDefault();editorDragDepth+=1;editorImageDropEl.hidden=false;document.body.classList.add("editor-image-dragging");});
   sourceEditorEl.addEventListener("dragover",(event)=>{if(!state.editing)return;event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";});

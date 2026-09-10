@@ -8,6 +8,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { chromium } = require("playwright-core");
 const { version } = require("../package.json");
+const { checkEditorBehavior } = require("./editor-behavior-smoke");
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function reservePort() {
@@ -326,7 +327,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     for (const footer of footerChoices) {
       // The actual successful-export write is covered by main-process tests. Here
       // only read preferences and cancel, so CI never opens an OS save dialog.
-      await page.evaluate((pdfFooterText) => window.lumaDesktop.setPreferences({ pdfFooterText }), footer);
+      await page.evaluate((pdfFooterText) => window.lumaDesktop.setPreferences({ pdfFooterText, pdfIncludeFooter: true, pdfColorFrame: true }), footer);
       await reloadDocument();
       await page.evaluate(() => document.querySelector("#export-pdf").click());
       await page.waitForSelector("#pdf-options-dialog[open]");
@@ -340,6 +341,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       await settleLayout();
       assert.equal(await page.evaluate(async () => (await window.lumaDesktop.getPreferences()).pdfFooterText), footer);
     }
+
+    await checkEditorBehavior(page);
 
     currentStage = "long Chinese, ASCII, and URL wrapping";
     console.log(`[smoke] ${label}: ${currentStage}`);
@@ -411,6 +414,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       pdfHiddenDefaultAndPreferencePersisted: true, editorPreviewDefaultMigrated: true, editorPreviewExplicitOptOutPersisted: true,
       pdfFooterDialogRestoresSavedChoice: true, pdfFooterInputSelected: true, pdfCancelPreservesPreference: true,
       pdfFooterChoices: footerChoices, manualDefaultAppGuidance: true,
+      formattingUndoRedo: true, insertSelectionVisible: true, unequalPaneTypingStable: true,
       longChineseAsciiAndUrlWrap: true, softWrapPreservesExactText: true, wrappingWidths: widths, wrappingModes: wrapModes,
       elapsedSeconds: Math.round((Date.now() - startedAt) / 1000),
     };

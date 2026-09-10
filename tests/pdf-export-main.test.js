@@ -122,13 +122,14 @@ test("successful PDF export escapes company names and shares custom and blank fo
   const firstOutput = path.join(h.root, "custom.pdf");
   h.saveReplies.push({ canceled: false, filePath: firstOutput });
   const custom = '可愛 & <公司> "Z"';
-  const first = await h.invoke("document:export-pdf", 0, { name: "document.md", footerText: `  ${custom}  ` });
+  const first = await h.invoke("document:export-pdf", 0, { name: "document.md", footerText: `  ${custom}  `, includeFooter: true });
   assert.equal(first.ok, true);
   assert.deepEqual(fs.readFileSync(firstOutput), pdfBytes);
   assert.equal(h.saveRequests[0].window, h.windows[0]);
   assert.equal(h.windows[1].printRequests.length, 0);
   const options = h.windows[0].printRequests[0];
   assert.equal(options.printBackground, true);
+  assert.equal(options.displayHeaderFooter, true);
   assert.equal(options.preferCSSPageSize, true);
   assert.match(options.footerTemplate, /可愛 &amp; &lt;公司&gt;/);
   assert.ok(!options.footerTemplate.includes("<公司>"));
@@ -175,6 +176,33 @@ test("the initial PDF footer is LumaReader and is remembered only after a succes
   const result = await h.invoke("document:export-pdf", 0, { name: "document.md" });
   assert.equal(result.ok, true);
   assert.match(h.windows[0].printRequests[0].footerTemplate, />LumaReader</);
+  assert.equal(h.windows[0].printRequests[0].displayHeaderFooter, false);
   assert.equal(h.storedPreferences().pdfFooterText, "LumaReader");
   assert.equal((await h.invoke("preferences:get", 1)).pdfFooterText, "LumaReader");
+});
+
+test("PDF style options default to plain and persist independently without erasing the footer name", async (t) => {
+  const h = await createHarness(t, {pdfFooterText:"原有公司"});
+  const initial = await h.invoke("preferences:get",0);
+  assert.equal(initial.pdfIncludeFooter,false);
+  assert.equal(initial.pdfColorFrame,false);
+  for(const [includeFooter,colorFrame] of [[false,false],[true,false],[false,true],[true,true]]){
+    h.saveReplies.push({canceled:false,filePath:path.join(h.root,`style-${includeFooter}-${colorFrame}.pdf`)});
+    const result=await h.invoke("document:export-pdf",0,{name:"document.md",footerText:"原有公司",includeFooter,colorFrame});
+    assert.equal(result.ok,true);
+    assert.equal(h.windows[0].printRequests.at(-1).displayHeaderFooter,includeFooter);
+    const saved=await h.invoke("preferences:get",1);
+    assert.equal(saved.pdfFooterText,"原有公司");
+    assert.equal(saved.pdfIncludeFooter,includeFooter);
+    assert.equal(saved.pdfColorFrame,colorFrame);
+  }
+  h.saveReplies.push({canceled:true});
+  await h.invoke("document:export-pdf",1,{footerText:"Not saved",includeFooter:false,colorFrame:false});
+  assert.equal(h.storedPreferences().pdfIncludeFooter,true);
+  assert.equal(h.storedPreferences().pdfColorFrame,true);
+  h.windows[1].printError=new Error("Failed print");
+  h.saveReplies.push({canceled:false,filePath:path.join(h.root,"failed-style.pdf")});
+  await h.invoke("document:export-pdf",1,{footerText:"Not saved",includeFooter:false,colorFrame:false});
+  assert.equal(h.storedPreferences().pdfIncludeFooter,true);
+  assert.equal(h.storedPreferences().pdfColorFrame,true);
 });
