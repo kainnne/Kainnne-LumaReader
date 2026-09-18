@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # GitHub exposes draft-release assets only to callers with repository write access.
+  contents: write
 
 concurrency:
   group: qiyue-zhiwai-notarize-20260919
