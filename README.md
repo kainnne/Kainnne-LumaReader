@@ -19,10 +19,10 @@ Version 1.4.0 is the current desktop release. The same local-first Electron code
 - Local images, audio, video, includes, tables, task lists, abbreviations, footnotes, alerts, and emoji shortcodes.
 - KaTeX mathematics and Mermaid diagrams, including flowcharts and Gantt charts.
 - Syntax highlighting, raw source preview, document outline, media preview, and live refresh.
-- In-place raw Markdown editing with a compact toolbar action and native `Command+S` / `Ctrl+S` save. Saving confirms in place; the reader returns only when the user exits editing.
-- An Insert menu adds headings, emphasis, links, quotes, code, tasks, tables, and images with native undo/redo and a visible selection while choosing formats. Preview reflow does not move the source while typing. Dropped images are copied to a portable document-adjacent asset folder and appear in preview immediately.
+- Direct editing of formatted text and table cells by default, with native `Command+S` / `Ctrl+S` save. Enable **Show Markdown** for source and comparison preview; disable it to return to direct editing. Saving confirms in place; the reader returns only when the user exits editing.
+- A Format menu explains headings, emphasis, links, quoted paragraphs, code, tasks, tables, and images, with optional compact labels, undo/redo and a visible selection while choosing formats. Preview reflow does not move the source while typing. Dropped images are copied to a portable document-adjacent asset folder and appear in preview immediately.
 - Optional live comparison preview while editing, with a draggable split, source-led synchronized scrolling, and one shared scrollbar at the far right.
-- Editing opens with live preview enabled. If the rendered side extends past the source at the end of a highly styled document, a deliberate **Show bottom** action reveals the remaining preview without changing the normal synchronization behavior.
+- **Show Markdown** starts off each time editing begins. Enabling it opens comparison preview; **Show bottom** reveals any preview content extending past the source.
 - Selecting another document during editing displays a palette-matched reminder to save or exit editing first.
 - Exiting with unsaved edits opens a palette-matched confirmation before anything is discarded.
 - Create a new `.md` by choosing its destination folder first. LumaReader confirms the name and destination, never overwrites an existing file, refreshes the library immediately, then opens the new document directly in the editor.
@@ -34,6 +34,7 @@ Version 1.4.0 is the current desktop release. The same local-first Electron code
 - Reader text, Markdown source, and editor text share the same size control through the toolbar or `Command` / `Ctrl` with `+` and `-`.
 - Soft wrapping for vertical reading, source view, and editing on Desktop and Web.
 - Source, Media, and Export PDF are hidden by default and can be enabled in Settings.
+- Desktop code files (`.py`, `.c`, `.h`, `.cpp`, `.hpp`, `.js`, `.ts`) open read-only with syntax colors and line numbers; editing requires per-document opt-in. Code is never executed.
 - Bounded scans, per-window loopback credentials, and atomic saves with conflict detection.
 - Compact responsive controls and a persistent sidebar toggle.
 - Installed macOS and Windows builds register `.md`, `.markdown`, `.mkd`, and `.mdx` so LumaReader appears in the system **Open With** menu and can be chosen as the default Markdown app by the user through system settings. The app does not rewrite OS defaults at launch.
