@@ -39,9 +39,9 @@
 
 ## Try the interface / 先體驗介面
 
-Open a Markdown file or try editing this example. The Web edition holds up to three documents at a time.
+Open a Markdown file or edit this example directly. Turn on **Show Markdown** when you want the source beside a preview. The Web edition holds up to three documents at a time.
 
-開啟自己的 Markdown 檔案，或直接編輯這份示範文件。網頁版同時最多開啟 3 份文件。
+開啟自己的 Markdown 檔案，或直接點文字編輯這份示範文件。需要對照原文時，再開啟 **顯示 Markdown**。網頁版同時最多開啟 3 份文件。
 
 ## Read your way / 用喜歡的方式閱讀
 

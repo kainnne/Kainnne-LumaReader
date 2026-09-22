@@ -4,7 +4,8 @@
   window.LumaPdfTools.install(window.marked);
 
   const MARKDOWN_EXTENSIONS = [".md", ".mkd", ".mdx", ".markdown"];
-  const SUPPORTED_EXTENSIONS = [...MARKDOWN_EXTENSIONS, ".txt", ".log"];
+  const CODE_EXTENSIONS=[".py",".c",".h",".cpp",".hpp",".js",".ts"];
+  const SUPPORTED_EXTENSIONS = [...MARKDOWN_EXTENSIONS, ".txt", ".log",...CODE_EXTENSIONS];
   const SUPPORTED_EXTENSION_SET = new Set(SUPPORTED_EXTENSIONS);
   const translations = {
     en: { library:"Document Library",sourcePlaceholder:"Paste file://, http:// or https://",openSource:"Open source",chooseFile:"Choose local document",search:"Search documents",rescan:"Rescan",navigation:"Navigation",files:"Files",outline:"Current File Outline",documents:"Documents",ready:"Ready",readerSettings:"Reader settings",readingMode:"Reading mode",vertical:"Vertical",horizontal:"Horizontal",paged:"Paged",pagedHorizontal:"Paged · Left / right",pagedVertical:"Paged · Up / down",pageNavigation:"Page navigation",previousPage:"Previous page",nextPage:"Next page",source:"Source",media:"Media",smallerText:"Smaller text",largerText:"Larger text",palette:"Color palette",language:"Interface language",darkMode:"Dark mode",lightMode:"Light mode",fullscreen:"Fullscreen",empty:"Choose a main folder as the root of your preview library.",mediaPreview:"Media Preview",close:"Close",live:"Live",loading:"Loading…",loadError:"Unable to open this document.",refreshed:"Document refreshed",renderedView:"Rendered view",sourceView:"Source view",noOutline:"No headings in this document.",noMedia:"No media in this document.",copy:"Copy",copied:"Copied",invalidSource:"Enter a file://, http://, https:// or local path.",noMatches:"No matching documents." },
@@ -183,7 +184,7 @@
     sidebarCollapsed:localStorage.getItem("lumareader-sidebar-collapsed")==="true",sidebarWidth:Number(localStorage.getItem("lumareader-sidebar-width")||320),
     enabledExtensions:new Set(MARKDOWN_EXTENSIONS), typeCatalog:new Map(), documentKind:"markdown", activeAdapter:null,
     documentRequestId:0, documentAbortController:null, libraryRefreshId:0,libraryScanId:0,libraryScanTimer:null,libraryScanStartedAt:0,
-    imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")!=="false",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],editorPreviewScrollIntent:false,
+    compactFormatting:false,editorMode:"direct",imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")!=="false",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],editorPreviewScrollIntent:false,
     toolbarVisibility:storedToolbarVisibility(),languagePromptSeen:localStorage.getItem("lumareader-language-prompt-seen")==="true",importingImages:false,
     creatingDocument:false,choosingCreateDirectory:false,createDirectory:"",createDirectoryPath:"",createDestinationToken:"",pendingWebFiles:[],sessionDialogPath:"",sessionDialogMode:"remove"
   };
@@ -227,6 +228,7 @@
     const saved=await window.lumaDesktop?.getPreferences?.().catch(()=>null);
     if(!saved)return {};
     if(Number.isFinite(saved.fontSize))state.fontSize=saved.fontSize;
+    state.compactFormatting=saved.compactFormatting===true;
     if(typeof saved.editorPreview==="boolean")state.editorPreview=saved.editorPreview;
     if(Number.isFinite(saved.editorSplitRatio))state.editorSplitRatio=Math.max(.25,Math.min(.75,saved.editorSplitRatio));
     if(typeof saved.language==="string")state.language=saved.language;
@@ -401,8 +403,88 @@
     updateEditorControls();
   }
 
+  const directHost=$("#direct-editor"),editorModeControl=$("#editor-mode-control"),showMarkdownButton=$("#show-markdown"),directTableTools=$("#direct-table-tools");
+  let directEditor=null;
+  function updateDirectLayout(){
+    const code=state.documentKind==="code",active=state.editing&&!code&&state.editorMode==="direct";
+    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code;showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;showMarkdownButton.textContent=state.language.startsWith("zh")?"顯示 Markdown":"Show Markdown";
+
+    updateFormattingLabels();
+    $("#code-edit-control").hidden=!code||state.sourceType!=="project"||!window.lumaDesktop?.setCodeEditing;$("#code-edit-toggle").checked=code&&state.editing;$("#code-edit-toggle").disabled=state.saving||state.codeEditPending;$("#code-edit-label").textContent=state.language.startsWith("zh")?"允許編輯程式碼":"Enable code editing";
+    if(code){contentEl.hidden=false;rawEl.hidden=true;sourceEditorEl.hidden=true;state.activeAdapter?.setEditable?.(state.editing&&!state.saving);}
+    document.body.classList.toggle("direct-editing",active);directTableTools.hidden=!active||!directTableTools.dataset.inTable;
+    directTableTools.querySelectorAll("button").forEach(button=>{button.textContent=state.language.startsWith("zh")?button.dataset.zh:button.dataset.en;});
+    if(state.editing)sourceEditorEl.hidden=active||code;
+    if(active){contentEl.hidden=true;rawEl.hidden=true;directEditor?.setEditable(!state.saving);}
+  }
+  function activateDirectEditor(){
+    if(sourceEditorEl.value.length>500000){state.editorMode="source";showToast(state.language.startsWith("zh")?"大型文件請使用原文編輯。":"Use source editing for this large document.");updateEditorPreviewLayout({render:true});return;}
+    if(directEditor&&!directEditor.matches(sourceEditorEl.value)){directEditor.destroy();directEditor=null;}
+    if(!directEditor)directEditor=window.LumaDirectEditor.create({element:directHost,text:sourceEditorEl.value,language:state.language,resolveImage:mediaUrl,onImage:openImageViewer,onFiles:importEditorImages,onSource:()=>changeEditorMode("source"),onTableState:active=>{directTableTools.dataset.inTable=active?"true":"";directTableTools.hidden=state.editorMode!=="direct"||!active;},onChange:text=>{sourceEditorEl.value=text;state.editorDirty=text!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();}});
+    updateDirectLayout();
+  }
+  function changeEditorMode(mode){
+    if(!state.editing||state.saving||state.importingImages)return;
+    state.editorMode=mode;if(mode==="source"){state.editorPreview=true;localStorage.setItem("lumareader-editor-preview","true");persistPreferences({editorPreview:true});}clearTimeout(state.editorPreviewTimer);state.editorPreviewScrollIntent=false;
+    if(mode==="direct")activateDirectEditor();updateEditorPreviewLayout({render:true});
+    requestAnimationFrame(()=>mode==="direct"?directEditor?.focus():sourceEditorEl.focus({preventScroll:true}));
+  }
+  showMarkdownButton.addEventListener("click",()=>changeEditorMode(state.editorMode==="source"?"direct":"source"));
+  $("#code-edit-toggle").addEventListener("change",event=>{if(event.target.checked)void beginCodeEditing();else requestLeaveEditing();updateEditorControls();});
+  directTableTools.addEventListener("pointerdown",event=>event.preventDefault());
+  directTableTools.addEventListener("click",event=>{const button=event.target.closest("[data-table-command]");if(button)directEditor?.command(button.dataset.tableCommand);});
+  let formattingLabelKey="";
+  function updateFormattingLabels(){
+    const key=state.language+state.compactFormatting;if(key===formattingLabelKey)return;formattingLabelKey=key;
+    const zh=state.language.startsWith("zh"),compact=state.compactFormatting;
+    $("#format-menu-label").textContent=zh?"格式":"Format";$("#format-compact-label").textContent=zh?"精簡顯示":"Compact labels";$("#format-compact").checked=compact;
+    editorInsertMenuEl.classList.toggle("compact-formatting",compact);
+    const labels={
+      "heading-1":["H1","大標題","文件中最醒目的主要標題。","Title","The main title of your document."],
+      "heading-2":["H2","段落標題","分出章節，讓重點更好找。","Heading","Introduce a section of the document."],
+      "heading-3":["H3","小標題","用在章節裡的次要段落。","Subheading","Organize topics within a section."],
+      bold:["B","粗體","強調選取的文字。","Bold","Emphasize the selected text."],
+      italic:["I","斜體","用傾斜文字標示詞語。","Italic","Give selected words italic emphasis."],
+      link:["↗","連結","替文字加上可點開的網址。","Link","Add a web address to selected text."],
+      image:["▧","圖片","從電腦選圖，放進文件。","Image","Choose an image from your computer."],
+      quote:["❝","引述段落","將摘錄或補充說明縮排，和本文區隔。","Quoted paragraph","Indent a quotation or note to separate it from the body."],
+      code:["</>","程式碼區塊","保留縮排，清楚呈現一段程式碼。","Code block","Display code with its indentation intact."],
+      task:["☑","待辦清單","加入可以勾選完成的項目。","Checklist","Add an item you can mark as done."],
+      table:["▦","表格","用列與欄整理資料，可直接修改儲存格。","Table","Organize information in editable rows and columns."]
+    };
+    for(const button of editorInsertMenuEl.querySelectorAll("[data-markdown-command]")){const [icon,tw,detail,en,help]=labels[button.dataset.markdownCommand];const label=zh?tw:en;button.replaceChildren();const glyph=document.createElement("span");glyph.className="format-glyph";glyph.textContent=icon;glyph.setAttribute("aria-hidden","true");const words=document.createElement("span");words.className="format-description";const name=document.createElement("strong");name.textContent=label;const note=document.createElement("small");note.textContent=zh?detail:help;words.append(name,note);button.append(glyph,words);button.setAttribute("aria-label",label);button.title=label+" · "+(zh?detail:help);}
+    for(const [id,tw,en] of [["insert-structure-label","標題樣式","Headings"],["insert-inline-label","文字與圖片","Text and images"],["insert-block-label","整理內容","Organize content"]])$("#"+id).textContent=zh?tw:en;
+  }
+  $("#format-compact").addEventListener("change",event=>{state.compactFormatting=event.target.checked;persistPreferences({compactFormatting:state.compactFormatting});updateFormattingLabels();positionToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if(state.editorMode==="direct")directEditor?.focus();else sourceEditorEl.focus({preventScroll:true});});
+  async function beginCodeEditing(){
+    if(state.editing||state.codeEditPending||state.sourceType!=="project"||!window.lumaDesktop?.setCodeEditing)return;
+    const path=state.currentPath,request=state.documentRequestId;
+    state.codeEditPending=true;updateEditorControls();
+    try {
+      const result=await window.lumaDesktop.setCodeEditing({path,enabled:true});
+      if(request!==state.documentRequestId)return;
+      if(!result?.ok){showToast(result?.message||t("editUnavailable"));return;}
+      stopLiveRefresh();state.editing=true;state.editorDirty=false;state.editorSaved=false;sourceEditorEl.value=state.rawText;
+      pathEl.textContent=state.language.startsWith("zh")?"編輯程式碼 · ⌘S / Ctrl+S 儲存":"Editing code · ⌘S / Ctrl+S to save";
+      updateEditorControls();state.activeAdapter?.focus?.();
+    }catch(error){showToast(error.message||t("editUnavailable"));}
+    finally{state.codeEditPending=false;updateEditorControls();}
+  }
+  async function chooseEditorImages(){
+    if(state.importingImages||!state.editing)return;
+    closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);
+    if(!window.lumaDesktop?.chooseImages){editorImagePickerEl.click();return;}
+    state.importingImages=true;const status=$("#image-picker-status");status.textContent=state.language.startsWith("zh")?"正在開啟圖片選擇視窗…":"Opening image picker…";status.hidden=false;updateEditorControls();
+    try {
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const result=await window.lumaDesktop.chooseImages({path:state.currentPath});
+      if(result?.images?.length){insertEditorMarkdown(result.images.map(image=>`![${imageAltText(image.name)}](${image.markdownPath})`).join("\n"));showToast(t("imagesAdded"));}
+      if(!result?.canceled&&(result?.failed?.length||result?.truncated||!result?.ok))showToast(result?.message||t("imageImportFailed"));
+    }catch(error){showToast(error.message||t("imageImportFailed"));}
+    finally{state.importingImages=false;status.hidden=true;updateEditorControls();}
+  }
   function canEditCurrentDocument(){return Boolean(window.lumaDesktop?.saveDocument&&state.sourceType==="project"&&state.documentKind==="markdown"&&isMarkdown(state.currentPath));}
-  function editorPreviewIsActive(){return state.editing&&state.view==="source"&&state.editorPreview;}
+  function editorPreviewIsActive(){return state.documentKind==="markdown"&&state.editorMode==="source"&&state.editing&&state.view==="source"&&state.editorPreview;}
   function applyEditorSplitRatio(ratio=state.editorSplitRatio,{save=false}={}){state.editorSplitRatio=Math.max(.25,Math.min(.75,Number(ratio)||.5));document.documentElement.style.setProperty("--editor-source-size",`${(state.editorSplitRatio*100).toFixed(2)}%`);const stacked=matchMedia("(max-width: 820px)").matches;editorPreviewResizerEl.setAttribute("aria-orientation",stacked?"horizontal":"vertical");editorPreviewResizerEl.setAttribute("aria-valuenow",String(Math.round(state.editorSplitRatio*100)));if(save){localStorage.setItem("lumareader-editor-split",String(state.editorSplitRatio));persistPreferences({editorSplitRatio:state.editorSplitRatio});}}
   function scrollRatioFor(element){const max=Math.max(0,element.scrollHeight-element.clientHeight);return max?element.scrollTop/max:0;}
   function editorScrollEndTolerance(element){const lineHeight=parseFloat(getComputedStyle(element).lineHeight)||state.fontSize*1.65;return Math.max(2,Math.min(12,lineHeight*.25));}
@@ -441,14 +523,15 @@
   }
   function scheduleEditorPreview(immediate=false){clearTimeout(state.editorPreviewTimer);if(!editorPreviewIsActive())return;state.editorPreviewTimer=setTimeout(()=>renderEditorPreview().catch((error)=>console.warn("Unable to render the editor preview",error)),immediate?0:180);}
   function updateEditorPreviewLayout({render=false}={}){
-    const active=editorPreviewIsActive();editorPreviewControlEl.hidden=!state.editing;editorPreviewToggleEl.checked=state.editorPreview;editorPreviewToggleEl.disabled=state.saving;editorPreviewResizerEl.hidden=!active;editorPreviewEndEl.hidden=true;document.body.classList.toggle("editor-preview-enabled",active);applyEditorSplitRatio();
+    const active=editorPreviewIsActive();editorPreviewControlEl.hidden=!state.editing||state.editorMode!=="source"||state.documentKind!=="markdown";editorPreviewToggleEl.checked=state.editorPreview;editorPreviewToggleEl.disabled=state.saving;editorPreviewResizerEl.hidden=!active;editorPreviewEndEl.hidden=true;document.body.classList.toggle("editor-preview-enabled",active);applyEditorSplitRatio();
     if(active)contentEl.setAttribute("aria-label",t("comparisonPreview"));else contentEl.removeAttribute("aria-label");
     if(state.view==="source")contentEl.hidden=!active;if(render&&active)scheduleEditorPreview(true);
+    updateDirectLayout();
   }
   function updateEditorControls(){
     const editButton=$("#edit-document"),cancelButton=$("#cancel-edit"),label=$("#edit-document-label"),icon=$("#edit-document-icon"),editable=canEditCurrentDocument();
     editButton.hidden=!editable&&!state.editing;
-    editButton.disabled=state.saving;
+    editButton.disabled=state.saving||state.importingImages;
     editButton.classList.toggle("is-editing",state.editing);
     editButton.classList.toggle("is-dirty",state.editing&&state.editorDirty);
     const editKey=state.editing?(state.editorSaved&&!state.editorDirty?"saved":"save"):"edit";
@@ -457,11 +540,11 @@
     icon.textContent=state.editing?"✓":"✎";
     editButton.setAttribute("aria-label",t(editKey));
     cancelButton.hidden=!state.editing;
-    cancelButton.disabled=state.saving;
+    cancelButton.disabled=state.saving||state.importingImages;
     const exitKey=state.editorDirty?"discardEdits":"exitEdit";
     cancelButton.dataset.tooltipKey=exitKey;
     cancelButton.setAttribute("aria-label",t(exitKey));
-    editorInsertControlEl.hidden=!state.editing;
+    editorInsertControlEl.hidden=!state.editing||state.documentKind!=="markdown";
     editorInsertToggleEl.disabled=state.saving||state.importingImages;
     if(!state.editing&&!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);
     const sourceButton=$("#source-view");
@@ -472,22 +555,33 @@
     updateEditorPreviewLayout();
     updateToolbarTooltips();
   }
-  function resetEditorState(){clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
+  function resetEditorState(){if(state.documentKind==="code"){state.activeAdapter?.setEditable?.(false);state.activeAdapter?.setText?.(state.rawText);window.lumaDesktop?.setCodeEditing?.({enabled:false}).catch(()=>{});}directEditor?.destroy();directEditor=null;directHost.hidden=true;document.body.classList.remove("direct-editing");clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
   function blockWhileEditing(){if(!state.editing)return false;showEditingBlockedNotice();return true;}
   function beginEditing(){
+    if(state.documentKind==="code"){void beginCodeEditing();return;}
+    state.editorMode="direct";
     if(!canEditCurrentDocument()){showToast(t("editUnavailable"));return;}
     stopLiveRefresh();state.editing=true;state.editorDirty=false;state.editorSaved=false;sourceEditorEl.value=state.rawText;pathEl.textContent=t("editing");updateEditorControls();setView("source");updateEditorPreviewLayout({render:true});
-    requestAnimationFrame(()=>{sourceEditorEl.focus();sourceEditorEl.setSelectionRange(0,0);});
+    if(state.editorMode==="direct")activateDirectEditor();
+    requestAnimationFrame(()=>{if(state.editorMode==="direct")directEditor?.focus();else{sourceEditorEl.focus();sourceEditorEl.setSelectionRange(0,0);}});
   }
   async function leaveEditing({discarded=false}={}){const hadChanges=state.editorDirty;resetEditorState();updateEditorControls();pathEl.textContent=state.currentPath||t("ready");setView("rendered");if(state.documentKind==="markdown")await renderDocument(false);startLiveRefresh();if(discarded&&hadChanges)showToast(t("discarded"));}
-  function requestLeaveEditing(){if(!state.editing)return;if(!state.editorDirty){void leaveEditing();return;}discardEditDialogEl.returnValue="";if(!discardEditDialogEl.open)discardEditDialogEl.showModal();}
+  function requestLeaveEditing(){
+    if(!state.editing||state.importingImages)return;
+    if(!state.editorDirty){void leaveEditing();return;}
+    discardEditDialogEl.returnValue="";
+    if(!discardEditDialogEl.open)discardEditDialogEl.showModal();
+    requestAnimationFrame(()=>discardEditKeepEl.focus());
+  }
   async function saveEditing(){
     if(!state.editing){showToast(t("editUnavailable"));return;}
-    if(state.saving)return;
+    if(state.saving||state.importingImages)return;
     if(!state.editorDirty){state.editorSaved=true;pathEl.textContent=t("saved");updateEditorControls();showToast(t("saved"));return;}
     state.saving=true;updateEditorControls();
     try{
-      const result=await window.lumaDesktop.saveDocument({path:state.currentPath,text:sourceEditorEl.value,expectedModifiedNs:state.modifiedNs});
+      const save=state.documentKind==="code"?window.lumaDesktop.saveCodeDocument:window.lumaDesktop.saveDocument;
+      const text=state.documentKind==="code"?state.activeAdapter.getText():sourceEditorEl.value;
+      const result=await save({path:state.currentPath,text,expectedModifiedNs:state.modifiedNs,expectedRevision:state.documentRevision});
       if(!result?.ok){showToast(result?.code==="DOCUMENT_CHANGED"?t("changedExternally"):(result?.message||t("saveFailed")));return;}
       state.rawText=result.document.text||"";state.renderText=result.document.renderText||result.document.text||"";state.modifiedNs=result.document.modifiedNs??state.modifiedNs;state.currentBase=result.document.base||state.currentBase;
       rawEl.querySelector("code").textContent=state.rawText;state.editorDirty=false;state.editorSaved=true;pathEl.textContent=t("saved");
@@ -520,13 +614,15 @@
   }
   function applyEditorCommand(command){
     if(!state.editing)return;
-    if(command==="image"){editorImagePickerEl.click();return;}
+    if(command==="image"){void chooseEditorImages();return;}
+    if(state.editorMode==="direct"){directEditor?.command(command);closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);return;}
     const result=window.LumaReaderUtils.applyMarkdownCommand(sourceEditorEl.value,sourceEditorEl.selectionStart,sourceEditorEl.selectionEnd,command,{text:t("editorTextPlaceholder"),link:t("editorLinkPlaceholder")});
     replaceEditorText(result.text,result.selectionStart,result.selectionEnd);
     closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);
   }
   function imageAltText(name){return String(name||"").replace(/\.[^.]+$/,"").replace(/[-_]+/g," ").trim()||t("insertImage");}
   function insertEditorMarkdown(markdown){
+    if(state.editorMode==="direct"){directEditor?.insertMarkdown(markdown);return;}
     const start=sourceEditorEl.selectionStart,end=sourceEditorEl.selectionEnd,before=sourceEditorEl.value.slice(0,start),after=sourceEditorEl.value.slice(end),prefix=before&&!before.endsWith("\n")?"\n":"",suffix=after&&!after.startsWith("\n")?"\n":"",replacement=`${prefix}${markdown}${suffix}`;
     replaceEditorText(before+replacement+after,start+replacement.length,start+replacement.length);
   }
@@ -627,13 +723,14 @@
   async function renderAdapterPayload(data,requestId=state.documentRequestId){
     disposeActiveAdapter();const source=await sourceFromPayload(data);
     const options={PlainTextAdapter:{pageSize:70}};
-    const adapter=window.LumaDocumentAdapters?.createAdapterFor?.(source,options);
+    const adapter=data.kind==="code"?window.LumaCodeEditor?.createAdapter():window.LumaDocumentAdapters?.createAdapterFor?.(source,options);
     if(!adapter)throw new Error(`No safe preview adapter is available for ${data.extension||data.kind}.`);
     state.activeAdapter=adapter;contentEl.classList.remove("prose");contentEl.classList.add("adapter-content");document.body.dataset.documentKind=data.kind;
     await adapter.loadDocument(source);
     if(requestId!==state.documentRequestId){adapter.dispose?.();if(state.activeAdapter===adapter)state.activeAdapter=null;return false;}
     await adapter.renderDocument(contentEl,{
-      mode:state.mode,
+      mode:state.mode,language:state.language,
+      onEdit:text=>{if(!state.editing||state.activeAdapter!==adapter)return;sourceEditorEl.value=text;state.editorDirty=text!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();},
       onPageChange:(page)=>{if(requestId!==state.documentRequestId||state.activeAdapter!==adapter)return;state.activeAdapter.currentPage=page;updatePagination();},
       onPageModelChange:(model)=>{if(requestId!==state.documentRequestId||state.activeAdapter!==adapter)return;if(Number.isFinite(model?.current))state.activeAdapter.currentPage=model.current;updatePagination();},
       onLayoutChange:()=>{if(requestId===state.documentRequestId&&state.activeAdapter===adapter)scheduleLayoutRefresh(readingRatio());},
@@ -701,13 +798,13 @@
   function applyPalette(palette, rerender=false) {
     state.palette=palettes.some((item)=>item.id===palette)?palette:"dream-rose";
     document.documentElement.dataset.palette=state.palette; localStorage.setItem("lumareader-palette",state.palette); persistPreferences({palette:state.palette}); renderPaletteMenu();
-    if(rerender&&state.renderText&&state.documentKind==="markdown"){if(editorPreviewIsActive())scheduleEditorPreview(true);else renderDocument(true);}
+    if(rerender&&!(state.editing&&state.editorMode==="direct")&&state.renderText&&state.documentKind==="markdown"){if(editorPreviewIsActive())scheduleEditorPreview(true);else renderDocument(true);}
   }
   function openPalette(){openToolbarMenu(paletteMenuEl,paletteToggleEl);}
   function closePalette(){closeToolbarMenu(paletteMenuEl,paletteToggleEl);}
 
-  function updateThemeButton(){const dark=document.documentElement.classList.contains("dark");appearanceThemeIconEl.textContent="⚙";paletteToggleEl.setAttribute("aria-label",t("appearance"));$("#theme-light").classList.toggle("active",!dark);$("#theme-dark").classList.toggle("active",dark);$("#highlight-light").disabled=dark;$("#highlight-dark").disabled=!dark;}
-  function setTheme(theme){const dark=theme==="dark";document.documentElement.classList.toggle("dark",dark);localStorage.setItem("lumareader-theme",dark?"dark":"light");persistPreferences({theme:dark?"dark":"light"});updateThemeButton();if(state.renderText&&state.documentKind==="markdown"){if(editorPreviewIsActive())scheduleEditorPreview(true);else renderDocument(true);}}
+  function updateThemeButton(){ const dark=document.documentElement.classList.contains("dark");appearanceThemeIconEl.textContent="⚙";paletteToggleEl.setAttribute("aria-label",t("appearance"));$("#theme-light").classList.toggle("active",!dark);$("#theme-dark").classList.toggle("active",dark);$("#highlight-light").disabled=dark;$("#highlight-dark").disabled=!dark; }
+  function setTheme(theme){const dark=theme==="dark";document.documentElement.classList.toggle("dark",dark);localStorage.setItem("lumareader-theme",dark?"dark":"light");persistPreferences({theme:dark?"dark":"light"});updateThemeButton();if(!(state.editing&&state.editorMode==="direct")&&state.renderText&&state.documentKind==="markdown"){if(editorPreviewIsActive())scheduleEditorPreview(true);else renderDocument(true);}}
 
   function hideToast(){const toast=$("#toast");toast.hidden=true;delete toast.dataset.tone;document.body.classList.remove("editor-blocked-hint");}
   function showToast(message){const toast=$("#toast");toast.replaceChildren();toast.textContent=message;delete toast.dataset.tone;toast.hidden=false;document.body.classList.remove("editor-blocked-hint");clearTimeout(showToast.timer);showToast.timer=setTimeout(hideToast,2200);}
@@ -789,7 +886,7 @@
   function slugify(text,used){const base=text.trim().toLowerCase().replace(/\s+/g,"-").replace(/[^\p{L}\p{N}_-]/gu,"")||"section";let id=base,index=2;while(used.has(id))id=`${base}-${index++}`;used.add(id);return id;}
   function buildOutline(){ outlineEl.innerHTML="";const headings=[...contentEl.querySelectorAll("h1,h2,h3,h4")];if(!headings.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noOutline");outlineEl.appendChild(p);return;}headings.forEach((heading)=>{const button=document.createElement("button");button.type="button";button.className=`outline-item level-${heading.tagName.slice(1)}`;button.textContent=heading.textContent;button.addEventListener("click",()=>{heading.scrollIntoView({behavior:"smooth",block:"start"});sidebarEl.classList.remove("open");});outlineEl.appendChild(button);});}
 
-  async function renderDocument(preserve=false,requestId=state.documentRequestId,markdownText=state.renderText){ if(requestId!==state.documentRequestId)return false;const position=preserve?captureReadingPosition():{ratio:0};closeImageViewer();if(state.activeAdapter)disposeActiveAdapter();state.documentKind="markdown";document.body.dataset.documentKind="markdown";contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");if(!markdownText){contentEl.replaceChildren();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(updatePagination);return true;}if(markdownText.length>500000){const note=document.createElement("p");note.textContent=state.language==="zh-Hant"?"大型文件以純文字預覽，仍可編輯與儲存。":"Large document: plain-text preview. Editing and saving remain available.";const plain=document.createElement("pre");plain.className="large-document-preview";plain.textContent=markdownText;contentEl.replaceChildren(note,plain);rawEl.querySelector("code").textContent=state.rawText;state.editorPreviewBlocks=[];buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:false});return true;}const extensions=extractExtensions(markdownText);const protectedMath=protectMath(extensions.source);const normalizedStrong=window.LumaReaderUtils.normalizeStrongEmphasis(protectedMath.source);const parsedText=protectSubscript(normalizedStrong);let html=window.marked.parse(parsedText,{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);window.LumaPdfTools.prepare(contentEl,state.language.startsWith("zh")?"PDF 換頁":"PDF page break");const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceDocumentImages(contentEl);enhanceAlerts(contentEl);
+  async function renderDocument(preserve=false,requestId=state.documentRequestId,markdownText=state.renderText){ if(requestId!==state.documentRequestId)return false;const position=preserve?captureReadingPosition():{ratio:0};closeImageViewer();if(state.activeAdapter)disposeActiveAdapter();state.documentKind="markdown";document.body.dataset.documentKind="markdown";contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");if(!markdownText){contentEl.replaceChildren();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(updatePagination);return true;}if(markdownText.length>500000){const note=document.createElement("p");note.textContent=state.language==="zh-Hant"?"大型文件以純文字預覽，仍可編輯與儲存。":"Large document: plain-text preview. Editing and saving remain available.";const plain=document.createElement("pre");plain.className="large-document-preview";plain.textContent=markdownText;contentEl.replaceChildren(note,plain);rawEl.querySelector("code").textContent=state.rawText;state.editorPreviewBlocks=[];buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:false});return true;}const extensions=extractExtensions(markdownText);const protectedMath=protectMath(extensions.source);const normalizedStrong=window.LumaReaderUtils.normalizeStrongEmphasis(protectedMath.source);const parsedText=protectSubscript(normalizedStrong);let html=window.marked.parse(parsedText,{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,()=>escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);window.LumaPdfTools.prepare(contentEl,state.language.startsWith("zh")?"PDF 換頁":"PDF page break");const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceDocumentImages(contentEl);enhanceAlerts(contentEl);
     if(window.renderMathInElement){try{window.renderMathInElement(contentEl,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:"ignore",ignoredTags:["script","noscript","style","textarea","pre","code"]});}catch(error){console.warn("KaTeX",error);}}
     enhanceTextNodes(contentEl,extensions.abbreviations);contentEl.querySelectorAll("pre code").forEach((code)=>{if(code.classList.contains("language-mermaid")){const container=document.createElement("div");container.className="mermaid";container.textContent=code.textContent;code.parentElement.replaceWith(container);return;}try{window.hljs?.highlightElement(code);}catch{}const pre=code.closest("pre");if(pre&&!pre.querySelector(".copy-code")){const copy=document.createElement("button");copy.type="button";copy.className="copy-code";copy.textContent=t("copy");copy.addEventListener("click",async()=>{await navigator.clipboard.writeText(code.textContent);copy.textContent=t("copied");setTimeout(()=>copy.textContent=t("copy"),1200);});pre.appendChild(copy);}});
     void renderMermaidDiagrams(contentEl,requestId);
@@ -931,9 +1028,8 @@
   async function syncFormats(extensions){
     state.enabledExtensions=new Set((extensions||MARKDOWN_EXTENSIONS).filter((extension)=>SUPPORTED_EXTENSION_SET.has(extension)));
     renderTree();
-    if(state.editing)return;
-    const current=state.files.find((file)=>file.path===state.currentPath);
-    if(current&&currentFormatIsEnabled(current))return;
+    // Filtering the sidebar must not replace an explicitly opened document.
+    if(state.editing||state.currentPath||state.documentAbortController)return;
     const next=state.files.find(currentFormatIsEnabled);
     if(next)await openProjectFile(next.path);
   }

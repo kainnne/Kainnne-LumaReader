@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 
+const {getDocumentType}=require("./document-types");
 const MARKDOWN_EXTENSIONS = new Set([".md", ".markdown", ".mkd", ".mdx"]);
 
 function sourceFromFileArgument(value, { cwd = process.cwd(), statSync = fs.statSync } = {}) {
@@ -14,7 +15,7 @@ function sourceFromFileArgument(value, { cwd = process.cwd(), statSync = fs.stat
   } catch {
     return null;
   }
-  if (!MARKDOWN_EXTENSIONS.has(path.extname(candidate).toLowerCase())) return null;
+  if (!["markdown","code"].includes(getDocumentType(candidate)?.kind)) return null;
   try {
     if (!statSync(candidate).isFile()) return null;
   } catch {

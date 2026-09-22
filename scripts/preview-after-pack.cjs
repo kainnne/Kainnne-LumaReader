@@ -1,0 +1,2 @@
+const {execFileSync}=require('node:child_process');const path=require('node:path');
+exports.default=async context=>{if(context.electronPlatformName!=='darwin')return;const plist=path.join(context.appOutDir,`${context.packager.appInfo.productFilename}.app`,'Contents','Info.plist');for(const key of ['NSAudioCaptureUsageDescription','NSBluetoothAlwaysUsageDescription','NSBluetoothPeripheralUsageDescription','NSCameraUsageDescription','NSMicrophoneUsageDescription']){try{execFileSync('/usr/bin/plutil',['-remove',key,plist],{stdio:'ignore'});}catch{}}};

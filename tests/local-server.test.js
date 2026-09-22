@@ -45,8 +45,8 @@ async function dispatch(targetService, url, options = {}) {
   return response;
 }
 
-test("exposes only Markdown and plain-text extensions", () => {
-  assert.deepEqual([...DOCUMENT_EXTENSIONS].sort(), [".log", ".markdown", ".md", ".mdx", ".mkd", ".txt"]);
+test("exposes Markdown, plain-text and supported code extensions", () => {
+  assert.deepEqual([...DOCUMENT_EXTENSIONS].sort(), [".c", ".cpp", ".h", ".hpp", ".js", ".log", ".markdown", ".md", ".mdx", ".mkd", ".py", ".ts", ".txt"]);
   assert.deepEqual([...BINARY_DOCUMENT_EXTENSIONS], []);
   for (const extension of [".pdf", ".json", ".yaml", ".csv", ".xlsx", ".png", ".gif"]) {
     assert.ok(EXPLICITLY_UNSUPPORTED_EXTENSIONS.has(extension));
@@ -341,11 +341,11 @@ test("enforces the per-format preview limit", async (t) => {
   await assert.rejects(() => limitedService.openSource("large.md"), /exceeds the 8 MB preview limit/i);
 });
 
-test("publishes only six types through the API", async () => {
+test("publishes supported text and code types through the API", async () => {
   const response = await dispatch(service, "/api/types");
   const payload = JSON.parse(response.body().toString("utf8"));
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(payload.extensions, [".log", ".markdown", ".md", ".mdx", ".mkd", ".txt"]);
+  assert.deepEqual(payload.extensions, [".c", ".cpp", ".h", ".hpp", ".js", ".log", ".markdown", ".md", ".mdx", ".mkd", ".py", ".ts", ".txt"]);
   assert.ok(payload.types.every((type) => type.binary === false));
 });
 

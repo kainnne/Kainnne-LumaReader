@@ -12,6 +12,7 @@
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
   <link rel="stylesheet" href="styles.css?v=1.3.1" />
   <link rel="stylesheet" href="library-ui.css?v=1.3.1" />
+  <link rel="stylesheet" href="direct-editor.css" />
 </head>
 <body>
   <div id="app" class="app">
@@ -66,6 +67,13 @@
             <label><input type="checkbox" value=".txt" data-format /><span>.txt</span></label>
             <label><input type="checkbox" value=".log" data-format /><span>.log</span></label>
           </div>
+          <label class="code-format-option"><input type="checkbox" value=".py" data-format /><span>Python (.py)</span></label>
+          <label class="code-format-option"><input type="checkbox" value=".c" data-format /><span>C (.c)</span></label>
+          <label class="code-format-option"><input type="checkbox" value=".h" data-format /><span>C 標頭 (.h)</span></label>
+          <label class="code-format-option"><input type="checkbox" value=".cpp" data-format /><span>C++ (.cpp)</span></label>
+          <label class="code-format-option"><input type="checkbox" value=".hpp" data-format /><span>C++ 標頭 (.hpp)</span></label>
+          <label class="code-format-option"><input type="checkbox" value=".js" data-format /><span>JavaScript (.js)</span></label>
+          <label class="code-format-option"><input type="checkbox" value=".ts" data-format /><span>TypeScript (.ts)</span></label>
           <footer class="format-filter-footer">Markdown types are selected by default. Enable .txt or .log when needed.</footer>
         </div>
       </section>
@@ -90,6 +98,9 @@
         <div class="reader-actions" data-i18n-aria="readerSettings">
           <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
           <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
+          <div id="editor-mode-control" class="editor-mode-control" hidden><button id="show-markdown" type="button" aria-pressed="false">Show Markdown</button></div>
+          <label id="code-edit-control" class="editor-preview-control" hidden><input id="code-edit-toggle" type="checkbox" /><span id="code-edit-label">Enable code editing</span></label>
+          <span id="image-picker-status" class="image-picker-status" role="status" hidden></span>
           <label id="editor-preview-control" class="editor-preview-control" hidden>
             <input id="editor-preview-toggle" type="checkbox" />
             <span data-i18n="comparisonPreview">Preview</span>
@@ -97,12 +108,13 @@
           <div id="editor-insert-control" class="toolbar-dropdown editor-insert-control" hidden>
             <button id="editor-insert-toggle" class="toolbar-select-button editor-insert-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="editor-insert-menu">
               <span class="dropdown-leading-icon" aria-hidden="true">＋</span>
-              <span class="dropdown-label" data-i18n="insertMarkdown">Insert</span>
+              <span class="dropdown-label" id="format-menu-label">Format</span>
               <span class="dropdown-chevron" aria-hidden="true">⌄</span>
             </button>
-            <div id="editor-insert-menu" class="toolbar-menu editor-insert-menu" role="menu" hidden>
+            <div id="editor-insert-menu" class="toolbar-menu editor-insert-menu" role="dialog" aria-label="Formatting" hidden>
+              <label class="format-compact-control"><input id="format-compact" type="checkbox" /><span id="format-compact-label">Compact labels</span></label>
               <section class="editor-insert-group" aria-labelledby="insert-structure-label">
-                <strong id="insert-structure-label" data-i18n="insertStructure">Structure</strong>
+                <strong id="insert-structure-label">Structure</strong>
                 <div>
                   <button type="button" data-markdown-command="heading-1">H1</button>
                   <button type="button" data-markdown-command="heading-2">H2</button>
@@ -110,21 +122,21 @@
                 </div>
               </section>
               <section class="editor-insert-group" aria-labelledby="insert-inline-label">
-                <strong id="insert-inline-label" data-i18n="insertInline">Inline</strong>
+                <strong id="insert-inline-label">Inline</strong>
                 <div>
                   <button type="button" data-markdown-command="bold"><b>B</b></button>
                   <button type="button" data-markdown-command="italic"><i>I</i></button>
-                  <button type="button" data-markdown-command="link" data-i18n="insertLink">Link</button>
-                  <button type="button" data-markdown-command="image" data-i18n="insertImage">Image</button>
+                  <button type="button" data-markdown-command="link">Link</button>
+                  <button type="button" data-markdown-command="image">Image</button>
                 </div>
               </section>
               <section class="editor-insert-group" aria-labelledby="insert-block-label">
-                <strong id="insert-block-label" data-i18n="insertBlock">Blocks</strong>
+                <strong id="insert-block-label">Blocks</strong>
                 <div>
-                  <button type="button" data-markdown-command="quote" data-i18n="insertQuote">Quote</button>
-                  <button type="button" data-markdown-command="code" data-i18n="insertCode">Code</button>
-                  <button type="button" data-markdown-command="task" data-i18n="insertTask">Task</button>
-                  <button type="button" data-markdown-command="table" data-i18n="insertTable">Table</button>
+                  <button type="button" data-markdown-command="quote">Quote</button>
+                  <button type="button" data-markdown-command="code">Code</button>
+                  <button type="button" data-markdown-command="task">Task</button>
+                  <button type="button" data-markdown-command="table">Table</button>
                 </div>
               </section>
             </div>
@@ -235,6 +247,14 @@
           </button>
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
+        <section id="direct-editor" class="direct-editor" hidden></section>
+        <div id="direct-table-tools" class="direct-table-tools" role="toolbar" aria-label="Table editing" hidden>
+          <button type="button" data-table-command="row-add" data-zh="＋列" data-en="＋ Row">＋ Row</button>
+          <button type="button" data-table-command="column-add" data-zh="＋欄" data-en="＋ Column">＋ Column</button>
+          <button type="button" data-table-command="row-delete" data-zh="刪除列" data-en="Delete row">Delete row</button>
+          <button type="button" data-table-command="column-delete" data-zh="刪除欄" data-en="Delete column">Delete column</button>
+          <button type="button" data-table-command="table-delete" data-zh="刪除表格" data-en="Delete table">Delete table</button>
+        </div>
         <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="soft" hidden></textarea>
         <input id="editor-image-picker" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
         <div id="editor-image-drop" class="editor-image-drop" aria-hidden="true" hidden>
@@ -366,6 +386,8 @@
   <script src="library-search.js?v=1.3.1"></script>
   <script src="pdf-tools.js?v=1.3.1"></script>
   <script src="pdf-dialog.js?v=1.3.1"></script>
+  <script src="direct-editor.bundle.js"></script>
+  <script src="code-editor.bundle.js"></script>
   <script src="app.js?v=1.3.1"></script>
   <script src="multiformat-ui.js?v=1.3.1"></script>
 </body>

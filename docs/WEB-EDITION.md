@@ -12,7 +12,7 @@ LumaReader Web is the static, account-free browser edition served from `/web/`. 
 - No document content is uploaded during ordinary reading or editing.
 - Folder-library import, durable cloud libraries, document download, and PDF export are desktop-only.
 - The rest of the reading and editing interface should stay aligned with the desktop renderer, including Settings, toolbar visibility, Markdown insertion, image insertion, and unsaved-change confirmation.
-- The built-in sample begins with a practical English and Traditional Chinese explanation of why the local-first Desktop edition is the primary product. Its Desktop download action is also placed directly beside **Share this Markdown** in the reader toolbar.
+- The built-in sample begins with a practical English and Traditional Chinese explanation of why the local-first Desktop edition is the primary product. Its footer offers direct macOS, Windows and Linux downloads plus a homepage link.
 - **Share this Markdown** compresses the current Markdown into a reader URL, then asks the LumaReader share Worker for an eight-character short link. The Worker retains the target, title, and excerpt in KV for 30 days so link-preview crawlers can receive document-specific Open Graph metadata.
 - Sharing the unchanged built-in `LumaReader Web.md` sample always returns `/web/` and never writes a KV entry. If the short-link service is unavailable, the browser falls back to the complete `#share=` URL so sharing still works.
 
@@ -33,11 +33,11 @@ Interface preferences use local storage. Document names, paths, and content do n
 1. Open one to three supported documents and confirm all appear in the sidebar.
 2. Attempt to open a fourth document and confirm the capacity dialog appears instead of silently replacing a file.
 3. Remove one document, confirm the original local file still exists, and continue importing the pending document.
-4. Enter editing and confirm the preview is open by default, the split is draggable, synchronized scrolling works, and **Show bottom** appears only when needed.
+4. Enter editing and confirm direct editing is the default. Enable **Show Markdown** to open source and comparison preview, then disable it to return to direct editing. The source split remains draggable with synchronized scrolling.
 5. Open **Settings**, compare several palettes without the panel closing, change toolbar visibility, and confirm Source and Media begin hidden for a fresh profile.
 6. Use **Insert** and drop an image into the editor; confirm the source viewport stays in place and the preview updates. Close with unsaved edits and confirm the discard dialog appears.
 7. Reload the page and confirm user documents and edits are gone while visual preferences may remain.
-8. Confirm PDF export and document-download controls are absent and the desktop call to action reaches `/#download`.
+8. Confirm PDF export and document-download controls remain absent. The sample footer offers direct desktop installers and a homepage link.
 9. Share the current Markdown, confirm the dialog shows a short `workers.dev/s/…` link, then open it in a clean tab and confirm the same filename and content render.
 10. Share the unchanged built-in sample and confirm the result is the permanent `/web/` URL with no new KV record.
-11. Confirm the built-in sample is bilingual and both its inline download link and the highlighted toolbar action reach `/#download`.
+11. Confirm the built-in sample is bilingual, retains its OS-specific download footer, and has no download toolbar button.

@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
   setPreferences: (patch) => ipcRenderer.invoke("preferences:set", patch),
   createDocument: (payload) => ipcRenderer.invoke("document:create", payload),
   saveDocument: (payload) => ipcRenderer.invoke("document:save", payload),
+  chooseImages: payload=>ipcRenderer.invoke("document:choose-images",payload),
+  setCodeEditing: payload=>ipcRenderer.invoke("document:code-edit",payload),
+  saveCodeDocument: payload=>ipcRenderer.invoke("document:save-code",payload),
   importImage: (payload) => ipcRenderer.invoke("document:import-image", payload),
   exportPdf: (payload) => ipcRenderer.invoke("document:export-pdf", payload),
   onSaveRequested: (callback) => {

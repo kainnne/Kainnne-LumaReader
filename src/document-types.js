@@ -7,6 +7,7 @@ const MB = 1024 * 1024;
 const LIMITS = Object.freeze({
   markdownBytes: 8 * MB,
   textBytes: 16 * MB,
+  codeBytes: MB,
   // Kept for the dormant archive validator; no binary format is exposed.
   xlsxArchiveEntries: 10_000,
   xlsxUncompressedBytes: 512 * MB,
@@ -20,6 +21,7 @@ const LIMITS = Object.freeze({
 
 const CAPABILITIES = Object.freeze({
   markdown: Object.freeze({ search: true, paged: true, outline: true, media: true, source: true, edit: true, wrap: true }),
+  code: Object.freeze({search:true,source:false,edit:true,wrap:true,monospaced:true}),
   text: Object.freeze({ search: true, paged: true, source: true, wrap: true }),
   log: Object.freeze({ search: true, paged: true, source: true, wrap: true, monospaced: true }),
 });
@@ -41,6 +43,14 @@ function record(extension, kind, category, mime, binary, maxBytes, capabilities,
 }
 
 const definitions = [
+  record(".py", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "python" }),
+  record(".c", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "c" }),
+  record(".h", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "c" }),
+  record(".cpp", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "cpp" }),
+  record(".hpp", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "cpp" }),
+  record(".js", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "javascript" }),
+  record(".ts", "code", "code", "text/plain", false, LIMITS.codeBytes, CAPABILITIES.code, { syntax: "typescript" }),
+
   record(".md", "markdown", "documents", "text/markdown", false, LIMITS.markdownBytes, CAPABILITIES.markdown),
   record(".markdown", "markdown", "documents", "text/markdown", false, LIMITS.markdownBytes, CAPABILITIES.markdown),
   record(".mkd", "markdown", "documents", "text/markdown", false, LIMITS.markdownBytes, CAPABILITIES.markdown),

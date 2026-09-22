@@ -10,15 +10,19 @@ const { LocalReaderService } = require("./local-server");
 const { markdownSources, sourceFromFileArgument } = require("./open-target");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const { DocumentWindows } = require("./document-windows");
+const {createImagePicker}=require("./image-picker");
+const {getDocumentType}=require("./document-types");
 const { normalizeFooterText, pdfOptions } = require("./pdf-export");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
-const APP_ID = PREVIEW_BUILD ? "com.kainnne.lumareader.candidate" : "com.kainnne.lumareader";
-const APP_TITLE = PREVIEW_BUILD ? "LumaReader Candidate" : "Kainnne LumaReader";
+const APP_ID = PREVIEW_BUILD ? "com.kainnne.lumareader.bluepreview" : "com.kainnne.lumareader";
+const APP_TITLE = PREVIEW_BUILD ? "LumaReader Blue Preview" : "Kainnne LumaReader";
 const PREFERENCE_KEYS = new Set([
   "appMode",
   "editorPreview",
+  "editorMode",
+  "compactFormatting",
   "pdfFooterText",
   "pdfIncludeFooter",
   "pdfColorFrame",
@@ -118,11 +122,11 @@ async function openDocumentWindow(source) {
 
 async function chooseFiles(context = focusedContext()) {
   const result = await dialog.showOpenDialog(context?.window, {
-    title: "Open Markdown", properties: ["openFile", "multiSelections"],
-    filters: [{ name: "Markdown", extensions: ["md", "markdown", "mkd", "mdx"] }],
+    title: "Open document", properties: ["openFile", "multiSelections"],
+    filters: [{ name: "Markdown and code", extensions: ["md", "markdown", "mkd", "mdx", "py", "c", "h", "cpp", "hpp", "js", "ts"] }],
   });
   if (!result.canceled) {
-    if (result.filePaths.length > 8) throw new Error("Open up to eight Markdown files at a time.");
+    if (result.filePaths.length > 8) throw new Error("Open up to eight documents at a time.");
     for (const filePath of result.filePaths) openFile(filePath);
   }
   return { canceled: result.canceled };
@@ -223,6 +227,7 @@ async function chooseLibrary(context = focusedContext(), { automatic = false } =
   if (result.canceled || !result.filePaths[0]) {
     return { selected: Boolean(settings.libraryRoot), root: settings.libraryRoot, canceled: true, automatic };
   }
+  context.codeEditPath = null;
   const selectedRoot = readerService.setLibraryRoot(result.filePaths[0]);
   settings.libraryRoot = selectedRoot;
   context.preferences.lastDocumentPath = null;
@@ -403,6 +408,7 @@ handle("library:get", (context) => ({ selected: Boolean(context.service.getLibra
 handle("library:choose", (context) => chooseLibrary(context));
 handle("document:open", (context) => chooseFiles(context));
 handle("document:activated", (context, _event, documentPath) => {
+  context.codeEditPath = null;
   try { documents.update(context, context.service.resolveProjectDocument(documentPath)); context.window.setTitle(`${path.basename(documentPath)} — ${APP_TITLE}`); } catch { documents.update(context, null); }
   return true;
 });
@@ -450,6 +456,22 @@ handle("document:save", async (context, event, payload) => {
       message: error.message || "Unable to save this document.",
     };
   }
+});
+const chooseImages=createImagePicker({showOpenDialog:(window,options)=>dialog.showOpenDialog(window,options),defaultPath:app.getPath("pictures")});
+handle("document:choose-images",async(context,event,payload)=>{
+  try {if(typeof payload?.path!=="string"||getDocumentType(payload.path)?.kind!=="markdown")throw new Error("Choose a Markdown document first.");return await chooseImages(context,payload.path);}
+  catch(error){return {ok:false,message:error.message};}
+});
+handle("document:code-edit",async(context,event,payload)=>{
+  context.codeEditPath=null;
+  if(!payload?.enabled)return {ok:true};
+  try {const file=context.service.resolveProjectDocument(payload.path);if(getDocumentType(file)?.kind!=="code")throw new Error("Not a supported code file.");context.codeEditPath=file;return {ok:true};}
+  catch(error){return {ok:false,message:error.message};}
+});
+handle("document:save-code",async(context,event,payload)=>{
+  try {if(!context.codeEditPath||context.codeEditPath!==context.service.resolveProjectDocument(payload?.path))return {ok:false,code:"CODE_EDIT_DISABLED",message:"Enable code editing before saving."};
+    const document=await context.service.saveCodeDocument(payload.path,payload.text,payload.expectedModifiedNs,payload.expectedRevision);return {ok:true,document};}
+  catch(error){return {ok:false,code:error.code||"SAVE_FAILED",message:error.message};}
 });
 handle("document:import-image", async (context, event, payload) => {
   const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;

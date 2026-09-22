@@ -12,3 +12,5 @@ tests/qa-library/
 .env
 .env.*
 !.env.example
+
+build/preview.iconset/

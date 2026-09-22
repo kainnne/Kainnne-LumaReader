@@ -364,13 +364,15 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     }
     await page.locator("#source-view").click();
     await page.locator("#edit-document").click();
-    assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true, "The migrated editing preference must show live preview by default");
+    assert.equal(await page.locator("#show-markdown").getAttribute("aria-pressed"), "false", "Direct editing is the default");
+    await page.locator("#show-markdown").click();
+    assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true);
     await setPreview(false);
-    // Nothing has been edited yet, so reload safely exercises persistent opt-out.
     await reloadDocument();
     await page.locator("#edit-document").click();
-    assert.equal(await page.locator("#editor-preview-toggle").isChecked(), false, "A later explicit preview opt-out must remain off");
-    await setPreview(true);
+    assert.equal(await page.locator("#show-markdown").getAttribute("aria-pressed"), "false");
+    await page.locator("#show-markdown").click();
+    assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true, "Showing Markdown also enables comparison preview");
     const edited = text + "\nSaved from window A.\n";
     await page.locator("#source-editor").fill(edited);
     await page.waitForFunction(() => document.querySelector("#content").textContent.includes("Saved from window A."));

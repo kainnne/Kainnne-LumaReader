@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const ALL_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx", ".txt", ".log"]);
+  const ALL_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx", ".txt", ".log", ".py", ".c", ".h", ".cpp", ".hpp", ".js", ".ts"]);
   const DEFAULT_FORMATS = Object.freeze([".md", ".markdown", ".mkd", ".mdx"]);
   const ONBOARDING_VERSION = 5;
   const STORAGE_FORMATS = "lumareader-text-formats-v2";
@@ -16,7 +16,7 @@
       selectAll: "Select all",
       clearAll: "Clear all",
       close: "Close format selector",
-      footnote: "Markdown types are selected by default. Enable .txt or .log when needed.",
+      footnote: "Markdown is selected by default. Enable text or code files as needed. Code opens read-only until editing is enabled.",
       steps: [
         ["Choose your library", "Open a Markdown file to edit it in its own window with its folder in the sidebar, or choose a folder to browse."],
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
@@ -35,7 +35,7 @@
       selectAll: "全部選取",
       clearAll: "全部清除",
       close: "關閉格式選單",
-      footnote: "預設選取 Markdown 類型；需要時再啟用 .txt 或 .log。",
+      footnote: "預設只顯示 Markdown；可勾選文字或程式碼檔案。程式碼預設唯讀，需另外勾選才可編輯。",
       steps: [
         ["選擇文件資料夾", "開啟 Markdown 後，可在獨立視窗編輯，左側會顯示檔案所在的資料夾；也能自行選取資料夾瀏覽。"],
         ["選擇檔案格式", "Markdown 預設開啟；需要時才將 .txt 或 .log 加入清單。"],

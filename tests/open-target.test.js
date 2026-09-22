@@ -51,3 +51,10 @@ test("Windows uses opt-in Open With registration instead of automatic default as
   assert.equal(packageMetadata.build.win.fileAssociations, undefined);
   assert.equal(packageMetadata.build.nsis.include, "build/installer.nsh");
 });
+
+ test("opens common code files explicitly without changing registered associations", () => {
+  for (const name of ["a.py", "a.C", "a.cpp", "a.hpp", "a.js", "a.ts"]) {
+    assert.ok(sourceFromFileArgument(name, { cwd: "/documents", statSync: () => fakeFile }));
+  }
+  assert.deepEqual(require("../build/preview.config.cjs").mac.fileAssociations, []);
+ });

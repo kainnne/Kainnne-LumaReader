@@ -172,9 +172,9 @@ function requireDocumentType(filePath) {
   throw new HttpError("Unsupported document type", 415, "UNSUPPORTED_DOCUMENT_TYPE");
 }
 
-function decodeUtf8(bytes) {
+function decodeUtf8(bytes, preserveBOM = false) {
   try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: preserveBOM }).decode(bytes);
   } catch {
     throw new HttpError("Document is not valid UTF-8 text", 422, "TEXT_DECODING_FAILED");
   }
@@ -263,7 +263,7 @@ async function statDocument(filePath) {
 async function readDocument(filePath) {
   const { stat, type } = await statDocument(filePath);
   if (type.binary) throw new HttpError("Binary documents must use the content endpoint", 415, "BINARY_DOCUMENT");
-  return { text: decodeUtf8(await fsp.readFile(filePath)), stat, type };
+  return { text: decodeUtf8(await fsp.readFile(filePath), type.kind === "code"), stat, type };
 }
 
 async function expandIncludes(text, baseDirectory, boundary, seen = new Set(), depth = 0, budget = { bytes: LIMITS.markdownBytes, count: 64 }) {
@@ -515,7 +515,7 @@ async function localPayload(filePath, sourceType, root, publicPath = null, inspe
     };
   }
   const bytes = await fsp.readFile(filePath);
-  const text = decodeUtf8(bytes);
+  const text = decodeUtf8(bytes, type.kind === "code");
   const boundary = sourceType === "project" ? root : path.dirname(filePath);
   return {
     ...common,
@@ -546,7 +546,7 @@ async function remotePayload(source) {
   const bytes = Buffer.from(await response.arrayBuffer());
   if (bytes.length > type.maxBytes) throw new HttpError("Remote document exceeds its preview limit", 413, "DOCUMENT_TOO_LARGE");
   const finalUrl = response.url || source;
-  const text = decodeUtf8(bytes);
+  const text = decodeUtf8(bytes, type.kind === "code");
   return {
     path: finalUrl,
     name: path.basename(new URL(finalUrl).pathname) || `remote${type.extension}`,
@@ -723,23 +723,31 @@ class LocalReaderService {
   }
 
   async saveMarkdownDocument(rawPath, text, expectedModifiedNs = null, expectedRevision = null) {
+    return this.saveTextDocument(rawPath,text,expectedModifiedNs,expectedRevision,"markdown");
+  }
+
+  async saveCodeDocument(rawPath,text,expectedModifiedNs=null,expectedRevision=null) {
+    return this.saveTextDocument(rawPath,text,expectedModifiedNs,expectedRevision,"code");
+  }
+
+  async saveTextDocument(rawPath,text,expectedModifiedNs,expectedRevision,allowedKind) {
     const key = this.resolveProjectDocument(rawPath);
     const previous = saveQueues.get(key) || Promise.resolve();
-    const pending = previous.catch(() => {}).then(() => this.writeMarkdownDocument(key, text, expectedModifiedNs, expectedRevision));
+    const pending = previous.catch(() => {}).then(() => this.writeMarkdownDocument(key, text, expectedModifiedNs, expectedRevision, allowedKind));
     saveQueues.set(key, pending);
     try { return await pending; } finally { if (saveQueues.get(key) === pending) saveQueues.delete(key); }
   }
 
-  async writeMarkdownDocument(filePath, text, expectedModifiedNs = null, expectedRevision = null) {
+  async writeMarkdownDocument(filePath, text, expectedModifiedNs = null, expectedRevision = null, allowedKind = "markdown") {
     // Recheck after the prior save completes, including changes to this window's folder.
     if (this.resolveProjectDocument(path.relative(this.libraryRoot, filePath)) !== filePath) throw new HttpError("Document moved", 409, "DOCUMENT_CHANGED");
     const publicPath = path.relative(this.libraryRoot, filePath).split(path.sep).join("/");
     const { stat, type } = await statDocument(filePath);
-    if (type.kind !== "markdown") {
-      throw new HttpError("Only Markdown documents can be edited", 415, "DOCUMENT_READ_ONLY");
+    if (type.kind !== allowedKind) {
+      throw new HttpError("This document is not enabled for editing", 415, "DOCUMENT_READ_ONLY");
     }
     if (typeof text !== "string") {
-      throw new HttpError("Markdown content must be text", 400, "INVALID_DOCUMENT_CONTENT");
+      throw new HttpError("Document content must be text", 400, "INVALID_DOCUMENT_CONTENT");
     }
     if (Buffer.byteLength(text, "utf8") > type.maxBytes) {
       const limitMb = Math.round(type.maxBytes / (1024 * 1024));

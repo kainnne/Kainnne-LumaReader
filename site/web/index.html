@@ -27,8 +27,9 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=1.3.1" />
-  <link rel="stylesheet" href="library-ui.css?v=1.3.1" />
+  <link rel="stylesheet" href="styles.css?v=1.4.0" />
+  <link rel="stylesheet" href="library-ui.css?v=1.4.0" />
+  <link rel="stylesheet" href="direct-editor.css" />
 </head>
 <body class="booting">
   <div id="boot-loader" class="boot-loader" role="status" aria-live="polite" aria-label="Loading LumaReader Web">
@@ -116,6 +117,9 @@
         <div class="reader-actions" data-i18n-aria="readerSettings">
           <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
           <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
+          <div id="editor-mode-control" class="editor-mode-control" hidden><button id="show-markdown" type="button" aria-pressed="false">Show Markdown</button></div>
+          <label id="code-edit-control" class="editor-preview-control" hidden><input id="code-edit-toggle" type="checkbox" /><span id="code-edit-label">Enable code editing</span></label>
+          <span id="image-picker-status" class="image-picker-status" role="status" hidden></span>
           <label id="editor-preview-control" class="editor-preview-control" hidden>
             <input id="editor-preview-toggle" type="checkbox" />
             <span data-i18n="comparisonPreview">Preview</span>
@@ -123,19 +127,37 @@
           <div id="editor-insert-control" class="toolbar-dropdown editor-insert-control" hidden>
             <button id="editor-insert-toggle" class="toolbar-select-button editor-insert-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="editor-insert-menu">
               <span class="dropdown-leading-icon" aria-hidden="true">＋</span>
-              <span class="dropdown-label" data-i18n="insertMarkdown">Insert</span>
+              <span class="dropdown-label" id="format-menu-label">Format</span>
               <span class="dropdown-chevron" aria-hidden="true">⌄</span>
             </button>
-            <div id="editor-insert-menu" class="toolbar-menu editor-insert-menu" role="menu" hidden>
-              <section class="editor-insert-group"><strong data-i18n="insertStructure">Structure</strong><div>
-                <button type="button" data-markdown-command="heading-1">H1</button><button type="button" data-markdown-command="heading-2">H2</button><button type="button" data-markdown-command="heading-3">H3</button>
-              </div></section>
-              <section class="editor-insert-group"><strong data-i18n="insertInline">Inline</strong><div>
-                <button type="button" data-markdown-command="bold"><b>B</b></button><button type="button" data-markdown-command="italic"><i>I</i></button><button type="button" data-markdown-command="link" data-i18n="insertLink">Link</button><button type="button" data-markdown-command="image" data-i18n="insertImage">Image</button>
-              </div></section>
-              <section class="editor-insert-group"><strong data-i18n="insertBlock">Blocks</strong><div>
-                <button type="button" data-markdown-command="quote" data-i18n="insertQuote">Quote</button><button type="button" data-markdown-command="code" data-i18n="insertCode">Code</button><button type="button" data-markdown-command="task" data-i18n="insertTask">Task</button><button type="button" data-markdown-command="table" data-i18n="insertTable">Table</button>
-              </div></section>
+            <div id="editor-insert-menu" class="toolbar-menu editor-insert-menu" role="dialog" aria-label="Formatting" hidden>
+              <label class="format-compact-control"><input id="format-compact" type="checkbox" /><span id="format-compact-label">Compact labels</span></label>
+              <section class="editor-insert-group" aria-labelledby="insert-structure-label">
+                <strong id="insert-structure-label">Structure</strong>
+                <div>
+                  <button type="button" data-markdown-command="heading-1">H1</button>
+                  <button type="button" data-markdown-command="heading-2">H2</button>
+                  <button type="button" data-markdown-command="heading-3">H3</button>
+                </div>
+              </section>
+              <section class="editor-insert-group" aria-labelledby="insert-inline-label">
+                <strong id="insert-inline-label">Inline</strong>
+                <div>
+                  <button type="button" data-markdown-command="bold"><b>B</b></button>
+                  <button type="button" data-markdown-command="italic"><i>I</i></button>
+                  <button type="button" data-markdown-command="link">Link</button>
+                  <button type="button" data-markdown-command="image">Image</button>
+                </div>
+              </section>
+              <section class="editor-insert-group" aria-labelledby="insert-block-label">
+                <strong id="insert-block-label">Blocks</strong>
+                <div>
+                  <button type="button" data-markdown-command="quote">Quote</button>
+                  <button type="button" data-markdown-command="code">Code</button>
+                  <button type="button" data-markdown-command="task">Task</button>
+                  <button type="button" data-markdown-command="table">Table</button>
+                </div>
+              </section>
             </div>
           </div>
           <button id="share-document" class="icon-button labeled-button share-document-button" data-tooltip-key="shareMarkdown" type="button" data-i18n-title="shareMarkdown" title="Share this Markdown" aria-label="Share this Markdown" hidden><span class="share-button-icon" aria-hidden="true">↗</span><span data-i18n="shareMarkdown">Share Markdown</span></button>
@@ -218,6 +240,14 @@
           </button>
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
+        <section id="direct-editor" class="direct-editor" hidden></section>
+        <div id="direct-table-tools" class="direct-table-tools" role="toolbar" aria-label="Table editing" hidden>
+          <button type="button" data-table-command="row-add" data-zh="＋列" data-en="＋ Row">＋ Row</button>
+          <button type="button" data-table-command="column-add" data-zh="＋欄" data-en="＋ Column">＋ Column</button>
+          <button type="button" data-table-command="row-delete" data-zh="刪除列" data-en="Delete row">Delete row</button>
+          <button type="button" data-table-command="column-delete" data-zh="刪除欄" data-en="Delete column">Delete column</button>
+          <button type="button" data-table-command="table-delete" data-zh="刪除表格" data-en="Delete table">Delete table</button>
+        </div>
         <textarea id="source-editor" class="source-editor" aria-label="Markdown source editor" data-i18n-aria="markdownEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="soft" hidden></textarea>
         <input id="editor-image-picker" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
         <div id="editor-image-drop" class="editor-image-drop" aria-hidden="true" hidden><span aria-hidden="true">▧</span><strong data-i18n="dropImages">Drop images to add them</strong></div>
@@ -364,15 +394,17 @@
   <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=1.3.1"></script>
-  <script src="reader-utils.js?v=1.3.1"></script>
+  <script src="web-bridge.js?v=1.4.0"></script>
+  <script src="reader-utils.js?v=1.4.0"></script>
   <script src="adapters/core.js?v=1.2.0"></script>
   <script src="adapters/plain-text.js?v=1.2.0"></script>
   <script src="adapters/index.js?v=1.2.0"></script>
-  <script src="library-search.js?v=1.3.1"></script>
-  <script src="pdf-tools.js?v=1.3.1"></script>
-  <script src="pdf-dialog.js?v=1.3.1"></script>
-  <script src="app.js?v=1.3.1"></script>
-  <script src="multiformat-ui.js?v=1.3.1"></script>
+  <script src="library-search.js?v=1.4.0"></script>
+  <script src="pdf-tools.js?v=1.4.0"></script>
+  <script src="pdf-dialog.js?v=1.4.0"></script>
+  <script src="direct-editor.bundle.js"></script>
+  <script src="code-editor.bundle.js"></script>
+  <script src="app.js?v=1.4.0"></script>
+  <script src="multiformat-ui.js?v=1.4.0"></script>
 </body>
 </html>
