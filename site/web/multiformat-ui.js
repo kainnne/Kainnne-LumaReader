@@ -20,8 +20,8 @@
       steps: [
         ["Open your documents", "Choose files or drag Markdown directly onto the reader. You can keep up to three documents open."],
         ["Choose file types", "Markdown is on by default. Turn on .txt or .log only when you want them in the list."],
-        ["Read your way", "Use vertical, horizontal, or paged reading. In vertical mode, text wraps to the available width, including while editing."],
-        ["Make the toolbar yours", "Open Settings to switch light or dark mode, choose a palette, change language, or hide controls you do not use."],
+        ["Read your way", "Open Settings to choose vertical, horizontal, or paged reading. In vertical mode, text wraps to the available width, including while editing."],
+        ["Reading settings", "Open Settings for appearance, language, source, media, and sharing. Edit stays on the toolbar."],
         ["Open Markdown from your desktop", "LumaReader Desktop opens and edits Markdown in separate windows. Choose it as your default yourself in Finder, Windows Settings, or your Linux file manager’s Open With / Properties settings. The app does not change system defaults."],
       ],
       step: "Step {current} of {total}",
@@ -39,8 +39,8 @@
       steps: [
         ["開啟文件", "選擇檔案，或直接將 Markdown 拖曳到閱讀器；一次最多可開啟 3 份文件。"],
         ["選擇檔案格式", "預設顯示 Markdown 文件；需要閱讀純文字或記錄檔時，再勾選 .txt 或 .log。"],
-        ["選擇閱讀方式", "可使用直式、橫式或翻頁閱讀；直式內文與編輯文字會隨視窗寬度自動換行。"],
-        ["調整成你習慣的工具列", "點開齒輪設定，就能調整深淺色模式、配色與語言，也能隱藏不常用的工具按鈕。"],
+        ["選擇閱讀方式", "在設定裡選擇直式、橫式或翻頁閱讀；直式內文與編輯文字會隨視窗寬度自動換行。"],
+        ["調整閱讀設定", "點開「設定」，調整配色與語言，或使用原文、媒體與分享功能。「編輯」會保留在工具列上。"],
         ["直接從電腦開啟 Markdown", "LumaReader 桌面版可用獨立視窗開啟與編輯 Markdown。預設程式由你自行在 Finder、Windows 設定，或 Linux 檔案管理員的「開啟方式／內容」中選擇；程式不會自動更改系統預設值。"],
       ],
       step: "步驟 {current} / {total}",
@@ -161,7 +161,7 @@
     return Number(preferences.onboardingVersion ?? localStorage.getItem(STORAGE_TOUR) ?? 0);
   }
 
-  const tourTargets = ["#choose-file", "#format-filter-toggle", "#reading-mode-toggle", "#palette-toggle", "#choose-file"];
+  const tourTargets = ["#choose-file", "#format-filter-toggle", "#palette-toggle", "#palette-toggle", "#choose-file"];
 
   function positionSpotlight(target) {
     if (!target || !els.spotlight) return;

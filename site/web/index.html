@@ -27,8 +27,8 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=1.4.0" />
-  <link rel="stylesheet" href="library-ui.css?v=1.4.0" />
+  <link rel="stylesheet" href="styles.css?v=1.4.1-web.1" />
+  <link rel="stylesheet" href="library-ui.css?v=1.4.1-web.1" />
   <link rel="stylesheet" href="direct-editor.css" />
 </head>
 <body class="booting">
@@ -160,9 +160,9 @@
               </section>
             </div>
           </div>
-          <button id="share-document" class="icon-button labeled-button share-document-button" data-tooltip-key="shareMarkdown" type="button" data-i18n-title="shareMarkdown" title="Share this Markdown" aria-label="Share this Markdown" hidden><span class="share-button-icon" aria-hidden="true">↗</span><span data-i18n="shareMarkdown">Share Markdown</span></button>
-          <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
-          <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
+
+
+
           <button id="export-pdf" class="icon-button labeled-button export-pdf-button" data-tooltip-key="exportPdf" type="button" data-i18n-title="exportPdf" title="Export PDF" aria-label="Export PDF" hidden><span class="pdf-button-icon" aria-hidden="true">PDF</span><span data-i18n="exportPdf">Export PDF</span></button>
           <div id="reading-mode-control" class="toolbar-dropdown">
             <button id="reading-mode-toggle" class="toolbar-select-button reading-mode-button" data-tooltip-key="readingMode" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="reading-mode-menu" data-i18n-aria="readingMode" aria-label="Reading mode">
@@ -182,7 +182,7 @@
           <div class="toolbar-dropdown palette-control appearance-control">
             <button id="palette-toggle" class="icon-button appearance-button" data-tooltip-key="appearance" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="palette-menu" aria-label="Appearance and toolbar settings">
               <span id="appearance-theme-icon" class="appearance-theme-icon" aria-hidden="true">⚙</span>
-              <span id="palette-name" class="visually-hidden">Dream Rose</span>
+              <span data-i18n="webSettings">Settings</span><span id="palette-name" class="visually-hidden">Dream Rose</span>
             </button>
             <div id="palette-menu" class="toolbar-menu palette-menu appearance-menu" role="dialog" aria-label="Appearance and toolbar settings" hidden>
               <header class="appearance-menu-header"><div><strong data-i18n="appearanceSettings">Appearance &amp; toolbar</strong><span data-i18n="appearanceHint">Keep the reader focused on what you use.</span></div><button id="appearance-close" type="button" aria-label="Close">×</button></header>
@@ -191,14 +191,9 @@
               <section class="appearance-section"><strong data-i18n="language">Interface language</strong><select id="settings-language" class="settings-language" aria-label="Interface language">
                 <option value="en">English</option><option value="zh-Hant">繁體中文</option><option value="zh-Hans">简体中文</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt-BR">Português (Brasil)</option><option value="ru">Русский</option><option value="it">Italiano</option>
               </select></section>
-              <section class="appearance-section toolbar-visibility-section"><strong data-i18n="toolbarVisibility">Toolbar visibility</strong>
-                <label><span data-i18n="language">Interface language</span><input type="checkbox" data-toolbar-visibility="language" checked /></label>
-                <label><span data-i18n="readingMode">Reading mode</span><input type="checkbox" data-toolbar-visibility="readingMode" checked /></label>
-                <label><span data-i18n="source">Source</span><input type="checkbox" data-toolbar-visibility="source" /></label>
-                <label><span data-i18n="media">Media</span><input type="checkbox" data-toolbar-visibility="media" /></label>
-                <label><span data-i18n="textSize">Text size</span><input type="checkbox" data-toolbar-visibility="textSize" checked /></label>
-                <button id="toolbar-reset" class="toolbar-reset" type="button" data-i18n="restoreToolbar">Restore default toolbar</button>
-              </section>
+              <section class="appearance-section"><strong data-i18n="readingMode">Reading mode</strong><select id="settings-reading-mode" class="settings-language" aria-label="Reading mode"><option value="vertical" data-i18n="vertical">Vertical</option><option value="horizontal" data-i18n="horizontal">Horizontal</option><option value="paged-horizontal">Paged →</option><option value="paged-vertical">Paged ↓</option></select></section>
+              <section id="web-settings-actions" class="appearance-section web-settings-actions"><button id="share-document" class="icon-button labeled-button share-document-button" data-tooltip-key="shareMarkdown" type="button" data-i18n-title="shareMarkdown" title="Share this Markdown" aria-label="Share this Markdown" hidden><span class="share-button-icon" aria-hidden="true">↗</span><span data-i18n="shareMarkdown">Share Markdown</span></button><button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button><button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button></section>
+              <button id="toolbar-reset" type="button" hidden>Reset</button>
             </div>
           </div>
 
@@ -394,17 +389,17 @@
   <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="web-bridge.js?v=1.4.0"></script>
-  <script src="reader-utils.js?v=1.4.0"></script>
+  <script src="web-bridge.js?v=1.4.1-web.1"></script>
+  <script src="reader-utils.js?v=1.4.1-web.1"></script>
   <script src="adapters/core.js?v=1.2.0"></script>
   <script src="adapters/plain-text.js?v=1.2.0"></script>
   <script src="adapters/index.js?v=1.2.0"></script>
-  <script src="library-search.js?v=1.4.0"></script>
-  <script src="pdf-tools.js?v=1.4.0"></script>
-  <script src="pdf-dialog.js?v=1.4.0"></script>
+  <script src="library-search.js?v=1.4.1-web.1"></script>
+  <script src="pdf-tools.js?v=1.4.1-web.1"></script>
+  <script src="pdf-dialog.js?v=1.4.1-web.1"></script>
   <script src="direct-editor.bundle.js"></script>
   <script src="code-editor.bundle.js"></script>
-  <script src="app.js?v=1.4.0"></script>
-  <script src="multiformat-ui.js?v=1.4.0"></script>
+  <script src="app.js?v=1.4.1-web.1"></script>
+  <script src="multiformat-ui.js?v=1.4.1-web.1"></script>
 </body>
 </html>

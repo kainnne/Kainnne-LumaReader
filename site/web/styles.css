@@ -736,7 +736,7 @@ button, input, select { font: inherit; }
 .prose h3 { margin: 2em 0 0.8em; font-size: 1.2em; color: var(--accent-strong); }
 .prose h4 { margin: 1.7em 0 0.7em; font-size: 1.05em; }
 .prose p { margin: 0 0 1.15em; }
-.prose strong { font-weight: 750; }
+.prose strong { font-family: var(--sans); font-weight: 800; }
 .prose em { color: var(--muted); }
 .prose a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .prose hr { margin: 2.7em 0; border: 0; border-top: 1px solid var(--line); }
@@ -2778,3 +2778,22 @@ body.editor-preview-enabled .prose :is(p, li, blockquote, h1, h2, h3, h4, h5, h6
   :root[data-pdf-frame="plain"] { --print-page: #fff; }
   :root[data-pdf-frame="plain"] body::before { display: none; }
 }
+
+/* Browser reading: two named actions, with secondary controls in Settings. */
+#font-up, #font-down, .language-control, #reading-mode-control { display: none !important; }
+#edit-document-icon, #appearance-theme-icon { display: none; }
+.reader-actions #edit-document-label, .reader-actions #palette-toggle > [data-i18n="webSettings"] { display: inline; }
+.reader-actions #edit-document, .reader-actions #palette-toggle { display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 64px; min-height: 38px; padding: 0 14px; font: 650 13px/1 var(--sans); }
+.reader-actions #edit-document[hidden] { display: none; }
+.appearance-menu-header [data-i18n="appearanceHint"] { display: none; }
+.web-settings-actions { grid-template-columns: 1fr 1fr; }
+.web-settings-actions .labeled-button { width: auto; justify-content: center; min-height: 38px; }
+.web-settings-actions .labeled-button span:last-child { display: inline; }
+@media (max-width: 820px) {
+  body:not(.editing-document) .reader-bar { min-height: 60px; flex-wrap: nowrap; align-items: center; gap: 12px; }
+  body:not(.editing-document) .file-heading { flex: 1 1 auto; min-width: 0; }
+  body:not(.editing-document) .reader-actions { flex: 0 0 auto; width: auto; overflow: visible; }
+  .reader-actions .appearance-menu { max-width: calc(100vw - 16px); }
+}
+
+@media (max-width: 820px) { body:not(.editing-document) .progress-track { top: 59px; } }
