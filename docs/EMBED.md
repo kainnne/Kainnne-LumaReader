@@ -66,6 +66,27 @@ LUMA_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google 
 
 官方固定載入網址持續提供相容更新。先儲存文件，再重新整理網頁；快取更新後就會載入新版。
 
-使用工具安裝的 HTML 可執行 `npx --yes --prefer-online https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html --update`。工具讀取 `/embed/version.json`，備份 HTML 並只更新官方載入網址的版本參數，不更動文件 JSON、ID 或其他內容；須重新部署該 HTML。手貼的 HTML 保留官方固定網址即可。自託管完整資源包仍需自行替換資源。
+使用工具安裝的 HTML 可執行 `npx --yes https://lumareader.kainnne.com/embed/lumareader-embed-1.1.0.tgz ./index.html --update`。工具讀取 `/embed/version.json`，備份 HTML 並只更新官方載入網址的版本參數，不更動文件 JSON、ID 或其他內容；須重新部署該 HTML。手貼的 HTML 保留官方固定網址即可。自託管完整資源包仍需自行替換資源。
 
 每次發布 Web 嵌入更新時，同步更新 `site/embed/version.json`、`install.js` 的預設資源版本與說明頁的版本／變更內容。版本參數用於更新快取，不是歷史版本鎖定；破壞性更新仍須遵守 v1 相容契約。
+
+## 選擇嵌入功能（v1 相容擴充）
+
+公開說明與可複製設定在 https://lumareader.kainnne.com/embed/#customize 。設定規格為 `/embed/options.schema.json`，小說設定範例為 `/embed/novel-options.json`。agent 可依網站用途讀取規格後產生設定，不需另一套編輯器。
+
+在原本 `install.js` script 加 `data-luma-options="my-luma-options"`，並於其前方放 `<script type="application/json" id="my-luma-options">{...}</script>`。JSON 接受 `mode`（direct/source/preview）、`readOnly`、`sourcePreview`，及 `features` 的 sidebar/modeSwitch/rename/share/formatting/settings 布林值。SDK 在 mountLumaReader options 直接使用這些欄位。安裝 loader 另支援 expand/download 控制外層按鈕。
+
+預設直接編輯，sidebar 為 true，modeSwitch 為 false，sourcePreview 與其餘 features 為 true。小說文案建議關閉 sidebar/modeSwitch/rename/share；Markdown 工具可開 source 與 modeSwitch；展示頁開 preview + readOnly。preview 只決定初始模式，readOnly 才會關閉文字與名稱修改。這些 UI 設定不是後台授權機制。features 限制不會被訪客偏好蓋掉。
+
+嵌入實例最多包含 3 份 Markdown。拿掉新增按鈕；空白文件提供拖曳／匯入、直接撰寫入口。側邊欄統一為匯入、文件列表、大綱，預設可展開但先收起。features.sidebar=false 可隱藏側欄，仍支援拖曳。每份文件有固定 ID；切換會保留草稿。
+
+點檔名可改名稱，副檔名固定。改名透過既有 onChange/onSave 回傳 title（不含 .md），id 不變，revision 會增加；僅改名也必須儲存。瀏覽器草稿鍵不變，重新掛載和下載沿用新名稱。一般 Web 僅修改分頁文件名稱，不改作業系統檔案。
+
+
+### 多文件與語言
+
+`onChange`、`onSave`、`getDocument()` 相容既有 `{id,title,markdown,revision}`，title/markdown 是目前顯示的文件，最外層 id 仍是原 host ID。新增 `files:[{id,title,markdown}]`（最多 3 份）及 `activeFileId`。需要多文件的後台請保存完整快照，再傳回 `document`；舊整合只讀 markdown 仍取得目前文件，但不會自動保存其他文件。安裝 loader 的瀏覽器草稿已保存完整快照。`editor.save()` 成功後再移除或切換外層步驟。瀏覽器清除資料或更換裝置不會保留草稿，需要持久儲存請接 onSave 後台。
+
+`language:'zh-Hant'`（亦支援 en、zh-Hans、ja 等既有語言）指定每次掛載的初始語言；`features.language:false` 隱藏切換入口。預設允許切換。原 preferences.language 也相容，明確 language 優先。
+
+更新指令使用不可變的 1.1.0 工具網址，以避開 npx 對舊版固定別名的快取。此工具每次查詢最新 Web version.json，工具網址中的版本不會鎖住 Reader 版本，之後可沿用同一行。

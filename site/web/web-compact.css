@@ -1,5 +1,5 @@
 /* Browser and iframe controls share the same responsive layout. */
-.embedded-reader #editor-mode-control { display: none !important; }
+.embedded-reader.embed-no-modeSwitch #editor-mode-control { display: none !important; }
 .format-sheet-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .format-sheet-header .format-compact-control { padding: 0; justify-content: flex-start; }
 #format-close { width: 36px; height: 36px; flex: none; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--paper); font: 22px/1 var(--sans); cursor: pointer; }
@@ -39,3 +39,29 @@
   #editor-insert-menu.compact-formatting [data-markdown-command] { justify-content: center; }
 }
 .format-categories button { -webkit-tap-highlight-color: transparent; }
+
+/* Embedded sessions edit a host-owned document; document management stays with the host. */
+.embedded-reader #new-markdown, .embedded-reader #format-filter { display:none !important; }
+.embed-readonly .library-controls, .embed-readonly .file-remove-button {display:none !important;}
+.embed-no-sidebar #sidebar, .embed-no-sidebar #sidebar-toggle { display:none !important; }
+.embed-no-sidebar .app { grid-template-columns:minmax(0,1fr) !important; }
+.embed-no-sidebar .reader-shell { grid-column:1 / -1; }
+body.embed-no-sidebar.editing-document .file-heading { padding-left:0; }
+.embed-no-share #share-document, .embed-no-formatting #editor-insert-control, .embed-no-formatting #direct-table-tools,
+.embed-no-settings #palette-toggle { display:none !important; }
+#file-name[role=button] { cursor:text; border-radius:5px; }
+#file-name[role=button]:hover { text-decoration:underline dotted; text-underline-offset:4px; }
+#file-name[role=button]:focus-visible { outline:2px solid var(--accent-strong); outline-offset:3px; }
+#file-name[hidden], #rename-file[hidden] { display:none !important; }
+#rename-file { display:flex; align-items:center; gap:4px; min-width:0; max-width:100%; height:30px; color:var(--muted); }
+#rename-file-stem { width:180px; min-width:30px; flex:1 1 auto; height:30px; box-sizing:border-box; border:1px solid var(--line); border-radius:6px; padding:3px 6px; color:var(--ink); background:var(--paper); font:inherit; }
+#rename-file-extension { flex:none; font:13px var(--sans); }
+#rename-file button { flex:none; height:30px; width:30px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); cursor:pointer; }
+
+.embed-language-hidden { display:none !important; }
+#embed-welcome { position:absolute; z-index:20; inset:100px 12px 12px; background:var(--paper); border:1px dashed var(--line); border-radius:20px; padding:24px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; color:var(--ink); }
+#embed-welcome h2 {font:700 22px var(--sans);margin:0;}
+#embed-welcome p {font:14px/1.6 var(--sans);color:var(--muted);max-width:360px;}
+#embed-welcome button {max-width:100%;white-space:normal;min-height:44px;}
+
+.embed-no-language .language-control {display:none !important;}

@@ -51,3 +51,8 @@
  #image-step { padding: 18px; }
 }
 @media (prefers-reduced-motion:reduce) { .embed-page .actions a, .embed-page button { transition: none; } }
+
+.embed-options {display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr);gap:12px 20px;padding:20px;border:1px solid var(--glass-line);border-radius:18px;background:rgba(255,255,255,.3);font-size:.9rem;}
+.embed-options dt {font-weight:700;overflow-wrap:anywhere;}
+.embed-options dd {margin:0;color:var(--ink-soft);}
+@media(max-width:600px){.embed-options{grid-template-columns:minmax(0,1fr);gap:6px;padding:14px;}.embed-options dd{margin-bottom:14px;}}

@@ -299,7 +299,7 @@ ${desktopDownloadMarkdown}
     const finalPath = path || uniquePath(safeName);
     const extension = extensionOf(finalPath);
     if (!TEXT_EXTENSIONS.includes(extension)) return null;
-    const document = { path: finalPath, name: finalPath.split("/").pop(), extension, text: String(text || ""), handle, sample, modifiedNs: String(Date.now() * 1000000) };
+    const document = { id:window.LumaEmbed?(crypto.randomUUID?.()||[...crypto.getRandomValues(new Uint8Array(16))].map(n=>n.toString(16).padStart(2,"0")).join("")):finalPath, path: finalPath, name: finalPath.split("/").pop(), extension, text: String(text || ""), handle, sample, modifiedNs: String(Date.now() * 1000000) };
     documents.set(finalPath, document);
     return document;
   }
@@ -313,14 +313,18 @@ ${desktopDownloadMarkdown}
   }
 
   async function importFiles(files, handles = []) {
+    if(window.LumaEmbed?.config?.readOnly)return {canceled:true};
     let lastDocument = "";
     const pendingFiles = [];
     let added = 0;
     const handleByName = new Map(handles.map((handle) => [handle.name, handle]));
     for (const file of Array.from(files || [])) {
       const extension = extensionOf(file.name);
-      if (TEXT_EXTENSIONS.includes(extension)) {
-        const document = addDocument({ name: file.name, text: await file.text(), handle: handleByName.get(file.name) || null });
+      if (TEXT_EXTENSIONS.includes(extension) && (!window.LumaEmbed || /\.(md|markdown|mkd|mdx)$/.test(extension))) {
+        if(window.LumaEmbed&&file.size>16*1024*1024)throw new Error("Markdown must be under 16 MB.");
+        // An untouched blank welcome document is replaced by the first import.
+        if(window.LumaEmbed&&documents.size===1){const first=[...documents.values()][0];if(first.blankWelcome&&!first.text.trim())documents.clear();}
+        const document = addDocument({ name: file.name, text: await file.text(), handle: window.LumaEmbed?null:handleByName.get(file.name) || null });
         if (document) {
           added += 1;
           lastDocument = document.path;
@@ -329,10 +333,12 @@ ${desktopDownloadMarkdown}
         addAsset(file);
       }
     }
+    if(added)window.LumaEmbed?.workspaceChanged();
     return { path: lastDocument, added, pendingFiles, ...sessionInfo() };
   }
 
   async function chooseFiles() {
+    if(window.LumaEmbed)return {supported:false,path:""};
     if (typeof window.showOpenFilePicker !== "function") return { supported: false, path: "" };
     try {
       const handles = await window.showOpenFilePicker({
@@ -421,6 +427,7 @@ ${desktopDownloadMarkdown}
   }
 
   function removeDocument(path) {
+    if(window.LumaEmbed&&(window.LumaEmbed.config.readOnly||documents.size<=1))return {ok:false};
     const document = documents.get(path);
     if (!document) return { ok: false, code: "DOCUMENT_NOT_FOUND" };
     documents.delete(path);
@@ -472,16 +479,32 @@ ${desktopDownloadMarkdown}
     localStorage.setItem("lumareader-language", browserLanguage.startsWith("zh") ? "zh-Hant" : browserLanguage);
   }
   const ready = window.LumaEmbed ? window.LumaEmbed.ready.then(config => {
-    const name = String(config.document.title || config.document.id).replace(/[\\/]/g,"-").replace(/\.md$/i,"") + ".md";
-    const document = addDocument({name,text:config.document.markdown});
-    window.LumaEmbed.managedPath = document.path;
+    const files=config.document.files||[{id:config.document.id,title:config.document.title||config.document.id,markdown:config.document.markdown}];
+    for(const file of files){
+      const name=String(file.title||file.id).replace(/[\\/]/g,"-").replace(/\.md$/i,"")+".md";
+      const doc=addDocument({name,text:file.markdown});doc.id=file.id;doc.blankWelcome=!config.document.files&&!file.markdown.trim();
+      if(file.id===(config.document.activeFileId||config.document.id))window.LumaEmbed.managedPath=doc.path;
+    }
     return {imported:true};
   }) : importSharedDocument().then((result) => {
     if (!result.imported) addDocument({ name: "LumaReader Web.md", text: sample, path: "LumaReader Web.md", sample: true });
     return result;
   });
 
-  window.lumaWeb = { commitEmbeddedText(text) {
+  window.lumaWeb = {
+    embeddedFiles(){return {files:[...documents.values()].map(doc=>({id:doc.id,title:doc.name.replace(/\.(md|markdown|mkd|mdx)$/i,''),markdown:doc.text})),activeFileId:documents.get(window.LumaEmbed?.managedPath)?.id};},
+    cacheEmbeddedText(path,text){const doc=documents.get(path);if(doc){doc.text=text;if(text.trim())doc.blankWelcome=false;}},
+    activateEmbedded(path){const doc=documents.get(path);if(doc)window.LumaEmbed.activate(path,doc.name.replace(/\.(md|markdown|mkd|mdx)$/i,''),doc.text);},
+    renameDocument(path, stem) {
+    const doc = documents.get(path);
+    if (!doc || !/\.(md|markdown|mkd|mdx)$/i.test(doc.name) || window.LumaEmbed?.config?.readOnly || window.LumaEmbed?.config?.features?.rename === false) throw new Error("Rename unavailable");
+    stem=String(stem).trim();
+    if (!stem || stem.length>120 || /[\\/:*?"<>|\x00-\x1f\x7f]/.test(stem) || /^\.+$/.test(stem)) throw new Error("Invalid file name");
+    // The internal key stays stable: relative assets and host document IDs must not change.
+    doc.name=stem+doc.name.slice(doc.name.lastIndexOf('.'));
+    window.LumaEmbed?.rename(stem);
+    return payload(doc);
+  }, commitEmbeddedText(text) {
     const document = documents.get(window.LumaEmbed?.managedPath);
     if (document) {document.text=text;document.modifiedNs=String(Date.now()*1000000);}
   }, desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
@@ -490,7 +513,7 @@ ${desktopDownloadMarkdown}
     platform: "web",
     getPreferences: async () => {
       const embed = await window.LumaEmbed?.ready;
-      return {readerDefaultsVersion:3,...(embed?.preferences || {}),...initialPreferences};
+      return {readerDefaultsVersion:3,...initialPreferences,...(embed?.preferences || {}),...(embed?.language?{language:embed.language}:{})};
     },
     setPreferences: async (patch) => {
       const next = { ...loadPreferences(), ...patch };
@@ -500,6 +523,7 @@ ${desktopDownloadMarkdown}
     chooseCreateDirectory: async () => ({ selected: true, canceled: false, directory: "", displayPath: "LumaReader Web", root: "LumaReader Web", destinationToken: "web-session" }),
     cancelCreateDocument: async () => ({ ok: true }),
     createDocument: async ({ name }) => {
+      if(window.LumaEmbed)return {ok:false,message:"The host manages embedded documents."};
       let normalized = String(name || "").trim();
       if (!normalized.toLowerCase().endsWith(".md")) normalized += ".md";
       normalized = normalized.replace(/[\\/]/g, "-");

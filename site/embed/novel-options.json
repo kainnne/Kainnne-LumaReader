@@ -1,0 +1,14 @@
+{
+  "$schema": "https://lumareader.kainnne.com/embed/options.schema.json",
+  "mode": "direct",
+  "features": {
+    "sidebar": false,
+    "modeSwitch": false,
+    "rename": false,
+    "share": false,
+    "formatting": true,
+    "settings": true,
+    "language": false
+  },
+  "language": "zh-Hant"
+}

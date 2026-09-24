@@ -21,7 +21,7 @@
   }
   function snapshot(refresh = true) {
     if (refresh && api) changed(api.getText());
-    return {...document,revision};
+    return {...document,...(api?.getFiles?.()||{}),revision};
   }
   function persist(text) {
     changed(text);
@@ -35,6 +35,10 @@
   window.LumaEmbed = {
     ready, get config(){return config;}, get markdown(){return document?.markdown || '';},
     managedPath:null, changed, persist,
+    workspaceChanged(){revision++;send('change',{document:snapshot()});},
+    activate(path,title,text){this.managedPath=path;document.title=title;document.markdown=text;},
+    get dirty(){return revision>savedRevision;},
+    rename(title){if(config.readOnly||config.features?.rename===false||document.title===title)return;document.title=title;revision++;send('change',{document:snapshot()});},
     attach(application) {api = application;send('initialized',{document:snapshot()});},
     get attached(){return Boolean(api);}
   };
@@ -48,7 +52,7 @@
     else if(m.type==='save-state'&&api){
       if(Number.isSafeInteger(m.savedRevision)&&m.savedRevision>=savedRevision){
         savedRevision=m.savedRevision;
-        if(typeof m.markdown==='string')api.saved(m.markdown);
+        if(typeof m.markdown==='string')api.saved(m.markdown,m.activeFileId);
       }
       if(m.error)api.error();
     }else if(m.type==='save-result'&&pending.has(m.requestId)){

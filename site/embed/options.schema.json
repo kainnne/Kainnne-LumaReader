@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lumareader.kainnne.com/embed/options.schema.json",
+  "title": "LumaReader embed v1 options",
+  "description": "Same Reader UI, up to three Markdown files. The host owns persistence. UI flags are not backend authorization.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "enum": [
+        "direct",
+        "source",
+        "preview"
+      ],
+      "default": "direct",
+      "description": "direct: visual editing; source: Markdown editing; preview: reading first, Edit remains available unless readOnly."
+    },
+    "readOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "Prevent document text and title editing."
+    },
+    "sourcePreview": {
+      "type": "boolean",
+      "default": true,
+      "description": "Start source editing with comparison preview."
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sidebar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow opening the existing file/outline sidebar; initially collapsed."
+        },
+        "modeSwitch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the Show Markdown toggle, allowing direct/source switching."
+        },
+        "rename": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow filename editing, preserving .md and the host document ID."
+        },
+        "formatting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show format insertion and table controls; this does not restrict which Markdown may be entered."
+        },
+        "share": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show public Markdown sharing. Disable for private content workflows."
+        },
+        "settings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Reader appearance and language settings."
+        },
+        "language": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow visitors to select another interface language in settings."
+        }
+      }
+    },
+    "expand": {
+      "type": "boolean",
+      "default": true,
+      "description": "install.js only: show outer expand button."
+    },
+    "download": {
+      "type": "boolean",
+      "default": true,
+      "description": "install.js only: show outer .md download button."
+    },
+    "language": {
+      "type": "string",
+      "description": "Initial interface language, e.g. zh-Hant, zh-Hans, en or ja; overrides the visitor stored preference at mount."
+    }
+  }
+}

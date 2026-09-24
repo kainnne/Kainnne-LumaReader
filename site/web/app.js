@@ -369,7 +369,7 @@
     updatePagination();
   }
   function scheduleLayoutRefresh(position=captureReadingPosition()){requestAnimationFrame(()=>{updatePagination();clearTimeout(scheduleLayoutRefresh.timer);scheduleLayoutRefresh.timer=setTimeout(()=>{if(!state.editing&&!dropdownPairs().some(([menu])=>!menu.hidden))restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();},240);});}
-  function toggleSidebar(){const position=captureReadingPosition();if(isNarrow()){sidebarEl.classList.toggle("open");document.body.classList.toggle("sidebar-open",sidebarEl.classList.contains("open"));}else{state.sidebarCollapsed=!state.sidebarCollapsed;localStorage.setItem("lumareader-sidebar-collapsed",String(state.sidebarCollapsed));persistPreferences({sidebarCollapsed:state.sidebarCollapsed});}updateSidebarToggle();scheduleLayoutRefresh(position);}
+  function toggleSidebar(){if(window.LumaEmbed?.config?.features?.sidebar===false)return;const position=captureReadingPosition();if(isNarrow()){sidebarEl.classList.toggle("open");document.body.classList.toggle("sidebar-open",sidebarEl.classList.contains("open"));}else{state.sidebarCollapsed=!state.sidebarCollapsed;localStorage.setItem("lumareader-sidebar-collapsed",String(state.sidebarCollapsed));persistPreferences({sidebarCollapsed:state.sidebarCollapsed});}updateSidebarToggle();scheduleLayoutRefresh(position);}
   function closeSidebarOnNarrow(){if(!isNarrow())return;sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");updateSidebarToggle();}
   function disposeActiveAdapter(){state.activeAdapter?.dispose?.();state.activeAdapter=null;contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");document.body.removeAttribute("data-document-kind");}
   function renderLibraryPrompt(){
@@ -413,7 +413,7 @@
   let directEditor=null;
   function updateDirectLayout(){
     const code=state.documentKind==="code",active=state.editing&&!code&&state.editorMode==="direct";
-    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code||Boolean(window.LumaEmbed);showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;showMarkdownButton.textContent=state.language.startsWith("zh")?"顯示 Markdown":"Show Markdown";
+    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code||Boolean(window.LumaEmbed&&!window.LumaEmbed.config?.features?.modeSwitch);showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;showMarkdownButton.textContent=state.language.startsWith("zh")?"顯示 Markdown":"Show Markdown";
 
     updateFormattingLabels();
     $("#code-edit-control").hidden=!code||state.sourceType!=="project"||!window.lumaDesktop?.setCodeEditing;$("#code-edit-toggle").checked=code&&state.editing;$("#code-edit-toggle").disabled=state.saving||state.codeEditPending;$("#code-edit-label").textContent=state.language.startsWith("zh")?"允許編輯程式碼":"Enable code editing";
@@ -426,7 +426,7 @@
   function activateDirectEditor(){
     if(sourceEditorEl.value.length>500000){state.editorMode="source";showToast(state.language.startsWith("zh")?"大型文件請使用原文編輯。":"Use source editing for this large document.");updateEditorPreviewLayout({render:true});return;}
     if(directEditor&&!directEditor.matches(sourceEditorEl.value)){directEditor.destroy();directEditor=null;}
-    if(!directEditor)directEditor=window.LumaDirectEditor.create({element:directHost,text:sourceEditorEl.value,language:state.language,resolveImage:mediaUrl,onImage:openImageViewer,onFiles:importEditorImages,onSource:()=>changeEditorMode("source"),onTableState:active=>{directTableTools.dataset.inTable=active?"true":"";directTableTools.hidden=state.editorMode!=="direct"||!active;},onChange:text=>{sourceEditorEl.value=text;state.editorDirty=text!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();}});
+    if(!directEditor)directEditor=window.LumaDirectEditor.create({element:directHost,text:sourceEditorEl.value,language:state.language,resolveImage:mediaUrl,onImage:openImageViewer,onFiles:files=>window.LumaEmbed&&[...files].some(file=>/\.(md|markdown|mkd|mdx)$/i.test(file.name))?openUploadedFile(files):importEditorImages(files),onSource:()=>changeEditorMode("source"),onTableState:active=>{directTableTools.dataset.inTable=active?"true":"";directTableTools.hidden=state.editorMode!=="direct"||!active;},onChange:text=>{sourceEditorEl.value=text;state.editorDirty=text!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();}});
     updateDirectLayout();
   }
   function changeEditorMode(mode){
@@ -550,13 +550,14 @@
   }
   compactToolbarQuery.addEventListener("change",syncEditorToolPlacement);
   function updateEditorControls(){
-    if(window.LumaEmbed?.attached && state.currentPath===window.LumaEmbed.managedPath) window.LumaEmbed.changed(state.editing?sourceEditorEl.value:state.rawText);
+    updateFilenameControl();
+    if(window.LumaEmbed?.attached && state.currentPath===window.LumaEmbed.managedPath){const text=state.editing?sourceEditorEl.value:state.rawText;window.lumaWeb.cacheEmbeddedText(state.currentPath,text);window.LumaEmbed.changed(text);}
     const editButton=$("#edit-document"),cancelButton=$("#cancel-edit"),label=$("#edit-document-label"),icon=$("#edit-document-icon"),editable=canEditCurrentDocument();
     editButton.hidden=!editable&&!state.editing;
     editButton.disabled=state.saving||state.importingImages;
     editButton.classList.toggle("is-editing",state.editing);
     editButton.classList.toggle("is-dirty",state.editing&&state.editorDirty);
-    const editKey=state.editing?(state.editorSaved&&!state.editorDirty?"saved":"save"):"edit";
+    const editKey=state.editing?(state.editorSaved&&!state.editorDirty&&!window.LumaEmbed?.dirty?"saved":"save"):"edit";
     editButton.dataset.tooltipKey=editKey;
     label.textContent=t(editKey);
     icon.textContent=state.editing?"✓":"✎";
@@ -578,11 +579,45 @@
     syncEditorToolPlacement();
     updateToolbarTooltips();
   }
+  const renameForm=$("#rename-file"),renameInput=$("#rename-file-stem");
+  function canRenameFile(){return Boolean(window.lumaWeb&&state.currentPath&&state.documentKind==="markdown"&&!state.saving&&!window.LumaEmbed?.config?.readOnly&&window.LumaEmbed?.config?.features?.rename!==false);}
+  function updateFilenameControl(){
+    const enabled=canRenameFile(),zh=state.language.startsWith("zh");
+    nameEl.setAttribute("role",enabled?"button":"heading");nameEl.tabIndex=enabled?0:-1;
+    nameEl.title=enabled?(zh?"點一下修改檔名":"Click to rename"):"";
+    nameEl.setAttribute("aria-label",enabled?(zh?"修改檔名：":"Rename file: ")+state.currentName:nameEl.textContent);
+  }
+  function closeFilenameEditor(){renameForm.hidden=true;nameEl.hidden=false;renameInput.setCustomValidity("");nameEl.focus();}
+  function openFilenameEditor(){
+    if(!canRenameFile())return;
+    const ext=state.currentName.slice(state.currentName.lastIndexOf('.')),zh=state.language.startsWith('zh');
+    renameInput.value=state.currentName.slice(0,-ext.length);renameInput.setAttribute('aria-label',zh?'檔名（副檔名固定）':'File name (extension fixed)');
+    $("#rename-file-extension").textContent=ext;
+    renameForm.querySelector('[type=submit]').setAttribute('aria-label',zh?'確認檔名':'Confirm name');$("#rename-file-cancel").setAttribute('aria-label',zh?'取消改名':'Cancel rename');
+    nameEl.hidden=true;renameForm.hidden=false;renameInput.focus();renameInput.select();
+  }
+  nameEl.addEventListener('click',openFilenameEditor);
+  nameEl.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openFilenameEditor();}});
+  $("#rename-file-cancel").addEventListener('click',closeFilenameEditor);
+  renameInput.addEventListener('input',()=>renameInput.setCustomValidity(''));
+  renameInput.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeFilenameEditor();}});
+  function commitFilename(event){
+    event.preventDefault();if(!canRenameFile())return;
+    try{
+      const doc=window.lumaWeb.renameDocument(state.currentPath,renameInput.value);
+      state.currentName=doc.name;nameEl.textContent=doc.name;state.editorSaved=false;
+      state.files=state.files.map(file=>file.path===doc.path?{...file,name:doc.name}:file);
+      renderTree();closeFilenameEditor();updateEditorControls();
+    }catch{renameInput.setCustomValidity(state.language.startsWith('zh')?'請輸入檔名，且不要包含 /、\\ 等特殊符號。':'Enter a name without slashes or reserved characters.');renameInput.reportValidity();}
+  }
+  renameForm.addEventListener('submit',commitFilename);
+  renameForm.querySelector('[type=submit]').addEventListener('click',commitFilename);
+  renameInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();commitFilename(event);}});
   function resetEditorState(){if(state.documentKind==="code"){state.activeAdapter?.setEditable?.(false);state.activeAdapter?.setText?.(state.rawText);window.lumaDesktop?.setCodeEditing?.({enabled:false}).catch(()=>{});}directEditor?.destroy();directEditor=null;directHost.hidden=true;document.body.classList.remove("direct-editing");clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
   function blockWhileEditing(){if(!state.editing)return false;showEditingBlockedNotice();return true;}
   function beginEditing({focus=true}={}){
     if(state.documentKind==="code"){void beginCodeEditing();return;}
-    state.editorMode="direct";
+    state.editorMode=window.LumaEmbed?.config?.mode==="source"?"source":"direct";
     if(!canEditCurrentDocument()){showToast(t("editUnavailable"));return;}
     stopLiveRefresh();state.editing=true;state.editorDirty=false;state.editorSaved=false;sourceEditorEl.value=state.rawText;pathEl.textContent=t("editing");updateEditorControls();setView("source");updateEditorPreviewLayout({render:true});
     if(state.editorMode==="direct")activateDirectEditor();
@@ -599,7 +634,7 @@
   async function saveEditing(){
     if(!state.editing){showToast(t("editUnavailable"));return;}
     if(state.saving||state.importingImages)return;
-    if(!state.editorDirty){state.editorSaved=true;pathEl.textContent=t("saved");updateEditorControls();showToast(t("saved"));return;}
+    if(!state.editorDirty&&!window.LumaEmbed?.dirty){state.editorSaved=true;pathEl.textContent=t("saved");updateEditorControls();showToast(t("saved"));return;}
     state.saving=true;updateEditorControls();
     try{
       const save=state.documentKind==="code"?window.lumaDesktop.saveCodeDocument:window.lumaDesktop.saveDocument;
@@ -925,7 +960,7 @@
   function rebuildMedia(){state.media=[...contentEl.querySelectorAll("img,audio,video")].map((el)=>({tag:el.tagName.toLowerCase(),src:el.currentSrc||el.src||"",alt:el.alt||el.title||""})).filter((item)=>item.src);mediaGridEl.innerHTML="";$("#media-count").textContent=state.media.length?` · ${state.media.length}`:"";if(!state.media.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noMedia");mediaGridEl.appendChild(p);return;}state.media.forEach((item,index)=>{const figure=document.createElement("figure");if(item.tag==="img"){const img=document.createElement("img");img.src=item.src;img.alt=item.alt;img.loading="lazy";img.tabIndex=0;img.setAttribute("role","button");img.setAttribute("aria-label",`${imageT("open")}: ${item.alt||index+1}`);img.addEventListener("click",()=>openImageViewer(img));img.addEventListener("keydown",(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openImageViewer(img);}});figure.appendChild(img);}else{const media=document.createElement(item.tag);media.src=item.src;media.controls=true;figure.appendChild(media);}const caption=document.createElement("figcaption");caption.textContent=item.alt||`${t("media")} ${index+1}`;figure.appendChild(caption);mediaGridEl.appendChild(figure);});}
 
   function emptyLibraryTree(){return{dirs:new Map(),files:[],extensions:new Set()};}
-  function appendTreeFiles(root,files){for(const file of files){const parts=file.path.split("/"),name=parts.pop(),extension=file.extension||file.ext||extensionOf(name);let node=root;node.extensions.add(extension);for(const part of parts){if(!node.dirs.has(part))node.dirs.set(part,emptyLibraryTree());node=node.dirs.get(part);node.extensions.add(extension);}node.files.push({...file,extension,displayName:name});}return root;}
+  function appendTreeFiles(root,files){for(const file of files){const parts=file.path.split("/"),name=parts.pop(),extension=file.extension||file.ext||extensionOf(name);let node=root;node.extensions.add(extension);for(const part of parts){if(!node.dirs.has(part))node.dirs.set(part,emptyLibraryTree());node=node.dirs.get(part);node.extensions.add(extension);}node.files.push({...file,extension,displayName:file.name||name});}return root;}
   function treeFromFiles(files){return appendTreeFiles(emptyLibraryTree(),files);}
   function ensureLibraryIndex(){if(state.libraryIndexFiles===state.files&&state.libraryIndexLength===state.files.length)return;state.librarySearchIndex=window.LumaLibrarySearch.createIndex(state.files);state.libraryTree=treeFromFiles(state.files);state.libraryFilePositions=new Map(state.files.map((file,index)=>[file.path,index]));state.libraryIndexFiles=state.files;state.libraryIndexLength=state.files.length;}
   function mergeLibraryFiles(files,reset){if(reset){state.files=[];state.librarySearchIndex=window.LumaLibrarySearch.createIndex();state.libraryTree=emptyLibraryTree();state.libraryFilePositions=new Map();state.libraryIndexFiles=state.files;state.libraryIndexLength=0;}else ensureLibraryIndex();const added=[];for(const file of files){const position=state.libraryFilePositions.get(file.path);if(position===undefined){state.libraryFilePositions.set(file.path,state.files.length);state.files.push(file);added.push(file);}else state.files[position]=file;}state.librarySearchIndex.append(files);appendTreeFiles(state.libraryTree,added);state.libraryIndexLength=state.files.length;}
@@ -949,6 +984,7 @@
     sessionDialogConfirmEl.hidden=true;sessionDialogCancelEl.textContent=t("limitDismiss");if(!sessionDialogEl.open)sessionDialogEl.showModal();requestAnimationFrame(()=>sessionDialogFilesEl.querySelector("button")?.focus());
   }
   async function consumeWebImportResult(result){
+    if(result?.path)$("#embed-welcome")?.remove();
     await loadFiles({showProgress:true});if(result?.path)await openProjectFile(result.path);
     if(result?.pendingFiles?.length)openSessionLimitDialog(result.pendingFiles);
   }
@@ -958,6 +994,7 @@
     await loadFiles({showProgress:true});
     if(wasCurrent){if(result.nextPath)await openProjectFile(result.nextPath);else{if(!window.LumaEmbed)history.replaceState(null,"",location.pathname);showEmptyLibrary();}}
     else renderTree();
+    window.LumaEmbed?.workspaceChanged();
     const pending=continueImport?[...state.pendingWebFiles]:[];state.pendingWebFiles=[];closeSessionDialog();showToast(t("removed"));
     if(pending.length){const imported=await window.lumaWeb.importFiles(pending);await consumeWebImportResult(imported);}
   }
@@ -968,7 +1005,7 @@
     const more=document.createElement("button");more.type="button";more.className="library-show-more";more.textContent=t("showMoreFiles");
     function appendPage(){more.remove();const fragment=document.createDocumentFragment();for(const entry of entries.slice(offset,offset+pageSize)){
       if(entry.child){const{name,child}=entry,folderPath=parentPath?`${parentPath}/${name}`:name,details=document.createElement("details");details.className="folder";details.open=autoOpenFolders?autoOpenFolders.has(folderPath):state.openFolders.has(folderPath);const summary=document.createElement("summary");summary.textContent=name;details.appendChild(summary);const inner=document.createElement("div");inner.className="folder-contents";let mounted=false;const mount=()=>{if(mounted)return;mounted=true;renderTreeNode(child,inner,folderPath,autoOpenFolders);};details.addEventListener("toggle",()=>{if(!details.isConnected)return;if(details.open)mount();if(!autoOpenFolders){details.open?state.openFolders.add(folderPath):state.openFolders.delete(folderPath);}});if(details.open)mount();details.appendChild(inner);fragment.appendChild(details);
-      }else{const file=entry.file;const row=document.createElement("div");row.className="file-row";row.classList.toggle("active",file.path===state.currentPath);const button=document.createElement("button");button.type="button";button.className="file-button";button.textContent=file.displayName;button.title=file.path;button.classList.toggle("active",file.path===state.currentPath);button.addEventListener("click",()=>openProjectFile(file.path));row.appendChild(button);if(window.lumaWeb){const remove=document.createElement("button");remove.type="button";remove.className="file-remove-button";remove.textContent="×";remove.title=t("removeDocument");remove.setAttribute("aria-label",`${t("removeDocument")}: ${file.displayName}`);remove.addEventListener("click",(event)=>{event.stopPropagation();openRemoveDocumentDialog(file);});row.appendChild(remove);}fragment.appendChild(row);}
+      }else{const file=entry.file;const row=document.createElement("div");row.className="file-row";row.classList.toggle("active",file.path===state.currentPath);const button=document.createElement("button");button.type="button";button.className="file-button";button.textContent=file.displayName;button.title=file.path;button.classList.toggle("active",file.path===state.currentPath);button.addEventListener("click",()=>openProjectFile(file.path));row.appendChild(button);if(window.lumaWeb){const remove=document.createElement("button");remove.type="button";remove.className="file-remove-button";remove.disabled=Boolean(window.LumaEmbed&&(state.files.length<=1||window.LumaEmbed.config.readOnly));remove.textContent="×";remove.title=t("removeDocument");remove.setAttribute("aria-label",`${t("removeDocument")}: ${file.displayName}`);remove.addEventListener("click",(event)=>{event.stopPropagation();openRemoveDocumentDialog(file);});row.appendChild(remove);}fragment.appendChild(row);}
     }offset+=pageSize;container.appendChild(fragment);if(offset<entries.length)container.appendChild(more);}
     more.addEventListener("click",appendPage);appendPage();
   }
@@ -999,13 +1036,14 @@
   function beginDocumentRequest(){state.documentRequestId+=1;state.documentAbortController?.abort();state.documentAbortController=new AbortController();stopLiveRefresh();setLoading(true);return{id:state.documentRequestId,signal:state.documentAbortController.signal};}
   function requestIsCurrent(requestId){return requestId===state.documentRequestId;}
   function finishDocumentRequest(requestId){if(!requestIsCurrent(requestId))return;state.documentAbortController=null;setLoading(false);}
-  async function consumePayload(data,{preserve=false,requestId=state.documentRequestId}={}){if(data.error)throw new Error(data.error);if(!requestIsCurrent(requestId))return false;resetEditorState();contentEl.classList.remove("library-prompt-active");state.currentPath=data.path;state.currentSource=data.path;state.currentBase=data.base||"";state.currentName=data.name;state.sourceType=data.sourceType;state.rawText=data.text||"";state.renderText=data.renderText||data.text||"";state.modifiedNs=data.modifiedNs??null;state.documentKind=data.kind||"markdown";nameEl.textContent=data.name;pathEl.textContent=data.path;if(!window.LumaEmbed)history.replaceState(null,"",`?source=${encodeURIComponent(data.path)}`);renderTree();setView("rendered");if(state.documentKind==="markdown")await renderDocument(preserve,requestId);else await renderAdapterPayload(data,requestId);if(!requestIsCurrent(requestId))return false;updateEditorControls();startLiveRefresh();closeSidebarOnNarrow();return true;}
-  async function openProjectFile(path,options={}){if(blockWhileEditing())return;const request=beginDocumentRequest();try{const response=await fetch(`/api/file?path=${encodeURIComponent(path)}`,{cache:"no-store",signal:request.signal}),data=await response.json();if(!requestIsCurrent(request.id))return;if(!response.ok&&data.error)throw new Error(data.error);await consumePayload(data,{...options,requestId:request.id});}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(String(path).split("/").pop(),extensionOf(path),error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
+  async function consumePayload(data,{preserve=false,requestId=state.documentRequestId}={}){if(data.error)throw new Error(data.error);if(!requestIsCurrent(requestId))return false;resetEditorState();contentEl.classList.remove("library-prompt-active");state.currentPath=data.path;if(window.LumaEmbed)window.lumaWeb.activateEmbedded(data.path);state.currentSource=data.path;state.currentBase=data.base||"";state.currentName=data.name;state.sourceType=data.sourceType;state.rawText=data.text||"";state.renderText=data.renderText||data.text||"";state.modifiedNs=data.modifiedNs??null;state.documentKind=data.kind||"markdown";renameForm.hidden=true;nameEl.hidden=false;nameEl.textContent=data.name;pathEl.textContent=data.path;if(!window.LumaEmbed)history.replaceState(null,"",`?source=${encodeURIComponent(data.path)}`);renderTree();setView("rendered");if(state.documentKind==="markdown")await renderDocument(preserve,requestId);else await renderAdapterPayload(data,requestId);if(!requestIsCurrent(requestId))return false;updateEditorControls();startLiveRefresh();closeSidebarOnNarrow();if(window.LumaEmbed?.attached){window.LumaEmbed.workspaceChanged();if(canEditCurrentDocument()&&window.LumaEmbed.config.mode!=="preview")beginEditing({focus:false});}return true;}
+  async function openProjectFile(path,options={}){if(state.saving||state.importingImages)return;if(window.LumaEmbed){stashEmbeddedEditing();}else if(blockWhileEditing())return;const request=beginDocumentRequest();try{const response=await fetch(`/api/file?path=${encodeURIComponent(path)}`,{cache:"no-store",signal:request.signal}),data=await response.json();if(!requestIsCurrent(request.id))return;if(!response.ok&&data.error)throw new Error(data.error);await consumePayload(data,{...options,requestId:request.id});}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(String(path).split("/").pop(),extensionOf(path),error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
   async function openSource(source,options={}){if(blockWhileEditing())return;source=String(source||"").trim();if(!source){showToast(t("invalidSource"));return;}const request=beginDocumentRequest();try{const response=await fetch(`/api/open?source=${encodeURIComponent(source)}`,{cache:"no-store",signal:request.signal}),data=await response.json();if(!requestIsCurrent(request.id))return;if(!response.ok&&data.error)throw new Error(data.error);await consumePayload(data,{...options,requestId:request.id});}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(String(source).split(/[\\/]/).pop(),extensionOf(source),error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
-  async function openUploadedFile(files){if(!files||blockWhileEditing())return;const list=files instanceof FileList||Array.isArray(files)?files:[files];if(window.lumaWeb?.importFiles){try{const result=await window.lumaWeb.importFiles(list);await consumeWebImportResult(result);return;}catch(error){showToast(`${t("loadError")} ${error.message}`);return;}}const file=list[0];if(!file)return;const extension=extensionOf(file.name),type=state.typeCatalog.get(extension)||fallbackType(extension);if(!type||!SUPPORTED_EXTENSION_SET.has(extension)){showUnsupportedDocument(file.name,extension);return;}const request=beginDocumentRequest();try{const text=type.binary?"":await file.text();if(!requestIsCurrent(request.id))return;const payload={path:file.name,name:file.name,extension,ext:extension,kind:type.kind,mime:type.mime,binary:type.binary,capabilities:type.capabilities||{},sourceType:"upload",text,renderText:text,uploadedFile:file,modifiedNs:null,size:file.size};state.currentSource="";state.currentBase="";await consumePayload(payload,{requestId:request.id});if(requestIsCurrent(request.id))stopLiveRefresh();}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(file.name,extension,error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
+  async function openUploadedFile(files){if(!files||state.saving||state.importingImages)return;if(!window.LumaEmbed&&blockWhileEditing())return;const list=files instanceof FileList||Array.isArray(files)?files:[files];if(window.lumaWeb?.importFiles){try{const result=await window.lumaWeb.importFiles(list);await consumeWebImportResult(result);return;}catch(error){showToast(`${t("loadError")} ${error.message}`);return;}}const file=list[0];if(!file)return;const extension=extensionOf(file.name),type=state.typeCatalog.get(extension)||fallbackType(extension);if(!type||!SUPPORTED_EXTENSION_SET.has(extension)){showUnsupportedDocument(file.name,extension);return;}const request=beginDocumentRequest();try{const text=type.binary?"":await file.text();if(!requestIsCurrent(request.id))return;const payload={path:file.name,name:file.name,extension,ext:extension,kind:type.kind,mime:type.mime,binary:type.binary,capabilities:type.capabilities||{},sourceType:"upload",text,renderText:text,uploadedFile:file,modifiedNs:null,size:file.size};state.currentSource="";state.currentBase="";await consumePayload(payload,{requestId:request.id});if(requestIsCurrent(request.id))stopLiveRefresh();}catch(error){if(error.name==="AbortError"||!requestIsCurrent(request.id))return;showUnsupportedDocument(file.name,extension,error.message);showToast(`${t("loadError")} ${error.message}`);}finally{finishDocumentRequest(request.id);}}
 
   async function chooseWebFiles(){
-    if(blockWhileEditing())return;
+    if(state.saving||state.importingImages)return;
+    if(!window.LumaEmbed&&blockWhileEditing())return;
     if(!window.lumaWeb?.chooseFiles){$("#file-picker").click();return;}
     try{
       const result=await window.lumaWeb.chooseFiles();
@@ -1015,14 +1053,14 @@
   }
   let fileDragDepth=0;
   function dragContainsFiles(event){return Array.from(event.dataTransfer?.types||[]).includes("Files");}
-  function showDropOverlay(){dropOverlayEl.hidden=false;}
+  function showDropOverlay(){if(!window.LumaEmbed?.config?.readOnly)dropOverlayEl.hidden=false;}
   function hideDropOverlay(){fileDragDepth=0;dropOverlayEl.hidden=true;}
   function handleFileDragEnter(event){if(!dragContainsFiles(event))return;event.preventDefault();fileDragDepth+=1;showDropOverlay();}
   function handleFileDragOver(event){if(!dragContainsFiles(event))return;event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";showDropOverlay();}
   function handleFileDragLeave(event){if(!dragContainsFiles(event))return;event.preventDefault();fileDragDepth=Math.max(0,fileDragDepth-1);if(!fileDragDepth)hideDropOverlay();}
   async function handleFileDrop(event){
-    if(!dragContainsFiles(event))return;event.preventDefault();const files=event.dataTransfer?.files;hideDropOverlay();
-    if(!files?.length)return;const hasDocument=Array.from(files).some((file)=>SUPPORTED_EXTENSION_SET.has(extensionOf(file.name)));
+    if(event.defaultPrevented){hideDropOverlay();return;}if(!dragContainsFiles(event))return;event.preventDefault();const files=event.dataTransfer?.files;hideDropOverlay();
+    if(window.LumaEmbed?.config?.readOnly||!files?.length)return;const hasDocument=Array.from(files).some((file)=>SUPPORTED_EXTENSION_SET.has(extensionOf(file.name)));
     if(!hasDocument){showToast(t("dropUnsupported"));return;}await openUploadedFile(files);
   }
   async function changeLibrary(){if(blockWhileEditing())return;if(!window.lumaDesktop?.chooseLibrary){showToast(t("folderSelectionUnavailable"));return;}try{await window.lumaDesktop.chooseLibrary();}catch(error){cancelDocumentRequest();showToast(error.message||t("loadError"));}}
@@ -1149,7 +1187,7 @@
   sourceEditorEl.addEventListener("dragenter",(event)=>{if(!state.editing||![...(event.dataTransfer?.items||[])].some((item)=>item.kind==="file"))return;event.preventDefault();event.stopPropagation();editorDragDepth+=1;editorImageDropEl.hidden=false;document.body.classList.add("editor-image-dragging");});
   sourceEditorEl.addEventListener("dragover",(event)=>{if(!state.editing)return;event.preventDefault();event.stopPropagation();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";});
   sourceEditorEl.addEventListener("dragleave",(event)=>{event.stopPropagation();editorDragDepth=Math.max(0,editorDragDepth-1);if(!editorDragDepth&&!state.importingImages){editorImageDropEl.hidden=true;document.body.classList.remove("editor-image-dragging");}});
-  sourceEditorEl.addEventListener("drop",(event)=>{if(!state.editing)return;event.preventDefault();event.stopPropagation();editorDragDepth=0;void importEditorImages(event.dataTransfer?.files);});
+  sourceEditorEl.addEventListener("drop",(event)=>{if(!state.editing)return;event.preventDefault();event.stopPropagation();editorDragDepth=0;if(window.LumaEmbed&&[...(event.dataTransfer?.files||[])].some(file=>/\.(md|markdown|mkd|mdx)$/i.test(file.name)))void openUploadedFile(event.dataTransfer.files);else void importEditorImages(event.dataTransfer?.files);});
   window.addEventListener("scroll",()=>{updateProgress();closeToolbarMenus();},{passive:true});window.addEventListener("resize",()=>{hideToolbarTooltip();closeToolbarMenus();languageHidePromptEl.hidden=true;const position=captureReadingPosition();sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");applySidebarWidth(state.sidebarWidth);applyEditorSplitRatio();updateSidebarToggle();scheduleLayoutRefresh(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();});contentEl.addEventListener("scroll",()=>{updatePagination();syncEditorSourceFromPreview();},{passive:true});rawEl.addEventListener("scroll",updatePagination,{passive:true});sourceEditorEl.addEventListener("scroll",()=>{updatePagination();syncEditorPreviewFromSource();},{passive:true});
   if("ResizeObserver" in window){const paginationObserver=new ResizeObserver(()=>requestAnimationFrame(()=>{updatePagination();if(editorPreviewIsActive())scheduleEditorScrollMapRefresh({sync:false});}));paginationObserver.observe(shellEl);paginationObserver.observe(contentEl);paginationObserver.observe(rawEl);paginationObserver.observe(sourceEditorEl);}
   sourceEditorEl.addEventListener("wheel",(event)=>{if(!editorPreviewIsActive())return;event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);},{passive:false});
@@ -1159,16 +1197,37 @@
   window.addEventListener("beforeunload",(event)=>{if(!state.editing||!state.editorDirty)return;event.preventDefault();event.returnValue="";});
 
   async function initialize(){const webReady=await window.lumaWeb?.ready;const localTheme=localStorage.getItem("lumareader-theme");document.documentElement.classList.toggle("dark",localTheme==="dark");const saved=await hydratePreferences();if(Number(saved.readerDefaultsVersion||0)<2){state.language="en";state.palette="dream-rose";document.documentElement.classList.remove("dark");localStorage.setItem("lumareader-language","en");localStorage.setItem("lumareader-theme","light");localStorage.setItem("lumareader-palette","dream-rose");persistPreferences({language:"en",theme:"light",palette:"dream-rose"});}if(Number(saved.readerDefaultsVersion||0)<3){state.mode="vertical";localStorage.setItem("lumareader-mode","vertical");persistPreferences({readingMode:"vertical",readerDefaultsVersion:3});}if(Number(saved.readerDefaultsVersion||0)<4){state.toolbarVisibility={...state.toolbarVisibility,source:false,media:false};localStorage.setItem("lumareader-toolbar-visibility",JSON.stringify(state.toolbarVisibility));persistPreferences({toolbarVisibility:state.toolbarVisibility,readerDefaultsVersion:4});}if(Number(saved.readerDefaultsVersion||0)<6){state.editorPreview=true;localStorage.setItem("lumareader-editor-preview","true");persistPreferences({editorPreview:true,readerDefaultsVersion:6});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();applyToolbarVisibility();window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();});window.lumaDesktop?.onFontSizeRequested?.((change)=>adjustFontSize(Number(change)));window.lumaDesktop?.onLibraryChanged(async(payload)=>{const refreshId=++state.libraryRefreshId;state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();try{await loadFiles({showProgress:true});if(refreshId!==state.libraryRefreshId)return;const first=state.files.find(currentFormatIsEnabled);if(first)await openProjectFile(first.path);else showEmptyLibrary();showToast(t("libraryChanged"));}catch(error){if(refreshId!==state.libraryRefreshId)return;showEmptyLibrary();showToast(error.message||t("loadError"));}});await loadFiles({showProgress:true});const params=new URLSearchParams(location.search),requested=window.LumaEmbed?.managedPath||params.get("source")||params.get("url")||params.get("file");if(requested){if(state.files.some((file)=>file.path===requested))await openProjectFile(requested);else await openSource(requested);return;}const preferred=state.files.find((file)=>file.path.endsWith("docs/story-review/00-閱讀順序與驗收範圍.md")&&currentFormatIsEnabled(file))||state.files.find(currentFormatIsEnabled);if(preferred)await openProjectFile(preferred.path);else showEmptyLibrary();if(webReady?.error)showToast(t("shareInvalid"));}
+  function stashEmbeddedEditing(){
+    if(!window.LumaEmbed||!state.editing)return;
+    const text=sourceEditorEl.value;window.lumaWeb.cacheEmbeddedText(state.currentPath,text);window.LumaEmbed.changed(text);state.rawText=text;state.renderText=text;resetEditorState();
+  }
+  function showEmbedWelcome(){
+    const zh=state.language.startsWith('zh'),panel=document.createElement('section');panel.id='embed-welcome';
+    const title=document.createElement('h2');title.textContent=zh?'從一份 Markdown 開始':'Start with Markdown';
+    const importButton=document.createElement('button');importButton.type='button';importButton.className='compact-button';importButton.textContent=zh?'拖曳檔案到這裡，或匯入 Markdown':'Drop a file here or import Markdown';importButton.onclick=()=>$("#file-picker").click();
+    const write=document.createElement('button');write.type='button';write.className='compact-button primary-button';write.textContent=zh?'直接撰寫':'Start writing';write.onclick=()=>{panel.remove();if(!state.editing)beginEditing();else directEditor?.focus();};
+    const hint=document.createElement('p');hint.textContent=window.LumaEmbed.config.features?.sidebar===false?(zh?'之後也可以拖曳 Markdown 到這個區塊。':'You can also drop Markdown into this area later.'):(zh?'之後仍可展開左側欄匯入文件，最多保留 3 份。':'You can import files from the sidebar later, up to 3 documents.');
+    panel.append(title,importButton,write,hint);shellEl.append(panel);
+  }
   function finishBootLoading(){requestAnimationFrame(()=>requestAnimationFrame(()=>{document.body.classList.remove("booting");$("#boot-loader")?.setAttribute("aria-hidden","true");}));}
   initialize().then(()=>{
     if(window.LumaEmbed){
       state.sidebarCollapsed=true;updateSidebarToggle();
-      if(canEditCurrentDocument())beginEditing({focus:false});
+      const config=window.LumaEmbed.config;
+      for(const [feature,enabled] of Object.entries(config.features||{}))document.body.classList.toggle('embed-no-'+feature,!enabled);
+      document.body.classList.toggle('embed-readonly',config.readOnly);
+      state.editorPreview=config.sourcePreview!==false;
+      $("#file-picker").accept=".md,.markdown,.mkd,.mdx";
+      const zh=state.language.startsWith('zh');$("#choose-file span:last-child").textContent=zh?'匯入 Markdown':'Import Markdown';
+      $("#settings-language").closest('section').classList.toggle('embed-language-hidden',config.features?.language===false);
+      if(canEditCurrentDocument()&&config.mode!=='preview')beginEditing({focus:false});
     }
     window.LumaEmbed?.attach({
+      getFiles:()=>{window.lumaWeb.cacheEmbeddedText(state.currentPath,state.editing?sourceEditorEl.value:state.rawText);return window.lumaWeb.embeddedFiles();},
       getText:()=>state.currentPath===window.LumaEmbed.managedPath?(state.editing?sourceEditorEl.value:state.rawText):window.LumaEmbed.markdown,
       message:key=>t(key),error:()=>showToast(t("saveFailed")),
-      saved:text=>{
+      saved:(text,fileId)=>{
+        if(fileId&&fileId!==window.lumaWeb.embeddedFiles().activeFileId)return;
         window.lumaWeb.commitEmbeddedText(text);
         if(state.currentPath!==window.LumaEmbed.managedPath)return;
         state.rawText=text;state.renderText=text;rawEl.querySelector("code").textContent=text;
@@ -1177,6 +1236,7 @@
         updateEditorControls();
       }
     });
+    if(window.LumaEmbed&&!window.LumaEmbed.config.readOnly&&!state.rawText.trim()&&!window.LumaEmbed.config.document.files)showEmbedWelcome();
     finishBootLoading();
   }).catch((error)=>{setLoading(false);contentEl.innerHTML=`<p class="error">${escapeHtml(error.message||error)}</p>`;finishBootLoading();});
 })();

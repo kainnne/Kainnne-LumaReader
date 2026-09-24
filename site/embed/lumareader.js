@@ -1,18 +1,34 @@
 /** LumaReader iframe SDK v1. Host owns persistence; no remote storage is assumed. */
+export function normalizeEmbedOptions(options={}) {
+  const mode=options.mode ?? 'direct';
+  if(!['direct','source','preview'].includes(mode))throw new TypeError('mode must be direct, source or preview');
+  const features={sidebar:true,modeSwitch:false,rename:true,formatting:true,share:true,settings:true,language:true};
+  for(const key of Object.keys(features))if(options.features?.[key]!==undefined){if(typeof options.features[key]!=='boolean')throw new TypeError('features.'+key+' must be boolean');features[key]=options.features[key];}
+  return {mode,features,sourcePreview:options.sourcePreview!==false,language:typeof options.language==='string'?options.language:undefined};
+}
 const protocol = 'lumareader-embed-v1';
 let expandedInstance;
+function validateFiles(value){
+  if(!value.files)return {};
+  if(!Array.isArray(value.files)||value.files.length<1||value.files.length>3)throw new TypeError('Provide one to three Markdown files');
+  const ids=new Set();let length=0;
+  const files=value.files.map(file=>{if(!file||typeof file.id!=='string'||!file.id||file.id.length>200||ids.has(file.id)||typeof file.markdown!=='string')throw new TypeError('Invalid embedded file');ids.add(file.id);length+=file.markdown.length;return {id:file.id,title:String(file.title||'Untitled').slice(0,200),markdown:file.markdown};});
+  if(length>64*1024*1024||!ids.has(value.activeFileId))throw new TypeError('Invalid embedded workspace');
+  return {files,activeFileId:value.activeFileId};
+}
 function validateDocument(document) {
   if (!document || typeof document.id !== 'string' || !document.id || document.id.length > 200 || typeof document.markdown !== 'string' || document.markdown.length > 64 * 1024 * 1024) throw new TypeError('Provide {id, title, markdown}; Markdown must be at most 64 Mi characters.');
-  return {id:document.id,title:String(document.title || '').slice(0,200),markdown:document.markdown,revision:0};
+  return {id:document.id,title:String(document.title || '').slice(0,200),markdown:document.markdown,...validateFiles(document),revision:0};
 }
 // Same expand/restore glyphs and button treatment as Kainnne × Gemini.
 export function setExpandIcon(button,expanded){
   const icon=document.createElement('span');icon.setAttribute('aria-hidden','true');icon.textContent=expanded?'❐':'⛶';button.replaceChildren(icon);
-  Object.assign(button.style,{display:'inline-flex',width:'40px',minWidth:'40px',height:'40px',minHeight:'40px',padding:'0',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,.84)',borderRadius:'14px',background:'linear-gradient(120deg,rgba(218,205,255,.68),rgba(255,183,206,.72),rgba(201,255,240,.62))',color:'#633c55',boxShadow:'0 8px 22px rgba(123,97,255,.12),inset 0 1px rgba(255,255,255,.82)',font:'22px/1 Arial,sans-serif',cursor:'pointer'});
+  Object.assign(button.style,{display:'inline-flex',width:'40px',minWidth:'40px',height:'40px',minHeight:'40px',padding:'0',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,.84)',borderRadius:'14px',background:'linear-gradient(120deg,rgba(218,205,255,.68),rgba(255,183,206,.72),rgba(201,255,240,.62))',color:'#633c55',boxShadow:'0 8px 22px rgba(123,97,255,.12),inset 0 1px rgba(255,255,255,.82)',font:'22px/1 Arial,sans-serif',cursor:'pointer'});if(button.hidden)button.style.display='none';
 }
 export function mountLumaReader(container, options) {
   if (!(container instanceof HTMLElement)) throw new TypeError('A container element is required.');
   if (container.children.length) throw new Error('Use an empty container for each editor.');
+  const configuration=normalizeEmbedOptions(options);
   let current = validateDocument(options.document), savedRevision = 0, boot, initialized = false, destroyed = false, expanded = false;
   let saving = Promise.resolve(), requestCounter = 0, savedStyle, bodyOverflow, previousFocus;
   const channel = (crypto.randomUUID?.() || [...crypto.getRandomValues(new Uint8Array(16))].map(n=>n.toString(16).padStart(2,'0')).join('')), requests = new Map();
@@ -38,8 +54,10 @@ export function mountLumaReader(container, options) {
   function rejectRequests(message) {for (const entry of requests.values()) {clearTimeout(entry.timer);entry.reject(new Error(message));}requests.clear();}
   function accept(document) {
     if (!document || document.id !== current.id || typeof document.markdown !== 'string' || !Number.isSafeInteger(document.revision) || document.revision < current.revision) return false;
+    let workspace;try{workspace=validateFiles(document);}catch{return false;}
     const changed = document.revision > current.revision;
-    current = {id:current.id,title:current.title,markdown:document.markdown,revision:document.revision};
+    current = {id:current.id,title:typeof document.title==='string'?document.title.slice(0,200):current.title,markdown:document.markdown,...workspace,revision:document.revision};
+    iframe.title='LumaReader — '+current.title;
     if (changed) {try {options.onChange?.({...current});} catch (error) {report(error);}}
     return true;
   }
@@ -76,7 +94,7 @@ export function mountLumaReader(container, options) {
       try {
         await options.onSave({...snapshot});
         savedRevision = Math.max(savedRevision,snapshot.revision);
-        send('save-state',{saving:false,savedRevision,markdown:snapshot.markdown});
+        send('save-state',{saving:false,savedRevision,markdown:snapshot.markdown,activeFileId:snapshot.activeFileId});
         return snapshot;
       } catch (error) {send('save-state',{saving:false,error:true});throw error;}
     });
@@ -89,7 +107,7 @@ export function mountLumaReader(container, options) {
     if (m.type === 'ready' && typeof m.boot === 'string') {
       if (boot !== m.boot) rejectRequests('Editor reloaded; retry the operation.');
       boot = m.boot; initialized = false;
-      send('init',{document:current,savedRevision,canSave:typeof options.onSave === 'function',readOnly:options.readOnly === true,preferences:options.preferences,baseURL:new URL(options.baseURL || './',location.href).href});
+      send('init',{...configuration,document:current,savedRevision,canSave:typeof options.onSave === 'function',readOnly:options.readOnly === true,preferences:options.preferences,baseURL:new URL(options.baseURL || './',location.href).href});
       return;
     }
     if (m.boot !== boot) return;

@@ -12,7 +12,7 @@ async function main(){
   await page.setViewportSize({width:1280,height:900});await page.goto(embed?local+'/fixture.html':origin+'/web/');const view=embed?page.frameLocator('iframe'):page;await view.locator('#boot-loader').waitFor({state:'hidden'});if(!embed)await view.locator('#edit-document').click();await view.locator('.direct-prose').waitFor();
   for(const width of [1280,768,390,320]){
    await page.setViewportSize({width,height:width<600?600:900});await view.locator('.direct-prose').fill('手機編輯測試');await view.locator('.direct-prose').press('ControlOrMeta+a');
-   assert.equal(await view.locator('#show-markdown').isVisible(),!embed&&width>820);
+   await view.locator('#show-markdown').waitFor({state:!embed&&width>820?'visible':'hidden'});
    if(width<=820){assert.ok(await view.locator('.reader-actions').evaluate(e=>e.scrollWidth<=e.clientWidth+1));assert.ok(await view.locator('.reader-bar').evaluate(e=>e.getBoundingClientRect().height<=100));}
    await view.locator('#editor-insert-toggle').tap();await view.locator('#editor-insert-menu').waitFor();
    if(width<=600){const rect=await view.locator('#editor-insert-menu').boundingBox();assert.ok(rect.height<=600*.47);assert.ok(rect.y>=600*.5);await view.locator('[data-format-category=structure]').tap();assert.equal(await view.locator('[data-markdown-command=heading-1]').isVisible(),true);await view.locator('[data-format-category=inline]').tap();await page.screenshot({path:`/private/tmp/luma-compact-${embed?'embed':'web'}-${width}.png`});}
