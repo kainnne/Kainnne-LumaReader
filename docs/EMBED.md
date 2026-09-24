@@ -7,13 +7,13 @@
 電腦需有 Node.js。在網站資料夾執行：
 
 ```sh
-npx --yes https://lumareader.kainnne.com/embed/lumareader-embed-1.0.0.tgz ./index.html
+npx --yes https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html
 ```
 
 指定另一份 HTML 或初始 Markdown：
 
 ```sh
-npx --yes https://lumareader.kainnne.com/embed/lumareader-embed-1.0.0.tgz ./novel.html --markdown ./transcript.md
+npx --yes https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./novel.html --markdown ./transcript.md
 ```
 
 - HTML 存在：先完整備份，再插入掛載區塊與官方載入程式。
@@ -48,3 +48,12 @@ LUMA_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google 
 ```
 
 開啟 <http://127.0.0.1:4174/embed/demo.html>。完整網站資源如需自行部署，可執行 `node scripts/build-embed.cjs`，取用 `dist-preview/embed/LumaReader-Embed-v1/`。桌面 App 的測試版本與此安裝工具各自獨立，發布工具不代表發布桌面 App。
+
+## 更新相容性契約
+
+- 固定安裝網址為 `/embed/lumareader-embed.tgz`。舊的版本網址（例如 `lumareader-embed-1.0.0.tgz`）保留於 `tools/embed-cli/releases/` 並繼續部署，不覆寫已發布的歷史套件。
+- 已生成的 HTML 永久使用 `/embed/install.js`、`data-luma-target`、`data-luma-document` 與文件 JSON `{id,title,markdown}`。這些是 v1 公開介面。Reader 內部可升級，破壞性的整合介面變更須另外開新入口，不能刪除 v1。
+- 保留 `lumareader-embed-v1` 訊息協定，以及既有文件 ID／localStorage 草稿鍵值；修改資料格式時必須提供相容讀取或遷移。
+- 一般 Reader 更新不需要重跑安裝。已開啟的頁面重新整理後，在瀏覽器／網站快取更新後載入相容的新版本。
+- `tests/fixtures/embed-v1.html` 是凍結的舊客戶範例，不能為了讓新版測試通過而改寫；`scripts/embed-cli-smoke.cjs` 會驗證這份舊 HTML 在新版 Reader 中可載入、修改、儲存及保留草稿。
+- 更新安裝工具版本時，把新版本 tarball 加入 `tools/embed-cli/releases/`；Pages 同時提供所有歷史檔案及固定最新版別名。

@@ -26,8 +26,9 @@ jobs:
         run: |
           mkdir -p _site
           cp -R site/. _site/
-          (cd tools/embed-cli && npm pack --ignore-scripts --pack-destination ../../_site/embed)
-          mv _site/embed/kainnne-lumareader-embed-1.0.0.tgz _site/embed/lumareader-embed-1.0.0.tgz
+          cp tools/embed-cli/releases/*.tgz _site/embed/
+          (cd tools/embed-cli && npm pack --ignore-scripts --json --pack-destination ../../_site/embed) > "$RUNNER_TEMP/luma-embed-pack.json"
+          node -e 'const fs=require("fs"); const pack=JSON.parse(fs.readFileSync(process.argv[1],"utf8"))[0]; fs.renameSync("_site/embed/"+pack.filename,"_site/embed/lumareader-embed.tgz");' "$RUNNER_TEMP/luma-embed-pack.json"
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:

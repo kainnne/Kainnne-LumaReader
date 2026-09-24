@@ -16,8 +16,9 @@
 <section id="install" class="guide-section"><p class="eyebrow">02 · ONE COMMAND</p><h2>在你的 HTML 裡加入 LumaReader。</h2>
 <p>電腦先安裝 Node.js，在網站資料夾開啟終端機，貼上這一行：</p>
 <div class="code-heading"><span>終端機</span><button type="button" data-copy-code="install-command">複製指令</button></div>
-<pre id="install-command"><code>npx --yes https://lumareader.kainnne.com/embed/lumareader-embed-1.0.0.tgz ./index.html</code></pre>
+<pre id="install-command"><code>npx --yes https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html</code></pre>
 <p>把 <code>./index.html</code> 換成你的 HTML 檔案路徑。工具會先備份原檔，再加入 LumaReader；檔案不存在時會建立新頁面。完成後，用你原本的網站伺服器開啟即可。</p>
+<p>這是固定安裝網址。安裝一次後，網頁會載入相容的新版 LumaReader，不必因版本更新重貼程式碼；文件 ID 和瀏覽器草稿維持原樣。</p>
 <p>想預先載入一份 Markdown，可在指令最後加上 <code>--markdown ./transcript.md</code>。</p>
 <p class="guide-note">適用於完整 HTML 頁面；不會直接修改 React、Vue 等框架元件。請透過 HTTP／HTTPS 開啟網頁，直接雙擊成 file:// 網址不適用。</p>
 </section>
@@ -34,7 +35,7 @@
   data-luma-document="my-luma-document"&gt;&lt;/script&gt;</code></pre>
 <p class="guide-note">同一頁放多個區塊時，請使用不同的元素 id 與文件 id。如果網站有設定 CSP，需允許從 lumareader.kainnne.com 載入 script 與 iframe。</p>
 </section>
-<div class="actions"><a href="demo.html">試試「編輯 → 下一步 → 返回」流程 →</a><a href="lumareader-embed-1.0.0.tgz" download>下載安裝工具</a><a href="https://github.com/kainnne/Kainnne-LumaReader/tree/main/tools/embed-cli">查看原始碼</a></div>
+<div class="actions"><a href="demo.html">試試「編輯 → 下一步 → 返回」流程 →</a><a href="lumareader-embed.tgz" download>下載安裝工具</a><a href="https://github.com/kainnne/Kainnne-LumaReader/tree/main/tools/embed-cli">查看原始碼</a></div>
 <p class="guide-note">MIT 開源授權，可免費用於個人與商業網站；散布程式碼時請保留授權聲明。<a href="LICENSE">查看授權</a></p>
 <p><a href="../">← 返回 LumaReader 首頁</a></p>
 </main></body></html>

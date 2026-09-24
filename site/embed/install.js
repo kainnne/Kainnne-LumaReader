@@ -1,4 +1,5 @@
-// Entry point used by the one-command HTML installer. Reader UI lives in /web/.
+// Permanent v1 entry point: retain this URL and the data-luma-* contract.
+// Breaking changes require a separate entry point. Reader UI lives in /web/.
 import {mountLumaReader} from './lumareader.js';
 for(const script of document.querySelectorAll('script[data-luma-target][data-luma-document]')){
  const mount=document.getElementById(script.dataset.lumaTarget),data=document.getElementById(script.dataset.lumaDocument);

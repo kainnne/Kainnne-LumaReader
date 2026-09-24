@@ -10,7 +10,7 @@ async function main(){
  }
  // Include the actual KaTeX license with the redistribution.
  await fs.copyFile(path.join(root,'site/web/vendor/LICENSE-KATEX'),path.join(out,'web/vendor/katex/LICENSE'));
- await fs.writeFile(path.join(out,'README.md'),'# 獨立包快速試用\n\n在此資料夾執行 `python3 -m http.server 4175 --bind 127.0.0.1`，再開啟 http://127.0.0.1:4175/embed/demo.html 。直接用 file:// 開啟不支援跨視窗通訊；正式套用請將整個資料夾放到自己的 HTTPS 靜態網站。以下 npm 指令是在 LumaReader 原始碼專案中使用。\n\n'+await fs.readFile(path.join(out,'README.md'),'utf8'));
+ await fs.writeFile(path.join(out,'README.md'),'# 獨立包快速試用\n\n在此資料夾執行 `python3 -m http.server 4175 --bind 127.0.0.1`，再開啟 http://127.0.0.1:4175/embed/demo.html 。直接用 file:// 開啟不支援跨視窗通訊；正式套用請將整個資料夾放到自己的 HTTPS 靜態網站。安裝指令可在你的網站資料夾執行；開發驗證指令則在 LumaReader 原始碼專案中使用。\n\n'+await fs.readFile(path.join(out,'README.md'),'utf8'));
  console.log(out);
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
