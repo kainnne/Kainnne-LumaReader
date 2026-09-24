@@ -21,7 +21,8 @@
     "test:direct-editor": "node scripts/direct-editor-smoke.cjs",
     "test:embed": "node scripts/embed-smoke.cjs",
     "build:embed": "node scripts/build-embed.cjs",
-    "preview:embed": "node scripts/serve-embed.cjs"
+    "preview:embed": "node scripts/serve-embed.cjs",
+    "build:web": "node scripts/build-web-runtime.cjs"
   },
   "devDependencies": {
     "@codemirror/commands": "6.11.1",

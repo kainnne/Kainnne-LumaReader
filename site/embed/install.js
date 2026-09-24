@@ -1,6 +1,6 @@
 // Permanent v1 entry point: retain this URL and the data-luma-* contract.
 // Breaking changes require a separate entry point. Reader UI lives in /web/.
-const revision=new URL(import.meta.url).searchParams.get('v')||'1.4.1-web.8';
+const revision=new URL(import.meta.url).searchParams.get('v')||'1.4.1-web.9';
 const sdkURL=new URL('./lumareader.js',import.meta.url);if(revision)sdkURL.searchParams.set('v',revision);
 const {mountLumaReader,setExpandIcon}=await import(sdkURL.href);
 for(const script of document.querySelectorAll('script[data-luma-target][data-luma-document]')){

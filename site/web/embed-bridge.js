@@ -7,6 +7,16 @@
   const parentOrigin = params.get('parentOrigin'), channel = params.get('channel');
   if (!/^https?:\/\//.test(parentOrigin || '') || !channel) return;
   window.document.body.classList.add('embedded-reader');
+  // Local editor dialogs do not submit data. Close them explicitly because the
+  // iframe intentionally has no allow-forms permission (including method=dialog).
+  window.document.addEventListener('click',event=>{
+    const button=event.target.closest?.('dialog.direct-formula-dialog button');
+    const form=button?.form,dialog=form?.closest('dialog');
+    if(!dialog?.open||form.method!=='dialog')return;
+    event.preventDefault();
+    if(button.formNoValidate||button.value==='cancel'||form.reportValidity())dialog.close(button.value);
+  });
+
   // Some browsers block storage in third-party frames. Keep the existing
   // preference API usable in memory; document persistence remains host-owned.
   try { const key='lumareader-embed-storage-check';localStorage.setItem(key,'1');localStorage.removeItem(key); }

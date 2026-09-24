@@ -37,6 +37,18 @@ async function main(){
  // Reading first versus truly read-only are different, explicit options.
  await page.evaluate(()=>mount({mode:'preview'}));await frame.locator('body:not(.booting)').waitFor();assert.equal(await frame.locator('.direct-prose').isVisible(),false);assert.equal(await frame.locator('#edit-document').isVisible(),true);await frame.locator('#edit-document').click();await frame.locator('.direct-prose').waitFor();
  await page.evaluate(()=>mount({mode:'source',readOnly:true,features:{rename:true,modeSwitch:true}}));await frame.locator('body:not(.booting)').waitFor();assert.equal(await frame.locator('#edit-document').isVisible(),false);assert.equal(await frame.locator('#file-name').getAttribute('role'),'heading');assert.equal(await frame.locator('#source-editor').isVisible(),false);
+
+ // Bundled classic globals must still render/edit math and highlight fenced code.
+ await page.setViewportSize({width:1280,height:900});
+ await page.evaluate(()=>mount({document:{id:'startup-features',title:'公式',markdown:'# 公式\n\n$$\\frac{1}{\\frac{2}{3}}$$\n\n```js\nconst answer = 42;\n```\n'},features:{modeSwitch:true}}));
+ await frame.locator('.direct-math .katex').waitFor();
+ assert.equal(await frame.locator('.katex-error').count(),0);
+ assert.equal(await frame.locator('#content pre code.hljs').count(),1);
+ assert.equal(await frame.locator('body').evaluate(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('code-editor.bundle.js'))),false);
+ await frame.locator('.direct-math').dblclick();await frame.locator('.direct-formula-dialog textarea').fill('\\frac{5}{6}');await frame.locator('.direct-formula-dialog button[value="save"]').click();
+ await frame.locator('.direct-formula-dialog').waitFor({state:'detached'});assert.match(await frame.locator('#source-editor').inputValue(),/frac\{5\}/);
+ await page.keyboard.press('ControlOrMeta+z');assert.match(await frame.locator('#source-editor').inputValue(),/frac\{1\}/);
+ await frame.locator('#edit-document').click();await page.waitForFunction(()=>window.saved?.id==='startup-features');
  assert.deepEqual(errors,[]);console.log('PASS standalone/embedded rename, extension validation, dirty text preservation, title-only host save, stable ID/reload; source/visual/preview/read-only modes; mobile feature controls; host preferences.');
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 }

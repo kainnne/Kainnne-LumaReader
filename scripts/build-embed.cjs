@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs/promises'),path=require('node:path');
 async function main(){
+ await require("./build-web-runtime.cjs").build();
  const root=path.resolve(__dirname,'..'),out=path.join(root,'dist-preview/embed/LumaReader-Embed-v1');
  await fs.mkdir(out,{recursive:true});
  // Retire the previous separate editor UI from this generated folder.

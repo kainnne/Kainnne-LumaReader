@@ -1,4 +1,4 @@
-import {mountLumaReader,setExpandIcon} from './lumareader.js?v=1.4.1-web.8';
+import {mountLumaReader,setExpandIcon} from './lumareader.js?v=1.4.1-web.9';
 const key = 'lumareader-embed-demo-v1', $ = id => document.getElementById(id);
 const initial = {id:'novel-transcript-01',title:'第一章・逐字稿',markdown:'# 第一章・逐字稿\n\n午後的雨停了，她推開書店的門。\n\n**編輯這段文字**，直接修改文字，再試試視窗外的放大按鈕。縮回之後，內容和游標都會保留。\n\n## 對話筆記\n\n| 角色 | 台詞 |\n| --- | --- |\n| 小雨 | 你也在等雨停嗎？ |\n| 店長 | 我在等故事開始。 |\n\n修改表格後，按「儲存並前往下一步」，再回來確認內容仍然存在。\n'};
 let draft = initial, editor, storageError = false, backupTimer;

@@ -793,7 +793,20 @@
     };
   }
 
+  let codeEditorLoading;
+  function loadCodeEditor(){
+    if(window.LumaCodeEditor)return Promise.resolve();
+    if(!codeEditorLoading)codeEditorLoading=new Promise((resolve,reject)=>{
+      const script=document.createElement("script");script.src="code-editor.bundle.js?v=1.4.1-web.9";
+      script.onload=()=>{if(window.LumaCodeEditor)resolve();else{script.remove();codeEditorLoading=null;reject(new Error("Code editor unavailable"));}};
+      script.onerror=()=>{script.remove();codeEditorLoading=null;reject(new Error("Unable to load code editor"));};
+      document.head.appendChild(script);
+    });
+    return codeEditorLoading;
+  }
+
   async function renderAdapterPayload(data,requestId=state.documentRequestId){
+    if(data.kind==="code"){await loadCodeEditor();if(requestId!==state.documentRequestId)return false;}
     disposeActiveAdapter();const source=await sourceFromPayload(data);
     const options={PlainTextAdapter:{pageSize:70}};
     const adapter=data.kind==="code"?window.LumaCodeEditor?.createAdapter():window.LumaDocumentAdapters?.createAdapterFor?.(source,options);

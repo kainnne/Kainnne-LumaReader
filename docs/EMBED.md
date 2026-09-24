@@ -97,3 +97,7 @@ LUMA_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google 
 嵌入版預設只顯示設定與編輯／儲存。設定內提供格式、分享 Markdown 勾選，皆預設 false。以 `toolbar:{formatting:true,share:true}` 指定初始勾選，每次掛載重新套用；`features.formatting/share:false` 仍可完全停用該選項。一般 Web 不受影響。
 
 網站使用目前開啟的文章：`await editor.getActiveDocument()` 回傳 `{id,activeFileId,title,markdown}`，不帶其他草稿。既有 onChange/onSave/getDocument 的頂層 title/markdown 同樣只對應目前文件，切換時立即更新。files 只用於草稿還原，不合併或逐份當成網站文章提交。網站儲存文章取 title/markdown 即可；需要草稿恢復時另存完整快照。下載與下一步也使用目前文章。重新掛載時以 activeFileId 指向的文件校正 title/markdown，避免舊快照欄位不一致。
+
+### 維護啟動資源
+
+Web 與嵌入版使用相同的 `bootstrap.bundle.js`、`reader.bundle.js`，以保留執行順序的 defer 腳本載入。修改 `site/web` 的來源後執行 `npm run build:web`；`npm test` 會檢查產物是否與來源一致。`npm run build:embed` 也會先重建。請勿直接修改合併產物。程式碼編輯器在需要對應文件類型時才載入；公式、表格、圖片與原文編輯仍使用原有實作。
