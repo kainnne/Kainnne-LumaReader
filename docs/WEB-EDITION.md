@@ -34,7 +34,7 @@ Interface preferences use local storage. Document names, paths, and content do n
 2. Attempt to open a fourth document and confirm the capacity dialog appears instead of silently replacing a file.
 3. Remove one document, confirm the original local file still exists, and continue importing the pending document.
 4. Enter editing and confirm direct editing is the default. Enable **Show Markdown** to open source and comparison preview, then disable it to return to direct editing. The source split remains draggable with synchronized scrolling.
-5. Confirm that the reading toolbar shows named **Edit** and **Settings** actions on desktop, tablet, and phone. Settings contains language, reading mode, source, media, and sharing. Text-size buttons stay hidden even with old preferences; Command/Ctrl +, −, and 0 still work. Compare palettes without the settings panel closing.
+5. Confirm that the reading toolbar shows named **Edit** and **Settings** actions plus an icon-only **Share** button on desktop, tablet, and phone. Settings contains language, reading mode, source, and media. Text-size buttons stay hidden even with old preferences; Command/Ctrl +, −, and 0 still work. Compare palettes without the settings panel closing.
 6. Use **Insert** and drop an image into the editor; confirm the source viewport stays in place and the preview updates. Close with unsaved edits and confirm the discard dialog appears.
 7. Reload the page and confirm user documents and edits are gone while visual preferences may remain.
 8. Confirm PDF export and document-download controls remain absent. The sample footer offers direct desktop installers and a homepage link.
