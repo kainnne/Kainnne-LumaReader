@@ -6,6 +6,7 @@
   const params = new URLSearchParams(location.hash.slice(1));
   const parentOrigin = params.get('parentOrigin'), channel = params.get('channel');
   if (!/^https?:\/\//.test(parentOrigin || '') || !channel) return;
+  window.document.body.classList.add('embedded-reader');
   // Some browsers block storage in third-party frames. Keep the existing
   // preference API usable in memory; document persistence remains host-owned.
   try { const key='lumareader-embed-storage-check';localStorage.setItem(key,'1');localStorage.removeItem(key); }

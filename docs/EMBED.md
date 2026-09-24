@@ -61,3 +61,11 @@ LUMA_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google 
 - 一般 Reader 更新不需要重跑安裝。已開啟的頁面重新整理後，在瀏覽器／網站快取更新後載入相容的新版本。
 - `tests/fixtures/embed-v1.html` 是凍結的舊客戶範例，不能為了讓新版測試通過而改寫；`scripts/embed-cli-smoke.cjs` 會驗證這份舊 HTML 在新版 Reader 中可載入、修改、儲存及保留草稿。
 - 更新安裝工具版本時，把新版本 tarball 加入 `tools/embed-cli/releases/`；Pages 同時提供所有歷史檔案及固定最新版別名。
+
+## 更新嵌入版本
+
+官方固定載入網址持續提供相容更新。先儲存文件，再重新整理網頁；快取更新後就會載入新版。
+
+使用工具安裝的 HTML 可執行 `npx --yes --prefer-online https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html --update`。工具讀取 `/embed/version.json`，備份 HTML 並只更新官方載入網址的版本參數，不更動文件 JSON、ID 或其他內容；須重新部署該 HTML。手貼的 HTML 保留官方固定網址即可。自託管完整資源包仍需自行替換資源。
+
+每次發布 Web 嵌入更新時，同步更新 `site/embed/version.json`、`install.js` 的預設資源版本與說明頁的版本／變更內容。版本參數用於更新快取，不是歷史版本鎖定；破壞性更新仍須遵守 v1 相容契約。

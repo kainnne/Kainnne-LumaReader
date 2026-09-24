@@ -1,0 +1,28 @@
+'use strict';
+const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require('playwright-core');
+async function main(){
+ const root=path.resolve('site');let origin;
+ const server=http.createServer(async(req,res)=>{try{const pathname=new URL(req.url,'http://localhost').pathname;res.setHeader('Content-Type','text/html; charset=utf-8');if(pathname==='/fixture.html'){res.end(`<!doctype html><meta charset="utf-8"><style>body{margin:0}#reader{height:100dvh}</style><div id="reader"></div><script type="module">import {mountLumaReader} from '${origin}/embed/lumareader.js';window.editor=mountLumaReader(document.querySelector('#reader'),{document:{id:'compact',title:'手機測試',markdown:'# 手機測試\\n\\n直接修改文字。\\n'},onSave:async d=>{window.saved=d;}});</script>`);return;}let file=path.resolve(root,'.'+pathname);if(file!==root&&!file.startsWith(root+path.sep))throw Error('path');if((await fs.stat(file)).isDirectory())file=path.join(file,'index.html');res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'})[path.extname(file)]||'application/octet-stream');res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const local=`http://127.0.0.1:${server.address().port}`;origin=process.env.LUMA_WEB_ORIGIN||local;let browser;
+ try{
+ browser=await chromium.launch({headless:true,...(process.env.LUMA_CHROMIUM_EXECUTABLE?{executablePath:process.env.LUMA_CHROMIUM_EXECUTABLE}:{})});const context=await browser.newContext({hasTouch:true,viewport:{width:1280,height:900}});await context.addInitScript(()=>localStorage.setItem('lumareader-web-preferences-v1',JSON.stringify({language:'zh-Hant',readerDefaultsVersion:6,onboardingVersion:5,sidebarCollapsed:true,languagePromptSeen:true})));
+ const page=await context.newPage();page.setDefaultTimeout(15000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ for(const embed of [false,true]){
+  await page.setViewportSize({width:1280,height:900});await page.goto(embed?local+'/fixture.html':origin+'/web/');const view=embed?page.frameLocator('iframe'):page;await view.locator('#boot-loader').waitFor({state:'hidden'});if(!embed)await view.locator('#edit-document').click();await view.locator('.direct-prose').waitFor();
+  for(const width of [1280,768,390,320]){
+   await page.setViewportSize({width,height:width<600?600:900});await view.locator('.direct-prose').fill('手機編輯測試');await view.locator('.direct-prose').press('ControlOrMeta+a');
+   assert.equal(await view.locator('#show-markdown').isVisible(),!embed&&width>820);
+   if(width<=820){assert.ok(await view.locator('.reader-actions').evaluate(e=>e.scrollWidth<=e.clientWidth+1));assert.ok(await view.locator('.reader-bar').evaluate(e=>e.getBoundingClientRect().height<=100));}
+   await view.locator('#editor-insert-toggle').tap();await view.locator('#editor-insert-menu').waitFor();
+   if(width<=600){const rect=await view.locator('#editor-insert-menu').boundingBox();assert.ok(rect.height<=600*.47);assert.ok(rect.y>=600*.5);await view.locator('[data-format-category=structure]').tap();assert.equal(await view.locator('[data-markdown-command=heading-1]').isVisible(),true);await view.locator('[data-format-category=inline]').tap();await page.screenshot({path:`/private/tmp/luma-compact-${embed?'embed':'web'}-${width}.png`});}
+   await view.locator('[data-markdown-command=bold]').tap();await view.locator('#editor-insert-menu').waitFor({state:'hidden'});assert.match(await view.locator('#source-editor').inputValue(),/\*\*手機編輯測試\*\*/);await view.locator('.direct-prose').press('ControlOrMeta+z');assert.doesNotMatch(await view.locator('#source-editor').inputValue(),/\*\*/);
+   if(width<=820){await view.locator('#palette-toggle').tap();assert.equal(await view.locator('#cancel-edit').isVisible(),true);assert.equal(await view.locator('#show-markdown').isVisible(),!embed);if(!embed){await view.locator('#show-markdown').tap();await view.locator('#source-editor').waitFor();assert.equal(await view.locator('#editor-preview-toggle').isChecked(),true);await view.locator('#palette-toggle').tap();await view.locator('#show-markdown').tap();}else await view.locator('#appearance-close').tap();}
+  }
+  await page.setViewportSize({width:320,height:360});await view.locator('#editor-insert-toggle').tap();await view.locator('[data-format-category=block]').tap();const bounds=await view.locator('#editor-insert-menu').boundingBox();assert.ok(bounds.y>=180&&bounds.y+bounds.height<=360);await view.locator('[data-markdown-command=table]').tap();await view.locator('.direct-prose table').waitFor();await view.locator('#edit-document').tap();if(embed){await page.waitForFunction(()=>window.saved?.markdown.includes('|'));}
+  await page.setViewportSize({width:1280,height:900});if(!embed)await view.locator('#show-markdown').waitFor();assert.equal(await view.locator('#show-markdown').isVisible(),!embed);await view.locator('#editor-insert-toggle').click();assert.equal(await view.locator('[data-markdown-command=heading-1]').isVisible(),true);assert.equal(await view.locator('[data-markdown-command=bold]').isVisible(),true);await page.keyboard.press('Escape');await view.locator('#editor-insert-menu').waitFor({state:'hidden'});
+ }
+ assert.deepEqual(errors,[]);console.log('PASS Web + iframe: 1280/768/390/320 widths, compact toolbar, bounded format sheet, categories, selection/bold/undo, settings source preview, short viewport table insertion, save, resize, Escape.');
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+}
+main().catch(e=>{console.error(e);process.exitCode=1;});

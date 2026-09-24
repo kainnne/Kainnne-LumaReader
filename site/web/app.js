@@ -413,7 +413,7 @@
   let directEditor=null;
   function updateDirectLayout(){
     const code=state.documentKind==="code",active=state.editing&&!code&&state.editorMode==="direct";
-    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code;showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;showMarkdownButton.textContent=state.language.startsWith("zh")?"顯示 Markdown":"Show Markdown";
+    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code||Boolean(window.LumaEmbed);showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;showMarkdownButton.textContent=state.language.startsWith("zh")?"顯示 Markdown":"Show Markdown";
 
     updateFormattingLabels();
     $("#code-edit-control").hidden=!code||state.sourceType!=="project"||!window.lumaDesktop?.setCodeEditing;$("#code-edit-toggle").checked=code&&state.editing;$("#code-edit-toggle").disabled=state.saving||state.codeEditPending;$("#code-edit-label").textContent=state.language.startsWith("zh")?"允許編輯程式碼":"Enable code editing";
@@ -445,6 +445,7 @@
     const zh=state.language.startsWith("zh"),compact=state.compactFormatting;
     $("#format-menu-label").textContent=zh?"格式":"Format";$("#format-compact-label").textContent=zh?"精簡顯示":"Compact labels";$("#format-compact").checked=compact;
     editorInsertMenuEl.classList.toggle("compact-formatting",compact);
+    for(const button of document.querySelectorAll("[data-format-category]"))button.textContent=({inline:zh?"文字":"Text",structure:zh?"標題":"Headings",block:zh?"區塊":"Blocks"})[button.dataset.formatCategory];
     const labels={
       "heading-1":["H1","大標題","文件中最醒目的主要標題。","Title","The main title of your document."],
       "heading-2":["H2","段落標題","分出章節，讓重點更好找。","Heading","Introduce a section of the document."],
@@ -534,6 +535,20 @@
     if(state.view==="source")contentEl.hidden=!active;if(render&&active)scheduleEditorPreview(true);
     updateDirectLayout();
   }
+  const compactToolbarQuery=matchMedia("(max-width: 820px)");
+  const compactEditorTools=["editor-mode-control","editor-preview-control","cancel-edit"].map(id=>{
+    const node=$("#"+id),anchor=document.createComment(id);node.before(anchor);return {node,anchor};
+  });
+  function syncEditorToolPlacement(){
+    const narrow=compactToolbarQuery.matches,settings=$("#web-editor-settings");
+    for(const {node,anchor} of compactEditorTools){
+      if(narrow){if(node.parentElement!==settings)settings.append(node);}
+      else if(node.parentNode!==anchor.parentNode)anchor.after(node);
+    }
+    settings.hidden=!narrow||!state.editing;
+    $("#cancel-edit").textContent=narrow?t(state.editorDirty?"discardEdits":"exitEdit"):"×";
+  }
+  compactToolbarQuery.addEventListener("change",syncEditorToolPlacement);
   function updateEditorControls(){
     if(window.LumaEmbed?.attached && state.currentPath===window.LumaEmbed.managedPath) window.LumaEmbed.changed(state.editing?sourceEditorEl.value:state.rawText);
     const editButton=$("#edit-document"),cancelButton=$("#cancel-edit"),label=$("#edit-document-label"),icon=$("#edit-document-icon"),editable=canEditCurrentDocument();
@@ -560,6 +575,7 @@
     shareButtonEl.disabled=state.saving;
     document.body.classList.toggle("editing-document",state.editing);
     updateEditorPreviewLayout();
+    syncEditorToolPlacement();
     updateToolbarTooltips();
   }
   function resetEditorState(){if(state.documentKind==="code"){state.activeAdapter?.setEditable?.(false);state.activeAdapter?.setText?.(state.rawText);window.lumaDesktop?.setCodeEditing?.({enabled:false}).catch(()=>{});}directEditor?.destroy();directEditor=null;directHost.hidden=true;document.body.classList.remove("direct-editing");clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
@@ -756,6 +772,12 @@
   function positionToolbarMenu(menu,toggle){
     const rect=toggle.getBoundingClientRect();
     menu.style.visibility="hidden";menu.hidden=false;
+    if(menu===editorInsertMenuEl && matchMedia("(max-width: 600px)").matches){
+      const viewport=window.visualViewport,height=viewport?.height||innerHeight,top=viewport?.offsetTop||0;
+      const panelHeight=Math.min(340,height*.46);
+      menu.style.left="8px";menu.style.top=`${top+height-panelHeight-8}px`;menu.style.height=`${panelHeight}px`;menu.style.maxHeight=`${panelHeight}px`;menu.style.visibility="";return;
+    }
+    menu.style.height="";
     const width=menu.offsetWidth,height=Math.min(menu.scrollHeight,innerHeight-16);
     const left=Math.max(8,Math.min(innerWidth-width-8,rect.left));
     const below=rect.bottom+8,top=below+height<=innerHeight-8?below:Math.max(8,rect.top-height-8);
@@ -1052,6 +1074,19 @@
   // Keep the native selection painted while pointer users choose a format.
   editorInsertToggleEl.addEventListener("pointerdown",(event)=>{if(state.editing&&event.button===0)event.preventDefault();});
   editorInsertToggleEl.addEventListener("click",()=>toggleToolbarMenu(editorInsertMenuEl,editorInsertToggleEl));
+  $("#format-close").addEventListener("click",()=>closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl,{focus:true}));
+  document.querySelectorAll("[data-format-category]").forEach(button=>{
+    button.addEventListener("pointerdown",event=>{if(event.button===0)event.preventDefault();});
+    button.addEventListener("click",()=>{
+      document.querySelectorAll("[data-format-category]").forEach(item=>item.setAttribute("aria-pressed",String(item===button)));
+      editorInsertMenuEl.querySelectorAll("[data-format-group]").forEach(group=>group.dataset.mobileActive=String(group.dataset.formatGroup===button.dataset.formatCategory));
+      $(".format-groups").scrollTop=0;
+    });
+  });
+  $("#web-editor-settings").addEventListener("click",event=>{if(event.target.closest("button"))closeToolbarMenu(paletteMenuEl,paletteToggleEl);});
+  const repositionFormatSheet=()=>{if(!editorInsertMenuEl.hidden)positionToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);};
+  window.visualViewport?.addEventListener("resize",repositionFormatSheet);
+  window.visualViewport?.addEventListener("scroll",repositionFormatSheet);
   document.addEventListener("click",(event)=>{const path=event.composedPath();const insideControl=path.some((node)=>node instanceof Element&&(node.matches(".toolbar-select-button,.appearance-button")||node.classList.contains("toolbar-menu")));if(!insideControl)closeToolbarMenus();});
   languageEl.addEventListener("change",()=>applyLanguage(languageEl.value,{fromUser:true}));settingsLanguageEl.addEventListener("change",()=>applyLanguage(settingsLanguageEl.value,{fromUser:true}));
   $("#web-settings-actions").addEventListener("click",event=>{if(event.target.closest("button"))closeToolbarMenu(paletteMenuEl,paletteToggleEl);});
@@ -1120,7 +1155,7 @@
   sourceEditorEl.addEventListener("wheel",(event)=>{if(!editorPreviewIsActive())return;event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);},{passive:false});
   [contentEl,rawEl].forEach((target)=>target.addEventListener("wheel",(event)=>{if(target===contentEl&&editorPreviewIsActive()){event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);return;}if(state.mode==="vertical")return;event.preventDefault();if(state.mode==="horizontal"){target.scrollBy({left:event.deltaY+event.deltaX,behavior:"auto"});return;}const now=Date.now();if(now-state.lastWheelAt<420||Math.abs(event.deltaY)+Math.abs(event.deltaX)<12)return;state.lastWheelAt=now;moveReading(event.deltaY+event.deltaX>0?1:-1);},{passive:false}));
 
-  document.addEventListener("keydown",(event)=>{const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(newMarkdownDialogEl.open&&event.key==="Escape"){event.preventDefault();closeNewMarkdownDialog();return;}if(command&&!event.shiftKey&&key==="s"){event.preventDefault();if(state.editing)saveEditing();return;}if(!window.lumaDesktop?.isDesktop&&command&&!event.altKey&&(["-","_","+","=","0"].includes(key))){event.preventDefault();event.stopPropagation();adjustFontSize(key==="0"?0:(["-","_"].includes(key)?-1:1));return;}if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(event.key==="Escape"){closeToolbarMenus();closeMediaPanel();closeSidebarOnNarrow();}});
+  document.addEventListener("keydown",(event)=>{if(event.key==="Escape"&&dropdownPairs().some(([menu])=>!menu.hidden)){event.preventDefault();closeToolbarMenus();return;}const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(newMarkdownDialogEl.open&&event.key==="Escape"){event.preventDefault();closeNewMarkdownDialog();return;}if(command&&!event.shiftKey&&key==="s"){event.preventDefault();if(state.editing)saveEditing();return;}if(!window.lumaDesktop?.isDesktop&&command&&!event.altKey&&(["-","_","+","=","0"].includes(key))){event.preventDefault();event.stopPropagation();adjustFontSize(key==="0"?0:(["-","_"].includes(key)?-1:1));return;}if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(event.key==="Escape"){closeToolbarMenus();closeMediaPanel();closeSidebarOnNarrow();}});
   window.addEventListener("beforeunload",(event)=>{if(!state.editing||!state.editorDirty)return;event.preventDefault();event.returnValue="";});
 
   async function initialize(){const webReady=await window.lumaWeb?.ready;const localTheme=localStorage.getItem("lumareader-theme");document.documentElement.classList.toggle("dark",localTheme==="dark");const saved=await hydratePreferences();if(Number(saved.readerDefaultsVersion||0)<2){state.language="en";state.palette="dream-rose";document.documentElement.classList.remove("dark");localStorage.setItem("lumareader-language","en");localStorage.setItem("lumareader-theme","light");localStorage.setItem("lumareader-palette","dream-rose");persistPreferences({language:"en",theme:"light",palette:"dream-rose"});}if(Number(saved.readerDefaultsVersion||0)<3){state.mode="vertical";localStorage.setItem("lumareader-mode","vertical");persistPreferences({readingMode:"vertical",readerDefaultsVersion:3});}if(Number(saved.readerDefaultsVersion||0)<4){state.toolbarVisibility={...state.toolbarVisibility,source:false,media:false};localStorage.setItem("lumareader-toolbar-visibility",JSON.stringify(state.toolbarVisibility));persistPreferences({toolbarVisibility:state.toolbarVisibility,readerDefaultsVersion:4});}if(Number(saved.readerDefaultsVersion||0)<6){state.editorPreview=true;localStorage.setItem("lumareader-editor-preview","true");persistPreferences({editorPreview:true,readerDefaultsVersion:6});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();applyToolbarVisibility();window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();});window.lumaDesktop?.onFontSizeRequested?.((change)=>adjustFontSize(Number(change)));window.lumaDesktop?.onLibraryChanged(async(payload)=>{const refreshId=++state.libraryRefreshId;state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();try{await loadFiles({showProgress:true});if(refreshId!==state.libraryRefreshId)return;const first=state.files.find(currentFormatIsEnabled);if(first)await openProjectFile(first.path);else showEmptyLibrary();showToast(t("libraryChanged"));}catch(error){if(refreshId!==state.libraryRefreshId)return;showEmptyLibrary();showToast(error.message||t("loadError"));}});await loadFiles({showProgress:true});const params=new URLSearchParams(location.search),requested=window.LumaEmbed?.managedPath||params.get("source")||params.get("url")||params.get("file");if(requested){if(state.files.some((file)=>file.path===requested))await openProjectFile(requested);else await openSource(requested);return;}const preferred=state.files.find((file)=>file.path.endsWith("docs/story-review/00-閱讀順序與驗收範圍.md")&&currentFormatIsEnabled(file))||state.files.find(currentFormatIsEnabled);if(preferred)await openProjectFile(preferred.path);else showEmptyLibrary();if(webReady?.error)showToast(t("shareInvalid"));}

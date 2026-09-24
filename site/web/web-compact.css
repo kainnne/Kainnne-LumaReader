@@ -1,0 +1,41 @@
+/* Browser and iframe controls share the same responsive layout. */
+.embedded-reader #editor-mode-control { display: none !important; }
+.format-sheet-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.format-sheet-header .format-compact-control { padding: 0; justify-content: flex-start; }
+#format-close { width: 36px; height: 36px; flex: none; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--paper); font: 22px/1 var(--sans); cursor: pointer; }
+.format-categories { display: none; }
+#web-editor-settings { gap: 10px; }
+#web-editor-settings[hidden] { display: none; }
+#web-editor-settings #show-markdown, #web-editor-settings #cancel-edit { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; color: var(--ink); background: var(--paper); font: 600 13px/1.4 var(--sans); }
+#web-editor-settings #show-markdown[aria-pressed=true] { background: var(--accent-strong); color: white; }
+#web-editor-settings .editor-mode-control { width: 100%; }
+#web-editor-settings .editor-preview-control { justify-content: flex-start; }
+@media (max-width:820px) {
+  body.editing-document .reader-bar { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; min-height: 94px; padding: 8px 10px; }
+  body.editing-document .file-heading { min-width: 0; padding-left: 44px; height: 30px; display: flex; align-items: center; }
+  body.editing-document .reader-actions { display: flex; flex-wrap: nowrap; width: 100%; gap: 6px; padding: 0; overflow: visible; }
+  body.editing-document .reader-actions #edit-document,
+  body.editing-document .reader-actions #palette-toggle { min-width: 58px; min-height: 40px; padding: 0 10px; }
+  body.editing-document #editor-insert-control { order: 1; }
+  body.editing-document #share-document { order: 2; margin-left: auto; }
+  body.editing-document #editor-insert-toggle { width: auto; min-width: 80px; height: 40px; padding: 0 10px; }
+  body.editing-document .progress-track { top: 93px; }
+}
+@media (max-width:600px) {
+  #editor-insert-menu, #editor-insert-menu.compact-formatting { width: calc(100vw - 16px); display: flex; flex-direction: column; overflow: hidden; padding: 10px; border-radius: 18px; background: var(--paper); }
+  #editor-insert-menu[hidden] { display: none; }
+  .format-sheet-header { flex: none; }
+  .format-categories { display: flex; flex: none; gap: 6px; padding: 8px 0; }
+  .format-categories button { flex: 1; min-height: 36px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: 650 12px var(--sans); cursor: pointer; }
+  .format-categories button[aria-pressed=true] { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
+  .format-groups { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #editor-insert-menu .editor-insert-group { padding: 0; border: 0; }
+  #editor-insert-menu .editor-insert-group:not([data-mobile-active=true]), #editor-insert-menu .editor-insert-group > strong { display: none; }
+  #editor-insert-menu .editor-insert-group > div { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  #editor-insert-menu [data-markdown-command] { gap: 5px; padding: 10px 6px; min-height: 46px; }
+  #editor-insert-menu .format-glyph { flex-basis: 22px; }
+  #editor-insert-menu .format-description small { font-size: 10px; line-height: 1.4; }
+  #editor-insert-menu.compact-formatting .editor-insert-group > div { display: grid; }
+  #editor-insert-menu.compact-formatting [data-markdown-command] { justify-content: center; }
+}
+.format-categories button { -webkit-tap-highlight-color: transparent; }

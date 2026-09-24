@@ -1,6 +1,8 @@
 // Permanent v1 entry point: retain this URL and the data-luma-* contract.
 // Breaking changes require a separate entry point. Reader UI lives in /web/.
-import {mountLumaReader} from './lumareader.js';
+const revision=new URL(import.meta.url).searchParams.get('v')||'1.4.1-web.5';
+const sdkURL=new URL('./lumareader.js',import.meta.url);if(revision)sdkURL.searchParams.set('v',revision);
+const {mountLumaReader,setExpandIcon}=await import(sdkURL.href);
 for(const script of document.querySelectorAll('script[data-luma-target][data-luma-document]')){
  const mount=document.getElementById(script.dataset.lumaTarget),data=document.getElementById(script.dataset.lumaDocument);
  if(!mount||!data||mount.dataset.lumaInstalled)continue;
@@ -10,7 +12,7 @@ for(const script of document.querySelectorAll('script[data-luma-target][data-lum
   let draft=initial,timer,editor;
   const tools=document.createElement('div'),expand=document.createElement('button'),download=document.createElement('button'),status=document.createElement('span'),container=document.createElement('div');
   tools.style.cssText='display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0;font:13px system-ui';
-  expand.type=download.type='button';expand.textContent='⛶';expand.title='Expand / 放大';expand.setAttribute('aria-label',expand.title);
+  expand.type=download.type='button';setExpandIcon(expand,false);expand.setAttribute('aria-pressed','false');expand.title='Expand / 放大';expand.setAttribute('aria-label',expand.title);
   download.textContent='↓ .md';download.title='Download Markdown / 下載 Markdown';
   status.setAttribute('role','status');status.textContent='Browser draft / 瀏覽器草稿';
   container.style.cssText='box-sizing:border-box;height:600px;max-height:85dvh;border:1px solid #ded8df;border-radius:12px;overflow:hidden';
@@ -18,7 +20,7 @@ for(const script of document.querySelectorAll('script[data-luma-target][data-lum
   try{const saved=localStorage.getItem(key);if(saved){const doc=JSON.parse(saved);if(doc.id===initial.id&&typeof doc.markdown==='string')draft=doc;}}catch{failed();}
   function persist(value){clearTimeout(timer);timer=null;localStorage.setItem(key,JSON.stringify(value));draft=value;status.textContent='Saved in this browser / 已存於此瀏覽器';}
   tools.append(expand,download,status);mount.append(tools,container);
-  editor=mountLumaReader(container,{document:draft,readOnly:script.dataset.lumaReadonly==='true',onChange:value=>{draft=value;clearTimeout(timer);timer=setTimeout(()=>{try{persist(draft);}catch{failed();}},250);},onSave:async value=>persist(value),onError:failed});
+  editor=mountLumaReader(container,{document:draft,...(revision?{url:new URL('../web/index.html?v='+encodeURIComponent(revision),import.meta.url).href}:{}),readOnly:script.dataset.lumaReadonly==='true',onChange:value=>{draft=value;clearTimeout(timer);timer=setTimeout(()=>{try{persist(draft);}catch{failed();}},250);},onSave:async value=>persist(value),onError:failed,onExpand:expanded=>{setExpandIcon(expand,expanded);expand.setAttribute('aria-pressed',String(expanded));}});
   expand.onclick=()=>editor.expand();
   download.onclick=async()=>{const value=await editor.getDocument();const url=URL.createObjectURL(new Blob([value.markdown],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='document.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   window.addEventListener('pagehide',()=>{if(timer)try{persist(draft);}catch{failed();}});

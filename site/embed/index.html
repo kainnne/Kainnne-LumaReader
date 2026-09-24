@@ -5,11 +5,11 @@
 <h1>免費嵌入你的網站</h1>
 <p class="intro">「嵌入」就是在你原本的網頁中，放入一個完整的 LumaReader 區塊。訪客不必跳到別的網站，就能閱讀文件、修改逐字稿，也能放大後專心編輯，再縮回原本的位置。</p>
 <p>同一套 LumaReader，包含原本的語言、色系、設定與編輯功能。免費使用，免帳號、免 API key。</p>
-<nav class="actions" aria-label="頁面導覽"><a href="#try">先試看看 ↓</a><a href="#install">一行指令安裝 ↓</a><a href="#html">直接貼 HTML ↓</a></nav></div>
+<nav class="actions" aria-label="頁面導覽"><a href="#try">先試看看 ↓</a><a href="#install">一行指令安裝 ↓</a><a href="#html">直接貼 HTML ↓</a><a href="#updates">更新方式 ↓</a></nav></div>
 <section id="try" class="guide-section"><p class="eyebrow">互動示範</p><h2>下面這個區塊，就是嵌入的樣子。</h2>
 <p>預設收起側邊欄，直接進入編輯。可以立刻修改文字、開啟「設定」，或用區塊外的 ⛶ 放大。內容和編輯紀錄會保留，縮回後可以繼續瀏覽這一頁。</p>
 <section id="guide-reader" data-luma-mount></section>
-<script type="application/json" id="guide-reader-document">{"id":"guide-live-example-v1","title":"嵌入示範","markdown":"# 這份文件，就在你的網頁裡\n\nLumaReader 可以放在小說網站、逐字稿工具或專案文件頁面的一個區塊中。外層網頁仍保留自己的設計。\n\n## 動手試試\n\n- 直接點進文字，就能開始修改。\n- 開啟「顯示 Markdown」，看看原文與對照預覽。\n- 在「設定」切換語言、色系與閱讀模式。\n\n| 場景 | 可以怎麼用 |\n| --- | --- |\n| 逐字稿 | 修改文字與段落，再交給網站處理 |\n| 小說章節 | 一邊閱讀、一邊調整內容 |\n| 文件頁面 | 提供熟悉的 Markdown 閱讀介面 |\n\n**這是原版 LumaReader 介面。** 你的修改會暫存在這個瀏覽器，也可以下載一份 Markdown。\n"}</script>
+<script type="application/json" id="guide-reader-document">{"id":"guide-live-example-v1","title":"嵌入示範","markdown":"# 這份文件，就在你的網頁裡\n\nLumaReader 可以放在小說網站、逐字稿工具或專案文件頁面的一個區塊中。外層網頁仍保留自己的設計。\n\n## 動手試試\n\n- 直接點進文字，就能開始修改。\n- 選取文字後，用「格式」加入粗體、標題或表格。\n- 在「設定」切換語言、色系與閱讀模式。\n\n| 場景 | 可以怎麼用 |\n| --- | --- |\n| 逐字稿 | 修改文字與段落，再交給網站處理 |\n| 小說章節 | 一邊閱讀、一邊調整內容 |\n| 文件頁面 | 提供熟悉的 Markdown 閱讀介面 |\n\n**這是原版 LumaReader 介面。** 你的修改會暫存在這個瀏覽器，也可以下載一份 Markdown。\n"}</script>
 <script type="module" src="install.js" data-luma-target="guide-reader" data-luma-document="guide-reader-document"></script>
 <p class="guide-note">此示範與預設安裝都將草稿存在訪客自己的瀏覽器，不會自動寫入你的後台。需要跨裝置或多人儲存時，可再接網站原有的儲存流程。</p>
 </section>
@@ -35,6 +35,16 @@
   data-luma-document="my-luma-document"&gt;&lt;/script&gt;</code></pre>
 <p class="guide-note">同一頁放多個區塊時，請使用不同的元素 id 與文件 id。瀏覽器會優先還原該文件的草稿；換成另一份文件時也請換一個文件 id。如果網站有設定 CSP，需允許從 lumareader.kainnne.com 載入 script 與 iframe。</p>
 <p>只想展示文件、不讓訪客修改？在上方載入 <code>install.js</code> 的 script 加上 <code>data-luma-readonly="true"</code>，就會以唯讀模式開啟。</p>
+</section>
+<section id="updates" class="guide-section"><p class="eyebrow">嵌入版更新</p><h2>更新現有的嵌入區塊</h2>
+<p><strong>1.4.1-web.5 · 2026 年 9 月 24 日</strong></p>
+<ul><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器移除「顯示 Markdown」按鈕。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
+<p>使用官方固定網址的嵌入區塊，重新整理網頁後，就會在快取更新時載入相容新版，不必重新安裝。正在編輯時請先儲存。</p>
+<p>若原本用一行指令安裝，可執行以下更新指令，取得目前維護的載入版本：</p>
+<div class="code-heading"><span>更新已安裝的 HTML</span><button type="button" data-copy-code="update-command">複製更新指令</button></div>
+<pre id="update-command"><code>npx --yes --prefer-online https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html --update</code></pre>
+<p>把 <code>./index.html</code> 換成原本的網頁路徑。工具會先備份，再更新官方載入網址，保留文件內容、文件 ID、唯讀設定和瀏覽器草稿的識別方式。完成後，將 HTML 重新部署到你的網站，再重新整理頁面。</p>
+<p class="guide-note">直接貼 HTML 的使用者：保留官方 <code>install.js</code> 網址即可接收更新，不需重貼文件。自行下載整份資源部署的版本，需自行替換新版資源。</p>
 </section>
 <div class="actions"><a href="demo.html">試試「編輯 → 下一步 → 返回」流程 →</a><a href="lumareader-embed.tgz" download>下載安裝工具</a><a href="https://github.com/kainnne/Kainnne-LumaReader/tree/main/tools/embed-cli">查看原始碼</a></div>
 <p class="guide-note">MIT 開源授權，可免費用於個人與商業網站；散布程式碼時請保留授權聲明。<a href="LICENSE">查看授權</a></p>

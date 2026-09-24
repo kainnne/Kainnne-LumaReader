@@ -5,6 +5,11 @@ function validateDocument(document) {
   if (!document || typeof document.id !== 'string' || !document.id || document.id.length > 200 || typeof document.markdown !== 'string' || document.markdown.length > 64 * 1024 * 1024) throw new TypeError('Provide {id, title, markdown}; Markdown must be at most 64 Mi characters.');
   return {id:document.id,title:String(document.title || '').slice(0,200),markdown:document.markdown,revision:0};
 }
+// Same expand/restore glyphs and button treatment as Kainnne × Gemini.
+export function setExpandIcon(button,expanded){
+  const icon=document.createElement('span');icon.setAttribute('aria-hidden','true');icon.textContent=expanded?'❐':'⛶';button.replaceChildren(icon);
+  Object.assign(button.style,{display:'inline-flex',width:'40px',minWidth:'40px',height:'40px',minHeight:'40px',padding:'0',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,.84)',borderRadius:'14px',background:'linear-gradient(120deg,rgba(218,205,255,.68),rgba(255,183,206,.72),rgba(201,255,240,.62))',color:'#633c55',boxShadow:'0 8px 22px rgba(123,97,255,.12),inset 0 1px rgba(255,255,255,.82)',font:'22px/1 Arial,sans-serif',cursor:'pointer'});
+}
 export function mountLumaReader(container, options) {
   if (!(container instanceof HTMLElement)) throw new TypeError('A container element is required.');
   if (container.children.length) throw new Error('Use an empty container for each editor.');
@@ -22,8 +27,8 @@ export function mountLumaReader(container, options) {
   iframe.setAttribute('allow','clipboard-write; web-share');
   Object.assign(iframe.style,{width:'100%',height:'100%',display:'block',border:'0',borderRadius:'inherit'});
   const expandedBar=document.createElement('div'), collapseButton=document.createElement('button');
-  expandedBar.hidden=true;expandedBar.style.cssText='flex:none;box-sizing:border-box;height:38px;padding:4px 10px;text-align:right;background:#fafafa;color:#333;border-bottom:1px solid #ddd';
-  collapseButton.type='button';collapseButton.textContent=options.collapseLabel || '↙';collapseButton.setAttribute('aria-label',options.collapseLabel || 'Exit expanded view');collapseButton.style.cssText='font:inherit;cursor:pointer;padding:3px 10px;border:1px solid #ddd;border-radius:6px;background:white;color:#333';
+  expandedBar.hidden=true;expandedBar.style.cssText='flex:none;box-sizing:border-box;height:48px;padding:4px 10px;text-align:right;background:#fafafa;color:#333;border-bottom:1px solid #ddd';
+  collapseButton.type='button';setExpandIcon(collapseButton,true);collapseButton.setAttribute('aria-label',options.collapseLabel || 'Exit expanded view');collapseButton.title=options.collapseLabel || 'Restore / 縮回';
   collapseButton.onclick=()=>expand(false);expandedBar.append(collapseButton);
   let readyResolve, readyReject;
   const ready = new Promise((resolve,reject) => {readyResolve=resolve;readyReject=reject;});
@@ -44,7 +49,7 @@ export function mountLumaReader(container, options) {
       expandedInstance?.collapse(); expandedInstance = api;
       savedStyle = container.getAttribute('style'); bodyOverflow = document.body.style.overflow; previousFocus = document.activeElement;
       Object.assign(container.style,{position:'fixed',boxSizing:'border-box',inset:'0',width:'100vw',height:'100dvh',maxWidth:'none',maxHeight:'none',margin:'0',zIndex:'2147483000',borderRadius:'0',background:'white',display:'flex',flexDirection:'column'});
-      expandedBar.hidden=false;iframe.style.height='calc(100% - 38px)';
+      expandedBar.hidden=false;iframe.style.height='calc(100% - 48px)';
       document.body.style.overflow = 'hidden';
     } else {
       if (savedStyle === null) container.removeAttribute('style'); else container.setAttribute('style',savedStyle);
