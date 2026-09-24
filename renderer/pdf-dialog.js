@@ -12,6 +12,7 @@
       const dialog = document.querySelector("#pdf-options-dialog"), $ = selector => dialog.querySelector(selector);
       const zh = language.startsWith("zh"), text = (en, tw) => zh ? tw : en;
       const input = $("#pdf-footer-text"), footer = $("#pdf-include-footer"), frame = $("#pdf-color-frame");
+      let notes=$("#pdf-annotations");if(!notes){const label=document.createElement('label');label.className='pdf-checkbox';notes=document.createElement('input');notes.type='checkbox';notes.id='pdf-annotations';const name=document.createElement('span');name.textContent=text('Include highlighted text','包含重點標記');label.append(notes,name);frame.closest('label').after(label);}notes.checked=false;
       const section = $("#pdf-section"), breakMode = $("#pdf-break-mode"), resetBreaks = $("#pdf-break-reset"), breaks = {};
       const paper = $("#pdf-paper"), font = $("#pdf-font-size"), inset = $("#pdf-inset");
       const save = $("#pdf-save"), close = $("#pdf-close"), status = $("#pdf-preview-status"), retry = $("#pdf-retry");
@@ -19,7 +20,7 @@
       let active = true, revision = 0, generatedRevision = -1, printing = false, saving = false;
       let timer, pdf, loading, rendering, previewId, pageNumber = 1, renderRevision = 0, result = null;
       const fail = error => { status.textContent = text("Unable to prepare preview. ", "無法產生預覽。") + (error?.message || ""); retry.hidden = false; save.disabled = true; };
-      const options = () => ({footerText:input.value, includeFooter:footer.checked, colorFrame:frame.checked, pageSize:paper.value, fontSize:Number(font.value), inset:Number(inset.value), breaks:{...breaks}});
+      const options = () => ({footerText:input.value, includeFooter:footer.checked, colorFrame:frame.checked, includeAnnotations:notes.checked, pageSize:paper.value, fontSize:Number(font.value), inset:Number(inset.value), breaks:{...breaks}});
       async function clearPdf() {
         renderRevision++;
         if (rendering) { rendering.cancel(); await rendering.promise.catch(() => {}); rendering = null; }
@@ -111,7 +112,7 @@
         paper.value = layout.pageSize === "Letter" ? "Letter" : "A4"; font.value = String(layout.fontSize || 18); inset.value = [6,10,14].includes(layout.inset) ? String(layout.inset) : "6";
         input.disabled = !footer.checked; save.disabled = true; close.disabled = false; canvas.width=0; canvas.height=0;
         $("#pdf-page-count").textContent = "—"; $("#pdf-prev").disabled = $("#pdf-next").disabled = true;
-        for (const control of [input,footer,frame,paper,font,inset]) control.oninput = schedule;
+        for (const control of [input,footer,frame,notes,paper,font,inset]) control.oninput = schedule;
         footer.onchange = () => { if (footer.checked) {input.focus(); input.select();} };
         close.onclick = () => { if (!saving) dialog.close(); };
         retry.onclick = schedule;
@@ -121,7 +122,7 @@
         save.onclick = async () => {
           if (!previewId || printing || saving || generatedRevision !== revision) return;
           saving = true; save.disabled = close.disabled = true;
-          for (const control of [input,footer,frame,paper,font,inset,section,breakMode,resetBreaks]) control.disabled = true;
+          for (const control of [input,footer,frame,notes,paper,font,inset,section,breakMode,resetBreaks]) control.disabled = true;
           try {
             const exported = await window.lumaDesktop.exportPdf({name, previewId});
             if (exported?.ok) { result = exported; dialog.close(); }
@@ -129,7 +130,7 @@
           } catch (error) { status.textContent = error.message; }
           finally {
             saving = false; save.disabled = close.disabled = false;
-            for (const control of [input,footer,frame,paper,font,inset,section,breakMode,resetBreaks]) control.disabled = false;
+            for (const control of [input,footer,frame,notes,paper,font,inset,section,breakMode,resetBreaks]) control.disabled = false;
             input.disabled = !footer.checked;
           }
         };

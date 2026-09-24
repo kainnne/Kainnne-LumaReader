@@ -32,7 +32,7 @@
   function snapshot(refresh = true) {
     if (refresh && api) changed(api.getText());
     const workspace=api?.getFiles?.()||{},active=workspace.files?.find(file=>file.id===workspace.activeFileId);
-    return {...document,...(active?{title:active.title,markdown:active.markdown}:{}),...workspace,revision};
+    return {...document,...(active?{title:active.title,markdown:active.markdown,...(active.annotations?{annotations:active.annotations}:{})}:{}),...workspace,revision};
   }
   function persist(text) {
     changed(text);
@@ -46,6 +46,9 @@
   window.LumaEmbed = {
     ready, get config(){return config;}, get markdown(){return document?.markdown || '';},
     managedPath:null, changed, persist,
+    context(){return {sessionId:boot,id:document.id,activeFileId:api?.getFiles?.().activeFileId||config.document.activeFileId||document.id,revision};},
+    annotationEvent(type,value){send(type,{value});},
+    annotatedChange(text,annotations){document.markdown=text;revision++;send('change',{document:snapshot(false)});send('annotations-change',{value:{...this.context(),annotations}});},
     workspaceChanged(){revision++;send('change',{document:snapshot()});},
     activate(path,title,text){this.managedPath=path;document.title=title;document.markdown=text;},
     get dirty(){return revision>savedRevision;},
@@ -53,12 +56,14 @@
     attach(application) {api = application;send('initialized',{document:snapshot()});},
     get attached(){return Boolean(api);}
   };
-  window.addEventListener('message',event => {
+  window.addEventListener('message',async event => {
     const m=event.data;
     if(event.source!==parent||event.origin!==parentOrigin||!m||m.protocol!==protocol||m.channel!==channel||m.boot!==boot)return;
     if(m.type==='init'&&!config){
       if(!m.document||typeof m.document.id!=='string'||typeof m.document.markdown!=='string'){send('error',{message:'Invalid document'});return;}
       config=m;document={id:m.document.id,title:String(m.document.title||''),markdown:m.document.markdown};revision=m.document.revision||0;savedRevision=m.savedRevision||0;resolveReady(config);
+    }else if(m.type==='annotation-request'&&api){
+      try{if(!config.features?.annotations)throw new Error('ANNOTATIONS_DISABLED');const value=await api.annotations(m.method,m.payload);send('annotation-result',{requestId:m.requestId,value});}catch(error){send('annotation-result',{requestId:m.requestId,error:error.code||error.message||'ANNOTATION_ERROR'});}
     }else if(m.type==='get'&&api)send('result',{requestId:m.requestId,document:snapshot()});
     else if(m.type==='save-state'&&api){
       if(Number.isSafeInteger(m.savedRevision)&&m.savedRevision>=savedRevision){

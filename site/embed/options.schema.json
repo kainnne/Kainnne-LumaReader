@@ -63,6 +63,11 @@
           "type": "boolean",
           "default": true,
           "description": "Allow visitors to select another interface language in settings."
+        },
+        "annotations": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable native text annotations in direct mode. Off by default; locks the source-mode switch off. Text readOnly and annotationReadOnly are independent."
         }
       }
     },
@@ -94,6 +99,42 @@
           "type": "boolean",
           "default": false,
           "description": "Initially check Share Markdown to show the share button."
+        }
+      }
+    },
+    "annotationReadOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show existing annotations without allowing changes. Requires features.annotations."
+    },
+    "selectionActions": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "Optional host actions. Omit to use built-in Highlight, Note and Image note; [] allows external SDK actions only. SDK onAction receives the stable selection snapshot.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[-\\w]{1,40}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "icon": {
+            "enum": [
+              "image",
+              "highlight",
+              "comment"
+            ]
+          }
         }
       }
     }

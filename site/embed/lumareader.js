@@ -1,12 +1,16 @@
+import {annotationCapabilities,cleanActions,cleanSnapshot} from './annotation-contract.js?v=1.4.1-web.10';
 /** LumaReader iframe SDK v1. Host owns persistence; no remote storage is assumed. */
 export function normalizeEmbedOptions(options={}) {
   const mode=options.mode ?? 'direct';
   if(!['direct','source','preview'].includes(mode))throw new TypeError('mode must be direct, source or preview');
-  const features={sidebar:true,modeSwitch:false,rename:true,formatting:true,share:true,settings:true,language:true};
+  const features={sidebar:true,modeSwitch:false,rename:true,formatting:true,share:true,settings:true,language:true,annotations:false};
   for(const key of Object.keys(features))if(options.features?.[key]!==undefined){if(typeof options.features[key]!=='boolean')throw new TypeError('features.'+key+' must be boolean');features[key]=options.features[key];}
   const toolbar={formatting:false,share:false};
   for(const key of Object.keys(toolbar))if(options.toolbar?.[key]!==undefined){if(typeof options.toolbar[key]!=='boolean')throw new TypeError('toolbar.'+key+' must be boolean');toolbar[key]=features[key]&&options.toolbar[key];}
-  return {mode,features,toolbar,sourcePreview:options.sourcePreview!==false,language:typeof options.language==='string'?options.language:undefined};
+  if(features.annotations&&mode!=='direct')throw new TypeError('Annotations currently require direct mode');
+  if(features.annotations){features.modeSwitch=false;if(options.readOnly)features.formatting=false;}
+  const selectionActions=cleanActions(options.selectionActions);
+  return {annotationReadOnly:options.annotationReadOnly===true,selectionActions,mode,features,toolbar,sourcePreview:options.sourcePreview!==false,language:typeof options.language==='string'?options.language:undefined};
 }
 const protocol = 'lumareader-embed-v1';
 let expandedInstance;
@@ -14,14 +18,14 @@ function validateFiles(value){
   if(!value.files)return {};
   if(!Array.isArray(value.files)||value.files.length<1||value.files.length>3)throw new TypeError('Provide one to three Markdown files');
   const ids=new Set();let length=0;
-  const files=value.files.map(file=>{if(!file||typeof file.id!=='string'||!file.id||file.id.length>200||ids.has(file.id)||typeof file.markdown!=='string')throw new TypeError('Invalid embedded file');ids.add(file.id);length+=file.markdown.length;return {id:file.id,title:String(file.title||'Untitled').slice(0,200),markdown:file.markdown};});
+  const files=value.files.map(file=>{if(!file||typeof file.id!=='string'||!file.id||file.id.length>200||ids.has(file.id)||typeof file.markdown!=='string')throw new TypeError('Invalid embedded file');ids.add(file.id);length+=file.markdown.length;return {id:file.id,title:String(file.title||'Untitled').slice(0,200),markdown:file.markdown,...(file.annotations?{annotations:cleanSnapshot(file.annotations)}:{})};});
   if(length>64*1024*1024||!ids.has(value.activeFileId))throw new TypeError('Invalid embedded workspace');
   return {files,activeFileId:value.activeFileId};
 }
 function validateDocument(document) {
   if (!document || typeof document.id !== 'string' || !document.id || document.id.length > 200 || typeof document.markdown !== 'string' || document.markdown.length > 64 * 1024 * 1024) throw new TypeError('Provide {id, title, markdown}; Markdown must be at most 64 Mi characters.');
   const workspace=validateFiles(document),active=workspace.files?.find(file=>file.id===workspace.activeFileId)||document;
-  return {id:document.id,title:String(active.title || '').slice(0,200),markdown:active.markdown,...workspace,revision:0};
+  return {id:document.id,title:String(active.title || '').slice(0,200),markdown:active.markdown,...(active.annotations?{annotations:cleanSnapshot(active.annotations)}:{}),...workspace,revision:0};
 }
 // Same expand/restore glyphs and button treatment as Kainnne × Gemini.
 export function setExpandIcon(button,expanded){
@@ -60,7 +64,7 @@ export function mountLumaReader(container, options) {
     let workspace;try{workspace=validateFiles(document);}catch{return false;}
     const active=workspace.files?.find(file=>file.id===workspace.activeFileId)||document;
     const changed = document.revision > current.revision;
-    current = {id:current.id,title:typeof active.title==='string'?active.title.slice(0,200):current.title,markdown:active.markdown,...workspace,revision:document.revision};
+    current = {id:current.id,title:typeof active.title==='string'?active.title.slice(0,200):current.title,markdown:active.markdown,...(active.annotations?{annotations:cleanSnapshot(active.annotations)}:{}),...workspace,revision:document.revision};
     iframe.title='LumaReader — '+current.title;
     if (changed) {try {options.onChange?.({...current});} catch (error) {report(error);}}
     return true;
@@ -91,6 +95,11 @@ export function mountLumaReader(container, options) {
       requests.set(requestId,{resolve,reject,timer}); send('get',{requestId});
     });
   }
+  async function annotationRequest(method,payload={}){
+    await ready;if(destroyed)throw new Error('Editor has been destroyed.');
+    const requestId=String(++requestCounter);
+    return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{requests.delete(requestId);reject(new Error('Annotation request timed out'));},10000);requests.set(requestId,{resolve,reject,timer});send('annotation-request',{requestId,method,payload});});
+  }
   function save() {
     const operation = saving.catch(() => {}).then(async () => {
       if (typeof options.onSave !== 'function') throw new Error('Provide onSave to persist documents.');
@@ -119,6 +128,8 @@ export function mountLumaReader(container, options) {
     else if (m.type === 'error') {const error=new Error(m.message || 'Editor could not load.');if (!initialized) {clearTimeout(startup);readyReject(error);}report(error);}
     else if (!initialized) return;
     else if (m.type === 'change') accept(m.document);
+    else if (m.type === 'annotation-result' && requests.has(m.requestId)) {const entry=requests.get(m.requestId);requests.delete(m.requestId);clearTimeout(entry.timer);if(m.error)entry.reject(Object.assign(new Error(m.error),{code:m.error}));else entry.resolve(m.value);}
+    else if (['selection','annotation-action','annotations-change','annotation-click'].includes(m.type)) {const key={selection:'onSelectionChange','annotation-action':'onAction','annotations-change':'onAnnotationsChange','annotation-click':'onAnnotationClick'}[m.type];try{options[key]?.(m.value);}catch(error){report(error);}}
     else if (m.type === 'result' && requests.has(m.requestId)) {
       const entry = requests.get(m.requestId);requests.delete(m.requestId);clearTimeout(entry.timer);
       if (accept(m.document)) entry.resolve({...current});else entry.reject(new Error('Invalid document response.'));
@@ -133,8 +144,8 @@ export function mountLumaReader(container, options) {
     expand(false);destroyed=true;clearTimeout(startup);readyReject(new Error('Editor destroyed.'));rejectRequests('Editor destroyed.');
     window.removeEventListener('message',receive);window.removeEventListener('keydown',escape);window.removeEventListener('beforeunload',beforeUnload);iframe.remove();expandedBar.remove();
   }
-  async function getActiveDocument(){const {id,activeFileId,title,markdown}=await getDocument();return {id,activeFileId,title,markdown};}
-  const api = {ready,getDocument,getActiveDocument,save,expand:()=>expand(true),collapse:()=>expand(false),destroy};
+  async function getActiveDocument(){const {id,activeFileId,title,markdown,annotations}=await getDocument();return {id,activeFileId,title,markdown,...(annotations?{annotations}:{})};}
+  const api = {capabilities:{annotations:{...annotationCapabilities,enabled:configuration.features.annotations,writable:configuration.features.annotations&&!configuration.annotationReadOnly}},getAttachment:id=>annotationRequest('attachment',{id}),getSelection:()=>annotationRequest('selection'),getAnnotations:()=>annotationRequest('get'),addAnnotation:p=>annotationRequest('add',p),updateAnnotation:p=>annotationRequest('update',p),deleteAnnotation:p=>annotationRequest('delete',p),setAnnotations:p=>annotationRequest('set',p),ready,getDocument,getActiveDocument,save,expand:()=>expand(true),collapse:()=>expand(false),destroy};
   window.addEventListener('message',receive);window.addEventListener('keydown',escape);window.addEventListener('beforeunload',beforeUnload);
   iframe.src=url.href;container.append(expandedBar,iframe);
   return api;

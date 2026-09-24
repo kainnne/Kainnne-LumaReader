@@ -16,7 +16,7 @@
     "dist:mac": "npm run build:editor && electron-builder --mac dmg zip --universal --publish never",
     "dist:win": "npm run build:editor && electron-builder --win nsis portable --x64 --publish never",
     "dist:linux": "npm run build:editor && electron-builder --linux AppImage deb --x64 --publish never",
-    "build:editor": "esbuild renderer/direct-editor.mjs --bundle --format=iife --global-name=LumaDirectEditor --outfile=renderer/direct-editor.bundle.js --minify && esbuild renderer/code-editor.mjs --bundle --format=iife --global-name=LumaCodeEditor --outfile=renderer/code-editor.bundle.js --minify",
+    "build:editor": "esbuild renderer/direct-editor.mjs --bundle --format=iife --global-name=LumaDirectEditor --outfile=renderer/direct-editor.bundle.js --minify && esbuild renderer/code-editor.mjs --bundle --format=iife --global-name=LumaCodeEditor --outfile=renderer/code-editor.bundle.js --minify && esbuild site/embed/annotation-contract.js --platform=node --format=cjs --outfile=src/annotation-contract.cjs",
     "pack:preview": "npm run build:editor && electron-builder --mac --arm64 --dir --publish never --config build/preview.config.cjs",
     "test:direct-editor": "node scripts/direct-editor-smoke.cjs",
     "test:embed": "node scripts/embed-smoke.cjs",
@@ -103,7 +103,8 @@
       "renderer/direct-editor.bundle.js",
       "renderer/direct-editor.css",
       "renderer/code-editor.bundle.js",
-      "renderer/vendor/pdfjs/**/*"
+      "renderer/vendor/pdfjs/**/*",
+      "renderer/annotations.css"
     ],
     "mac": {
       "icon": "build/icon.icns",

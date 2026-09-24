@@ -459,6 +459,12 @@ handle("document:save", async (context, event, payload) => {
   }
 });
 const chooseImages=createImagePicker({showOpenDialog:(window,options)=>dialog.showOpenDialog(window,options),defaultPath:app.getPath("pictures")});
+const {AnnotationStore}=require('./annotation-store');
+const annotationStore=new AnnotationStore(path.join(app.getPath('userData'),'annotations-v1'));
+handle('annotations:get',async(context,event,payload)=>annotationStore.read(context.service.resolveProjectDocument(payload.path)));
+handle('annotations:save',async(context,event,payload)=>{const file=context.service.resolveProjectDocument(payload.path);if(getDocumentType(file)?.kind!=='markdown')throw Error('Markdown required');const {fingerprint}=require('./annotation-contract.cjs');const text=await fsp.readFile(file,'utf8');if(fingerprint(text)!==payload.snapshot?.fingerprint)throw Error('Document changed. Save the text first.');await annotationStore.write(file,payload.snapshot);return {ok:true};});
+handle('annotations:image',async(context,event,payload)=>annotationStore.image(payload));
+handle('annotations:get-image',async(context,event,id)=>annotationStore.getImage(id));
 handle("document:choose-images",async(context,event,payload)=>{
   try {if(typeof payload?.path!=="string"||getDocumentType(payload.path)?.kind!=="markdown")throw new Error("Choose a Markdown document first.");return await chooseImages(context,payload.path);}
   catch(error){return {ok:false,message:error.message};}

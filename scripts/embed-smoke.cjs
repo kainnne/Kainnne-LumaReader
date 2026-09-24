@@ -2,6 +2,10 @@
 const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium}=require('playwright-core');const root=path.resolve('site');
 function server(){return http.createServer(async(req,res)=>{try{let file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+path.sep))throw Error('path');if((await fs.stat(file)).isDirectory())file=path.join(file,'index.html');res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.png':'image/png'})[path.extname(file)]||'application/octet-stream');res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});}
+
+async function openSettings(frame){if(await frame.locator('#sidebar .appearance-control').count()&&await frame.locator('#sidebar-toggle').getAttribute('aria-expanded')==='false')await frame.locator('#sidebar-toggle').click();await frame.locator('#palette-toggle').click();}
+async function closeSettings(frame){await frame.locator('#appearance-close').click();if(await frame.locator('#sidebar-toggle').getAttribute('aria-expanded')==='true')await frame.locator('#sidebar-toggle').click();}
+
 async function main(){
  const host=server(),embed=server();await Promise.all([host,embed].map(s=>new Promise(r=>s.listen(0,'127.0.0.1',r))));let browser;const errors=[];
  const origin=`http://127.0.0.1:${host.address().port}`,embedOrigin=`http://127.0.0.1:${embed.address().port}`;
@@ -25,7 +29,7 @@ async function main(){
   await page.locator('#next').click();await page.locator('#image-step').waitFor();assert.equal(await page.locator('iframe').count(),0);assert.match(await page.locator('#output').innerText(),/測試草稿/);
   await page.locator('#image-url').fill('https://example.invalid/image.png');await page.locator('#image-caption').fill('插圖');await page.locator('#add-image').click();await page.locator('#back').click();frame=page.frameLocator('iframe');await frame.locator('#content').waitFor({state:'attached'});await frame.locator('body:not(.booting)').waitFor();await frame.locator('.direct-prose').waitFor();assert.match(await frame.locator('#source-editor').inputValue(),/!\[插圖\]/);assert.match(await frame.locator('#source-editor').inputValue(),/data:image\/png;base64,/);
   // The existing settings change language and palette, surviving iframe remount.
-  await frame.locator('#palette-toggle').click();await frame.locator('#cancel-edit').click();await frame.locator('#palette-toggle').click();await frame.locator('#settings-language').selectOption('en');assert.equal(await frame.locator('#edit-document-label').innerText(),'Edit');await frame.locator('#appearance-close').click();
+  await openSettings(frame);await frame.locator('#cancel-edit').click();await openSettings(frame);await frame.locator('#settings-language').selectOption('en');assert.equal(await frame.locator('#edit-document-label').innerText(),'Edit');await closeSettings(frame);
   await page.reload();frame=page.frameLocator('iframe');await frame.locator('#content').waitFor({state:'attached'});await frame.locator('body:not(.booting)').waitFor();assert.equal(await frame.locator('#edit-document-label').innerText(),'Save');assert.match(await frame.locator('.direct-prose').innerText(),/測試草稿/);
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/private/tmp/luma-embed-shared-mobile.png'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   // Cross-origin persistence and save failures use the original Save button/toast.

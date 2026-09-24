@@ -1,4 +1,4 @@
-import {Schema, Slice} from 'prosemirror-model';
+import {Schema, Slice, Fragment} from 'prosemirror-model';
 import {EditorState, TextSelection, NodeSelection} from 'prosemirror-state';
 import {EditorView} from 'prosemirror-view';
 import {baseKeymap, toggleMark, setBlockType, wrapIn, chainCommands, exitCode} from 'prosemirror-commands';
@@ -10,6 +10,8 @@ import {splitListItem, sinkListItem, liftListItem, wrapInList} from 'prosemirror
 import {schema as commonSchema, defaultMarkdownParser, defaultMarkdownSerializer, MarkdownParser, MarkdownSerializer} from 'prosemirror-markdown';
 import {tableNodes, tableEditing, addRowAfter, addColumnAfter, deleteRow, deleteColumn, deleteTable, goToNextCell} from 'prosemirror-tables';
 import MarkdownIt from 'markdown-it';
+import {createAnnotations,restoreAnnotations,mapAnnotations,bindAnnotationHover} from './annotations.mjs';
+import {fingerprint,treeFingerprint} from '../site/embed/annotation-contract.js';
 
 const atom = (inline, name) => ({inline, group:inline?'inline':'block', atom:true, attrs:{source:{default:''},display:{default:!inline}},
   toDOM:node=>[inline?'span':'div',{'data-luma-atom':name,class:`direct-${name}`},node.attrs.source]});
@@ -17,6 +19,7 @@ let nodes=commonSchema.spec.nodes.append(tableNodes({tableGroup:'block',cellCont
 nodes=nodes.update('list_item',{...nodes.get('list_item'),attrs:{checked:{default:null}}});
 nodes=nodes.append({math_inline:atom(true,'math'),math_block:atom(false,'math'),raw_inline:atom(true,'raw'),raw_block:atom(false,'raw')});
 nodes.forEach((name,spec)=>{if(name!=='text'&&name!=='doc')nodes=nodes.update(name,{...spec,attrs:{...spec.attrs,lumaId:{default:null}}});});
+nodes=nodes.update('doc',{...nodes.get('doc'),attrs:{lumaAnnotations:{default:null}}});
 export const schema=new Schema({nodes,marks:commonSchema.spec.marks.append({strike:{parseDOM:[{tag:'s'},{tag:'del'}],toDOM:()=>['s',0]}})});
 
 export function safeURL(value) {
@@ -94,15 +97,41 @@ serializer=new MarkdownSerializer({...defaultMarkdownSerializer.nodes,
   table:(s,n)=>{n.forEach((row,_,i)=>{const cells=[];row.forEach(cell=>cells.push(serializeCell(cell)));s.write('| '+cells.join(' | ')+' |\n');if(i===0){const align=[];row.forEach(cell=>align.push(cell.attrs.align==='center'?':---:':cell.attrs.align==='right'?'---:':cell.attrs.align==='left'?':---':'---'));s.write('| '+align.join(' | ')+' |\n');}});s.closeBlock(n);}
 },{...defaultMarkdownSerializer.marks,strike:{open:'~~',close:'~~',mixable:true,expelEnclosingWhitespace:true}});
 export function serializeMarkdown(doc,source){
-  if(doc.eq(source.doc))return source.original;
+  if(doc.content.eq(source.doc.content))return source.original;
   let result='';doc.forEach(node=>{const record=source.records.get(node.attrs.lumaId);let value=record&&node.eq(record.node)?record.raw:((record?.leading||'')+serializer.serialize(schema.nodes.doc.create(null,[node]))+'\n');
     if(!(record&&node.eq(record.node))&&result&&!/(?:\r?\n){2}$/.test(result)&&!/^\r?\n/.test(value))result+='\n';result+=value;
   });return result+source.tail;
 }
+
+export function selectionSourceRanges(doc,source,from,to){
+  const ranges=[],markdown=serializeMarkdown(doc,source);let cursor=0,valid=true;
+  doc.forEach((node,position)=>{
+    const record=source.records.get(node.attrs.lumaId),untouched=record&&node.eq(record.node);
+    let value=untouched?record.raw:(record?.leading||'')+serializer.serialize(schema.nodes.doc.create(null,[node]))+'\n';
+    if(!untouched&&cursor&&!/(?:\r?\n){2}$/.test(markdown.slice(0,cursor))&&!/^\r?\n/.test(value))cursor++;
+    if(to>position&&from<position+node.nodeSize){
+      const nonce='LUMASEL'+Math.random().toString(36).slice(2).toUpperCase(),markers=[];
+      function decorate(current,pos){
+        if(current.isText){const a=Math.max(0,from-pos),b=Math.min(current.nodeSize,to-pos);if(a>=b)return current;
+          const id=markers.length,left='\ue000'+nonce+id+'A\ue001',right='\ue000'+nonce+id+'B\ue001';markers.push({left,right});return schema.text(current.text.slice(0,a)+left+current.text.slice(a,b)+right+current.text.slice(b),current.marks);}
+        const children=[];current.forEach((child,offset)=>children.push(decorate(child,pos+1+offset)));return current.copy(Fragment.fromArray(children));
+      }
+      const marked=serializer.serialize(schema.nodes.doc.create(null,[decorate(node,position)])).trim();
+      let clean=marked;for(const {left,right} of markers)clean=clean.replace(left,'').replace(right,'');
+      if(clean!==value.trim())valid=false;
+      else {let current=marked;const base=cursor+value.length-value.trimStart().length;for(const {left,right} of markers){const start=current.indexOf(left);current=current.replace(left,'');const end=current.indexOf(right);current=current.replace(right,'');if(start<0||end<start)valid=false;else ranges.push({from:base+start,to:base+end});}}
+    }
+    cursor+=value.length;
+  });
+  return valid&&ranges.length?ranges:null;
+}
 function latex(source){return source.replace(/^(?:\$\$|\$|\\\[|\\\()/,'').replace(/(?:\$\$|\$|\\\]|\\\))$/,'').trim();}
 
-export function create({element,text,onChange,resolveImage,onImage,onFiles,onSource,onTableState,language='en'}){
-  let parsed=parseMarkdown(text),view;const zh=language.startsWith('zh'),tr=(en,cn)=>zh?cn:en;
+export function create({element,text,onChange,resolveImage,onImage,onFiles,onSource,onTableState,language='en',annotationOptions}){
+  let parsed=parseMarkdown(text),view;
+  if(annotationOptions)parsed.doc=parsed.doc.type.create({lumaAnnotations:restoreAnnotations(annotationOptions.snapshot,parsed.doc,text)},parsed.doc.content);
+  const annotations=annotationOptions?createAnnotations({options:{...annotationOptions,language},getText:()=>serializeMarkdown(view.state.doc,parsed),sourceRanges:(from,to)=>selectionSourceRanges(view.state.doc,parsed,from,to)}):null;
+  const zh=language.startsWith('zh'),tr=(en,cn)=>zh?cn:en;
   const rules=inputRules({rules:[textblockTypeInputRule(/^(#{1,6})\s$/,schema.nodes.heading,m=>({level:m[1].length})),wrappingInputRule(/^\s*>\s$/,schema.nodes.blockquote),wrappingInputRule(/^\s*([-+*])\s$/,schema.nodes.bullet_list)]});
   function mathView(node,getPos){
     const dom=document.createElement(node.isInline?'span':'div');dom.className='direct-math';dom.contentEditable='false';dom.tabIndex=0;dom.title=tr('Double-click to edit formula','按兩下編輯數學式');
@@ -112,9 +141,9 @@ export function create({element,text,onChange,resolveImage,onImage,onFiles,onSou
     return {dom,stopEvent:()=>true,ignoreMutation:()=>true,update:n=>{if(n.type!==node.type)return false;node=n;draw();return true;}};
   }
   const keybindings={'Mod-k':()=>command('link'),'Mod-z':undo,'Shift-Mod-z':redo,'Mod-y':redo,'Mod-b':toggleMark(schema.marks.strong),'Mod-i':toggleMark(schema.marks.em),'Mod-`':toggleMark(schema.marks.code),Backspace:undoInputRule,Enter:splitListItem(schema.nodes.list_item),'Mod-Enter':exitCode,'Tab':chainCommands(goToNextCell(1),sinkListItem(schema.nodes.list_item)), 'Shift-Tab':chainCommands(goToNextCell(-1),liftListItem(schema.nodes.list_item))};
-  view=new EditorView(element,{state:EditorState.create({doc:parsed.doc,plugins:[history(),rules,keymap(keybindings),keymap(baseKeymap),gapCursor(),tableEditing()]}),
+  view=new EditorView(element,{state:EditorState.create({doc:parsed.doc,plugins:[...(annotations?[annotations.plugin]:[]),history(),rules,keymap(keybindings),keymap(baseKeymap),gapCursor(),tableEditing()]}),
     attributes:{class:'prose direct-prose',role:'textbox','aria-multiline':'true','aria-label':tr('Direct Markdown editor','直接編輯文件'),spellcheck:'false'},
-    dispatchTransaction(transaction){const state=view.state.apply(transaction);view.updateState(state);if(transaction.docChanged)onChange(serializeMarkdown(state.doc,parsed));onTableState?.(inTable());},
+    dispatchTransaction(transaction){if(annotationOptions?.readOnlyText&&!transaction.doc.content.eq(view.state.doc.content))return;if(annotations)transaction=mapAnnotations(transaction);const state=view.state.apply(transaction);view.updateState(state);if(transaction.docChanged)onChange(serializeMarkdown(state.doc,parsed),annotations?.getSnapshot());onTableState?.(inTable());annotations?.afterTransaction(transaction);},
     nodeViews:{list_item(node,editor,getPos){const dom=document.createElement('li'),contentDOM=document.createElement('div');if(node.attrs.checked!==null){dom.className='direct-task';const check=document.createElement('input');check.type='checkbox';check.checked=node.attrs.checked;check.contentEditable='false';check.setAttribute('aria-label',tr('Task completed','完成待辦事項'));check.addEventListener('change',()=>{if(!view.editable)return;view.dispatch(closeHistory(view.state.tr).setNodeMarkup(getPos(),null,{...node.attrs,checked:check.checked}));});dom.append(check);}dom.append(contentDOM);return {dom,contentDOM};},math_inline:(n,v,p)=>mathView(n,p),math_block:(n,v,p)=>mathView(n,p),
       image(node){const dom=document.createElement('span');dom.className='direct-image';dom.contentEditable='false';const img=document.createElement('img');img.src=resolveImage(safeURL(node.attrs.src));img.alt=node.attrs.alt||'';img.title=tr('Double-click to enlarge','按兩下放大圖片');img.addEventListener('dblclick',()=>onImage(img));dom.append(img);return {dom};},
       raw_block(node){const dom=document.createElement('div');dom.className='direct-protected';dom.contentEditable='false';const caption=document.createElement('span');caption.textContent=node.attrs.source.includes('lumareader:pagebreak')?tr('PDF page break','PDF 換頁'):tr('Special syntax · preserved as written','特殊語法・保留原文');const pre=document.createElement('pre');pre.textContent=node.attrs.source;const button=document.createElement('button');button.type='button';button.textContent=tr('Edit source','在原文中調整');button.addEventListener('click',onSource);dom.append(caption,pre,button);return {dom,stopEvent:()=>true};}
@@ -124,6 +153,7 @@ export function create({element,text,onChange,resolveImage,onImage,onFiles,onSou
     handleDrop(view,event){if(event.dataTransfer?.files.length){const pos=view.posAtCoords({left:event.clientX,top:event.clientY});if(pos)view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(pos.pos))));onFiles(event.dataTransfer.files);return true;}return false;},
     transformPastedHTML(html){const dom=new DOMParser().parseFromString(html,'text/html');dom.querySelectorAll('script,style,iframe,object,embed').forEach(n=>n.remove());dom.querySelectorAll('td,th').forEach(n=>{n.removeAttribute('colspan');n.removeAttribute('rowspan');});dom.querySelectorAll('[src],[href]').forEach(n=>{for(const attr of ['src','href'])if(n.hasAttribute(attr)&&!safeURL(n.getAttribute(attr)))n.removeAttribute(attr);});return dom.body.innerHTML;}
   });
+  annotations?.attach(view);
   function inTable(){const {$from}=view.state.selection;for(let depth=$from.depth;depth>0;depth--)if($from.node(depth).type.spec.tableRole==='table')return true;return false;}
   function run(command){view.focus();return command(view.state,view.dispatch,view);}
   function insertMarkdown(markdown){const content=parseMarkdown(markdown).doc.content;view.dispatch(closeHistory(view.state.tr).replaceSelection(new Slice(content,0,0)).scrollIntoView());view.focus();}
@@ -138,5 +168,23 @@ export function create({element,text,onChange,resolveImage,onImage,onFiles,onSou
     if(name==='table'){insertMarkdown('| '+tr('Heading','欄位')+' | '+tr('Heading','欄位')+' |\n| --- | --- |\n| '+tr('Content','內容')+' | '+tr('Content','內容')+' |\n');return true;}
     const tables={'row-add':addRowAfter,'column-add':addColumnAfter,'row-delete':deleteRow,'column-delete':deleteColumn,'table-delete':deleteTable};if(tables[name])return run(tables[name]);return false;
   }
-  return {view,command,insertMarkdown,focus:()=>view.focus(),destroy:()=>view.destroy(),getText:()=>serializeMarkdown(view.state.doc,parsed),setEditable:value=>view.setProps({editable:()=>value}),matches:text=>serializeMarkdown(view.state.doc,parsed)===text};
+  return {view,annotations,command,insertMarkdown,focus:()=>view.focus(),destroy:()=>{annotations?.destroy();view.destroy();},getText:()=>serializeMarkdown(view.state.doc,parsed),setEditable:value=>view.setProps({editable:()=>value}),matches:text=>serializeMarkdown(view.state.doc,parsed)===text};
+}
+
+export function reconcileAnnotations(text,snapshot){
+ if(!snapshot||snapshot.fingerprint===fingerprint(text))return snapshot;
+ const {doc}=parseMarkdown(text);return {schemaVersion:1,fingerprint:fingerprint(text),treeFingerprint:treeFingerprint(doc),items:restoreAnnotations(snapshot,doc,text)};
+}
+
+// Apply persisted anchors to the existing reading renderer only when all text
+// blocks match the same native document in order. Never search repeated text.
+export function paintAnnotations(root,text,snapshot){
+ if(!snapshot?.items?.length)return ()=>{};
+ const parsed=parseMarkdown(text),items=restoreAnnotations(snapshot,parsed.doc,text),blocks=[];
+ parsed.doc.descendants((node,pos)=>{if(node.isTextblock)blocks.push({node,pos});});
+ const elements=[...root.querySelectorAll('p,h1,h2,h3,h4,h5,h6,td,th,pre > code,li')].filter(el=>!el.closest('.katex')&&!el.parentElement.closest('td,th')&&!(el.tagName==='LI'&&el.querySelector(':scope > p')));
+ const pairs=elements.length===blocks.length?blocks.map((b,i)=>({...b,el:elements[i]})):[];
+ const textNodes=el=>{const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>{let parent=n.parentElement;while(parent&&parent!==el){if(['UL','OL','BUTTON'].includes(parent.tagName))return NodeFilter.FILTER_REJECT;parent=parent.parentElement;}return NodeFilter.FILTER_ACCEPT;}}),nodes=[];let n;while(n=walker.nextNode())nodes.push(n);return nodes;};
+ for(const {node,pos,el} of pairs){if(node.textContent!==textNodes(el).map(n=>n.textContent).join(''))continue;for(const item of items){if(item.status==='orphaned')continue;const start=Math.max(0,item.anchor.from-pos-1),end=Math.min(node.content.size,item.anchor.to-pos-1);if(start>=end)continue;const segments=[];let offset=0;for(const t of textNodes(el)){const a=Math.max(0,start-offset),b=Math.min(t.length,end-offset);if(a<b)segments.push({t,a,b});offset+=t.length;}for(const {t,a,b} of segments.reverse()){const range=document.createRange();range.setStart(t,a);range.setEnd(t,b);const mark=document.createElement('span');mark.className='luma-annotation-mark '+item.kind+' '+item.status;mark.dataset.lumaAnnotation=item.id;range.surroundContents(mark);}}}
+ const hover=bindAnnotationHover(()=>items);const show=e=>hover.show(e),hide=e=>hover.hide(e);root.addEventListener('pointerover',show);root.addEventListener('pointerout',hide);root.addEventListener('click',show);return ()=>{root.removeEventListener('pointerover',show);root.removeEventListener('pointerout',hide);root.removeEventListener('click',show);hover.destroy();};
 }

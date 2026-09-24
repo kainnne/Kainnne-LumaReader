@@ -101,3 +101,9 @@ LUMA_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google 
 ### 維護啟動資源
 
 Web 與嵌入版使用相同的 `bootstrap.bundle.js`、`reader.bundle.js`，以保留執行順序的 defer 腳本載入。修改 `site/web` 的來源後執行 `npm run build:web`；`npm test` 會檢查產物是否與來源一致。`npm run build:embed` 也會先重建。請勿直接修改合併產物。程式碼編輯器在需要對應文件類型時才載入；公式、表格、圖片與原文編輯仍使用原有實作。
+
+### 可選的原生文字註記（1.4.1-web.10）
+
+以 `features:{annotations:true}` 開啟同一套直接編輯器的重點、註解與拖入圖片註記；`selectionActions/onAction` 可接宿主選圖。正文與註記共同存入完整快照，位置與 Undo／Redo 由 Reader 管理，產生素材與後台儲存由宿主管理。正文 readOnly 與 annotationReadOnly 分開。第一版僅 direct 模式；原文偏移以 exact-or-unavailable 明示，不能用重複句子的 indexOf 補猜。
+
+完整公開契約與範例：[`site/embed/annotations-api.md`](../site/embed/annotations-api.md)、[`site/embed/annotations.js`](../site/embed/annotations.js)。在網站 `/embed/annotations.html` 可試用。`node scripts/annotations-smoke.cjs` 驗證跨來源選取、定位、原生歷程、存檔失敗、重載、多文件與權限；`tests/annotations.test.js` 驗證來源範圍、表格／格式與映射。

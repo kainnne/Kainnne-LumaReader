@@ -1,0 +1,11 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LumaReader 文字註記示範</title><link rel="stylesheet" href="../styles.css"><link rel="stylesheet" href="demo.css"><link rel="stylesheet" href="annotations.css"></head>
+<body class="embed-page"><main><header class="site-header"><a class="product-home" href="../" aria-label="LumaReader 首頁"><img class="product-home-logo" src="../assets/kainnne-wordmark.png" alt="Kainnne" width="154" height="50"></a><a class="hero-button" href="./">嵌入說明 ↗</a></header>
+<h1>替這段文字加註記</h1><p>反白文字，加上重點、筆記或圖片；不會改動 Markdown 原文。滑過標記就能查看補充內容，右上角可儲存。</p>
+<div class="actions"><button id="expand">放大</button><span id="status" role="status">正文與註記只儲存在此瀏覽器。</span></div><div id="reader"></div>
+<details><summary>在你的網站啟用</summary><p>一般筆記只要設定 <code>features: {annotations: true}</code>，就有內建的重點、文字註解與拖入圖片註記。要接自己的選圖流程，再提供 <code>selectionActions</code> 與 <code>onAction</code>。</p><pre><code>const editor = mountLumaReader(container, {
+  document: savedSnapshot,
+  features: { annotations: true },
+  onSave: snapshot =&gt; saveToYourBackend(snapshot)
+});</code></pre><p><a href="annotations.js">檢視本頁整合程式碼</a> · <a href="annotations-api.md">API、存檔方式與定位限制</a></p></details>
+
+</main><script type="module" src="annotations.js?v=1.4.1-web.10"></script></body></html>

@@ -81,9 +81,10 @@
 <p>使用 SDK 時，將相同的 <code>mode</code>、<code>readOnly</code>、<code>sourcePreview</code>、<code>features</code>、<code>toolbar</code> 傳給 <code>mountLumaReader</code> 即可；外層按鈕由你的網站自行決定。這些是介面選項，資料權限仍由網站後台管理。</p>
 <p class="guide-note">讓 agent 協助嵌入：把這頁網址與你的用途交給它，例如「小說章節，只編輯現有內容、不分享、不改名」。程式可讀取 <a href="options.schema.json">完整設定規格 JSON</a> 與 <a href="novel-options.json">小說文案設定範例</a>，直接調整同一份嵌入設定。原本的一行安裝指令仍可沿用。</p>
 </section>
+<section id="annotations" class="guide-section"><h2>文字註記</h2><p>可選擇開啟重點、文字備註與圖片註記。反白後加上註記，原文改動時會跟隨位置，或標示需要確認的關聯。<a href="annotations.html">試用註記示範 →</a> · <a href="annotations-api.md">整合 API 與限制</a></p></section>
 <section id="updates" class="guide-section"><p class="eyebrow">嵌入版更新</p><h2>更新現有的嵌入區塊</h2>
-<p><strong>1.4.1-web.9 · 2026 年 9 月 24 日</strong></p>
-<ul><li>加快嵌入編輯器首次載入：合併啟動資源，程式碼編輯器改為需要時才載入。既有編輯功能與安裝方式維持不變。</li><li>嵌入工具列預設只保留設定與編輯／儲存；格式和分享改為設定內的勾選項目。</li><li>網站以目前開啟的文件作為文章，其餘文件僅作草稿暫存。</li><li>嵌入版新增空白起始畫面、最多 3 份 Markdown 匯入與草稿保留，可設定預設語言和語言切換。</li><li>網頁與嵌入版支援點檔名修改，副檔名固定；嵌入版沿用原文件 ID 儲存。</li><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器可選擇直接編輯、Markdown 原文或預覽，並調整開放的功能。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
+<p><strong>1.4.1-web.10 · 2026 年 9 月 24 日</strong></p>
+<ul><li>新增可選的文字註記：重點、備註與素材關聯；圖片可拖入並在滑過標記時預覽，Markdown 原文不變；支援原生復原、獨立唯讀設定及完整快照儲存。</li><li>加快嵌入編輯器首次載入：合併啟動資源，程式碼編輯器改為需要時才載入。既有編輯功能與安裝方式維持不變。</li><li>儲存移至右上角，採柔和粉紅色；設定整合進左側匯入區，頂端不再顯示註記數字。格式與分享仍可在設定中開啟。</li><li>網站以目前開啟的文件作為文章，其餘文件僅作草稿暫存。</li><li>嵌入版新增空白起始畫面、最多 3 份 Markdown 匯入與草稿保留，可設定預設語言和語言切換。</li><li>網頁與嵌入版支援點檔名修改，副檔名固定；嵌入版沿用原文件 ID 儲存。</li><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器可選擇直接編輯、Markdown 原文或預覽，並調整開放的功能。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
 <p>使用官方固定網址的嵌入區塊，重新整理網頁後，就會在快取更新時載入相容新版，不必重新安裝。正在編輯時請先儲存。</p>
 <p>若原本用一行指令安裝，可執行以下更新指令，取得目前維護的載入版本：</p>
 <div class="code-heading"><span>更新已安裝的 HTML</span><button type="button" data-copy-code="update-command">複製更新指令</button></div>

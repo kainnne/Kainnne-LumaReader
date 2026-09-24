@@ -1,13 +1,20 @@
 'use strict';
 // Concatenate classic scripts without wrapping their UMD globals in a module.
 // Source files remain the source of truth; run after changes to the Web reader.
-const fs=require('node:fs/promises'),path=require('node:path'),{transform}=require('esbuild');
+const fs=require('node:fs/promises'),path=require('node:path'),{transform,build:compile}=require('esbuild');
 const groups={
  'bootstrap.bundle.js':['embed-bridge.js','web-bridge.js'],
  'reader.bundle.js':['vendor/marked/marked.umd.js','vendor/katex/katex.min.js','vendor/katex/contrib/auto-render.min.js','vendor/highlight/highlight.min.js','reader-utils.js','adapters/core.js','adapters/plain-text.js','adapters/index.js','library-search.js','pdf-tools.js','pdf-dialog.js','direct-editor.bundle.js','app.js','multiformat-ui.js'],
 };
 async function build({check=false}={}){
  const root=path.resolve(__dirname,'../site/web');
+ const css=await fs.readFile(path.resolve(__dirname,'../renderer/annotations.css'),'utf8');
+ if(check){if(await fs.readFile(path.join(root,'annotations.css'),'utf8')!==css)throw Error('Annotation styles are stale');}else await fs.writeFile(path.join(root,'annotations.css'),css);
+ const editorOutput=path.join(root,'direct-editor.bundle.js');
+ const compiled=await compile({entryPoints:[path.resolve(__dirname,'../renderer/direct-editor.mjs')],bundle:true,format:'iife',globalName:'LumaDirectEditor',outfile:editorOutput,minify:true,write:false});
+ const editorCode=compiled.outputFiles[0].text;
+ if(check){if(await fs.readFile(editorOutput,'utf8')!==editorCode)throw Error('Web direct editor is stale; run npm run build:web');}
+ else await fs.writeFile(editorOutput,editorCode);
  for(const [output,inputs] of Object.entries(groups)){
   const parts=await Promise.all(inputs.map(async file=>{
    const {code}=await transform(await fs.readFile(path.join(root,file),'utf8'),{minify:true,legalComments:'inline',target:'es2020'});

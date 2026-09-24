@@ -482,7 +482,7 @@ ${desktopDownloadMarkdown}
     const files=config.document.files||[{id:config.document.id,title:config.document.title||config.document.id,markdown:config.document.markdown}];
     for(const file of files){
       const name=String(file.title||file.id).replace(/[\\/]/g,"-").replace(/\.md$/i,"")+".md";
-      const doc=addDocument({name,text:file.markdown});doc.id=file.id;doc.blankWelcome=!config.document.files&&!file.markdown.trim();
+      const doc=addDocument({name,text:file.markdown});doc.id=file.id;doc.annotations=file.annotations;doc.blankWelcome=!config.document.files&&!file.markdown.trim();
       if(file.id===(config.document.activeFileId||config.document.id))window.LumaEmbed.managedPath=doc.path;
     }
     return {imported:true};
@@ -492,7 +492,9 @@ ${desktopDownloadMarkdown}
   });
 
   window.lumaWeb = {
-    embeddedFiles(){return {files:[...documents.values()].map(doc=>({id:doc.id,title:doc.name.replace(/\.(md|markdown|mkd|mdx)$/i,''),markdown:doc.text})),activeFileId:documents.get(window.LumaEmbed?.managedPath)?.id};},
+    embeddedFiles(){return {files:[...documents.values()].map(doc=>({id:doc.id,title:doc.name.replace(/\.(md|markdown|mkd|mdx)$/i,''),markdown:doc.text,...(doc.annotations?{annotations:doc.annotations}:{})})),activeFileId:documents.get(window.LumaEmbed?.managedPath)?.id};},
+    embeddedAnnotationState(path){const doc=documents.get(path);return {id:doc?.id,snapshot:doc?.annotations};},
+    cacheEmbeddedAnnotations(path,snapshot){const doc=documents.get(path);if(doc)doc.annotations=snapshot;},
     cacheEmbeddedText(path,text){const doc=documents.get(path);if(doc){doc.text=text;if(text.trim())doc.blankWelcome=false;}},
     activateEmbedded(path){const doc=documents.get(path);if(doc)window.LumaEmbed.activate(path,doc.name.replace(/\.(md|markdown|mkd|mdx)$/i,''),doc.text);},
     renameDocument(path, stem) {
