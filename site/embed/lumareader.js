@@ -4,7 +4,9 @@ export function normalizeEmbedOptions(options={}) {
   if(!['direct','source','preview'].includes(mode))throw new TypeError('mode must be direct, source or preview');
   const features={sidebar:true,modeSwitch:false,rename:true,formatting:true,share:true,settings:true,language:true};
   for(const key of Object.keys(features))if(options.features?.[key]!==undefined){if(typeof options.features[key]!=='boolean')throw new TypeError('features.'+key+' must be boolean');features[key]=options.features[key];}
-  return {mode,features,sourcePreview:options.sourcePreview!==false,language:typeof options.language==='string'?options.language:undefined};
+  const toolbar={formatting:false,share:false};
+  for(const key of Object.keys(toolbar))if(options.toolbar?.[key]!==undefined){if(typeof options.toolbar[key]!=='boolean')throw new TypeError('toolbar.'+key+' must be boolean');toolbar[key]=features[key]&&options.toolbar[key];}
+  return {mode,features,toolbar,sourcePreview:options.sourcePreview!==false,language:typeof options.language==='string'?options.language:undefined};
 }
 const protocol = 'lumareader-embed-v1';
 let expandedInstance;
@@ -18,7 +20,8 @@ function validateFiles(value){
 }
 function validateDocument(document) {
   if (!document || typeof document.id !== 'string' || !document.id || document.id.length > 200 || typeof document.markdown !== 'string' || document.markdown.length > 64 * 1024 * 1024) throw new TypeError('Provide {id, title, markdown}; Markdown must be at most 64 Mi characters.');
-  return {id:document.id,title:String(document.title || '').slice(0,200),markdown:document.markdown,...validateFiles(document),revision:0};
+  const workspace=validateFiles(document),active=workspace.files?.find(file=>file.id===workspace.activeFileId)||document;
+  return {id:document.id,title:String(active.title || '').slice(0,200),markdown:active.markdown,...workspace,revision:0};
 }
 // Same expand/restore glyphs and button treatment as Kainnne × Gemini.
 export function setExpandIcon(button,expanded){
@@ -55,8 +58,9 @@ export function mountLumaReader(container, options) {
   function accept(document) {
     if (!document || document.id !== current.id || typeof document.markdown !== 'string' || !Number.isSafeInteger(document.revision) || document.revision < current.revision) return false;
     let workspace;try{workspace=validateFiles(document);}catch{return false;}
+    const active=workspace.files?.find(file=>file.id===workspace.activeFileId)||document;
     const changed = document.revision > current.revision;
-    current = {id:current.id,title:typeof document.title==='string'?document.title.slice(0,200):current.title,markdown:document.markdown,...workspace,revision:document.revision};
+    current = {id:current.id,title:typeof active.title==='string'?active.title.slice(0,200):current.title,markdown:active.markdown,...workspace,revision:document.revision};
     iframe.title='LumaReader — '+current.title;
     if (changed) {try {options.onChange?.({...current});} catch (error) {report(error);}}
     return true;
@@ -129,7 +133,8 @@ export function mountLumaReader(container, options) {
     expand(false);destroyed=true;clearTimeout(startup);readyReject(new Error('Editor destroyed.'));rejectRequests('Editor destroyed.');
     window.removeEventListener('message',receive);window.removeEventListener('keydown',escape);window.removeEventListener('beforeunload',beforeUnload);iframe.remove();expandedBar.remove();
   }
-  const api = {ready,getDocument,save,expand:()=>expand(true),collapse:()=>expand(false),destroy};
+  async function getActiveDocument(){const {id,activeFileId,title,markdown}=await getDocument();return {id,activeFileId,title,markdown};}
+  const api = {ready,getDocument,getActiveDocument,save,expand:()=>expand(true),collapse:()=>expand(false),destroy};
   window.addEventListener('message',receive);window.addEventListener('keydown',escape);window.addEventListener('beforeunload',beforeUnload);
   iframe.src=url.href;container.append(expandedBar,iframe);
   return api;

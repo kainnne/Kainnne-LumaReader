@@ -79,6 +79,23 @@
     "language": {
       "type": "string",
       "description": "Initial interface language, e.g. zh-Hant, zh-Hans, en or ja; overrides the visitor stored preference at mount."
+    },
+    "toolbar": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Initial checkbox values in embedded Settings, reset from host configuration at each mount. features:false still disallows a tool.",
+      "properties": {
+        "formatting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initially check Formatting to show insertion/table controls."
+        },
+        "share": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initially check Share Markdown to show the share button."
+        }
+      }
     }
   }
 }

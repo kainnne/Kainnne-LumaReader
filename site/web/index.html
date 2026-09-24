@@ -27,10 +27,10 @@
   <link rel="stylesheet" href="vendor/katex/katex.min.css?v=2" />
   <link id="highlight-light" rel="stylesheet" href="vendor/highlight/github.min.css?v=2" />
   <link id="highlight-dark" rel="stylesheet" href="vendor/highlight/github-dark.min.css?v=2" disabled />
-  <link rel="stylesheet" href="styles.css?v=1.4.1-web.6" />
-  <link rel="stylesheet" href="library-ui.css?v=1.4.1-web.6" />
+  <link rel="stylesheet" href="styles.css?v=1.4.1-web.7" />
+  <link rel="stylesheet" href="library-ui.css?v=1.4.1-web.7" />
   <link rel="stylesheet" href="direct-editor.css" />
-  <link rel="stylesheet" href="web-compact.css?v=2" />
+  <link rel="stylesheet" href="web-compact.css?v=3" />
 </head>
 <body class="booting">
   <div id="boot-loader" class="boot-loader" role="status" aria-live="polite" aria-label="Loading LumaReader Web">
@@ -98,6 +98,7 @@
         </div>
       </section>
 
+      <p id="embed-draft-hint" class="sidebar-empty" hidden></p>
       <div class="sidebar-tabs" role="tablist" data-i18n-aria="navigation">
         <button class="sidebar-tab active" id="files-tab" type="button" role="tab" aria-selected="true" data-panel="files-panel" data-i18n="files">Files</button>
         <button class="sidebar-tab" id="outline-tab" type="button" role="tab" aria-selected="false" data-panel="outline-panel" data-i18n="outline">Current File Outline</button>
@@ -197,6 +198,11 @@
             <div id="palette-menu" class="toolbar-menu palette-menu appearance-menu" role="dialog" aria-label="Appearance and toolbar settings" hidden>
               <header class="appearance-menu-header"><div><strong data-i18n="appearanceSettings">Appearance &amp; toolbar</strong><span data-i18n="appearanceHint">Keep the reader focused on what you use.</span></div><button id="appearance-close" type="button" aria-label="Close">×</button></header>
               <section id="web-editor-settings" class="appearance-section" hidden></section>
+              <section id="embed-toolbar-settings" class="appearance-section" hidden>
+                <strong data-i18n="toolbarVisibility">Toolbar visibility</strong>
+                <label><input id="embed-formatting-toggle" type="checkbox" /><span id="embed-formatting-label">Formatting</span></label>
+                <label><input id="embed-share-toggle" type="checkbox" /><span data-i18n="shareMarkdown">Share Markdown</span></label>
+              </section>
               <section class="appearance-section"><strong data-i18n="colorMode">Color mode</strong><div class="appearance-mode-switch" role="group" aria-label="Color mode"><button id="theme-light" type="button" data-theme-choice="light"><span aria-hidden="true">☀</span><span data-i18n="lightMode">Light mode</span></button><button id="theme-dark" type="button" data-theme-choice="dark"><span aria-hidden="true">◐</span><span data-i18n="darkMode">Dark mode</span></button></div></section>
               <section class="appearance-section"><strong data-i18n="palette">Color palette</strong><div id="palette-options" class="palette-options" role="listbox"></div></section>
               <section class="appearance-section"><strong data-i18n="language">Interface language</strong><select id="settings-language" class="settings-language" aria-label="Interface language">
@@ -400,18 +406,18 @@
   <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
   <script src="vendor/highlight/highlight.min.js?v=11.11.1"></script>
-  <script src="embed-bridge.js?v=1.4.1-web.6"></script>
-  <script src="web-bridge.js?v=1.4.1-web.6"></script>
-  <script src="reader-utils.js?v=1.4.1-web.6"></script>
+  <script src="embed-bridge.js?v=1.4.1-web.7"></script>
+  <script src="web-bridge.js?v=1.4.1-web.7"></script>
+  <script src="reader-utils.js?v=1.4.1-web.7"></script>
   <script src="adapters/core.js?v=1.2.0"></script>
   <script src="adapters/plain-text.js?v=1.2.0"></script>
   <script src="adapters/index.js?v=1.2.0"></script>
-  <script src="library-search.js?v=1.4.1-web.6"></script>
-  <script src="pdf-tools.js?v=1.4.1-web.6"></script>
-  <script src="pdf-dialog.js?v=1.4.1-web.6"></script>
+  <script src="library-search.js?v=1.4.1-web.7"></script>
+  <script src="pdf-tools.js?v=1.4.1-web.7"></script>
+  <script src="pdf-dialog.js?v=1.4.1-web.7"></script>
   <script src="direct-editor.bundle.js"></script>
   <script src="code-editor.bundle.js"></script>
-  <script src="app.js?v=1.4.1-web.6"></script>
-  <script src="multiformat-ui.js?v=1.4.1-web.6"></script>
+  <script src="app.js?v=1.4.1-web.7"></script>
+  <script src="multiformat-ui.js?v=1.4.1-web.7"></script>
 </body>
 </html>

@@ -90,3 +90,10 @@ LUMA_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google 
 `language:'zh-Hant'`（亦支援 en、zh-Hans、ja 等既有語言）指定每次掛載的初始語言；`features.language:false` 隱藏切換入口。預設允許切換。原 preferences.language 也相容，明確 language 優先。
 
 更新指令使用不可變的 1.1.0 工具網址，以避開 npx 對舊版固定別名的快取。此工具每次查詢最新 Web version.json，工具網址中的版本不會鎖住 Reader 版本，之後可沿用同一行。
+
+
+### 工具列勾選與目前文章
+
+嵌入版預設只顯示設定與編輯／儲存。設定內提供格式、分享 Markdown 勾選，皆預設 false。以 `toolbar:{formatting:true,share:true}` 指定初始勾選，每次掛載重新套用；`features.formatting/share:false` 仍可完全停用該選項。一般 Web 不受影響。
+
+網站使用目前開啟的文章：`await editor.getActiveDocument()` 回傳 `{id,activeFileId,title,markdown}`，不帶其他草稿。既有 onChange/onSave/getDocument 的頂層 title/markdown 同樣只對應目前文件，切換時立即更新。files 只用於草稿還原，不合併或逐份當成網站文章提交。網站儲存文章取 title/markdown 即可；需要草稿恢復時另存完整快照。下載與下一步也使用目前文章。重新掛載時以 activeFileId 指向的文件校正 title/markdown，避免舊快照欄位不一致。

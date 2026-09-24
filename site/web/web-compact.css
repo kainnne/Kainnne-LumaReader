@@ -65,3 +65,10 @@ body.embed-no-sidebar.editing-document .file-heading { padding-left:0; }
 #embed-welcome button {max-width:100%;white-space:normal;min-height:44px;}
 
 .embed-no-language .language-control {display:none !important;}
+
+.embedded-reader.embed-hide-formatting #editor-insert-control, .embedded-reader.embed-hide-formatting #direct-table-tools,
+.embedded-reader.embed-hide-share #share-document {display:none !important;}
+#embed-toolbar-settings label {display:flex;align-items:center;gap:10px;min-height:36px;color:var(--ink);font:13px var(--sans);cursor:pointer;}
+#embed-toolbar-settings[hidden], #embed-toolbar-settings label[hidden] {display:none !important;}
+#embed-toolbar-settings input {width:16px;height:16px;accent-color:var(--accent-strong);}
+#embed-draft-hint {margin:0;padding:6px 4px 12px;font-size:12px;}

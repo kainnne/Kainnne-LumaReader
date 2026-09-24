@@ -63,18 +63,27 @@
 <dt><code>sourcePreview</code></dt><dd>原文編輯的對照預覽預設為 <code>true</code>，可設為 <code>false</code>。使用者仍可操作對照預覽按鈕。</dd>
 <dt><code>features.sidebar</code>、<code>features.modeSwitch</code></dt><dd>側邊欄預設可展開（<code>true</code>），一開始收起；不需要文件列表時可設 <code>false</code>，仍可拖曳匯入。Markdown 切換鈕預設 <code>false</code>，需要切換兩種編輯方式時設 <code>true</code>。</dd>
 <dt><code>language</code>、<code>features.language</code></dt><dd>例如 <code>"language": "zh-Hant"</code>（繁中）、<code>"en"</code>（英文）、<code>"ja"</code>（日文）。要固定網站指定的語言，就把 <code>features.language</code> 設為 <code>false</code>；預設 <code>true</code> 可讓訪客在設定中切換。</dd>
+<dt><code>toolbar.formatting</code>、<code>toolbar.share</code></dt><dd>嵌入版的「格式」與「分享 Markdown」預設不勾選，使用者可在設定中開啟。網站若要預設勾選，可加入 <code>"toolbar": {"formatting": true, "share": true}</code>。每次掛載以網站設定為初始值；若 <code>features</code> 明確關閉該功能，設定中也不提供勾選。</dd>
 <dt><code>features.rename</code>、<code>features.share</code></dt><dd>預設 <code>true</code>。設為 <code>false</code> 可關閉改名、隱藏分享。處理私人文案時可關閉分享；標題由網站決定時可關閉改名。</dd>
 <dt><code>features.formatting</code>、<code>features.settings</code></dt><dd>預設 <code>true</code>。設為 <code>false</code> 可隱藏格式插入／表格工具、閱讀設定。隱藏格式工具不會禁止輸入 Markdown 格式。</dd>
 <dt><code>expand</code>、<code>download</code></dt><dd>一行安裝工具的外層放大與下載按鈕，預設 <code>true</code>；設為 <code>false</code> 可隱藏。</dd>
 </dl>
 <p>嵌入版統一拿掉「新增 Markdown」。空白文件會提供「拖曳／匯入 Markdown」與「直接撰寫」入口；之後也可從側邊欄匯入並查看文件大綱。最多保留 3 份文件，切換時保留各份草稿；超過上限時，先移除不需要的文件再匯入。已提供內容的小說章節會直接開啟，不必再走一次入口。</p>
-<p>檔名可點擊修改，副檔名固定。改名後 <code>onChange</code>／<code>onSave</code> 會回傳目前文件的 <code>title</code>（不含 .md）和文字。最外層 <code>id</code> 保持不變；<code>files</code> 保留全部文件（各有固定 id、title、markdown），<code>activeFileId</code> 指向正在開啟的文件。接後台時請儲存整份回傳資料，再原樣傳回 <code>document</code> 以還原多份文件。一行安裝工具已自動處理瀏覽器草稿；下載會使用目前的檔名。一般 Web 的改名只套用此分頁中的文件，不會重新命名電腦上的原檔。</p>
-<p>使用 SDK 時，將相同的 <code>mode</code>、<code>readOnly</code>、<code>sourcePreview</code>、<code>features</code> 傳給 <code>mountLumaReader</code> 即可；外層按鈕由你的網站自行決定。這些是介面選項，資料權限仍由網站後台管理。</p>
+<p>檔名可點擊修改，副檔名固定。改名後 <code>onChange</code>／<code>onSave</code> 會回傳目前文件的 <code>title</code>（不含 .md）和文字。最外層 <code>id</code> 保持不變；<code>files</code> 保留全部文件（各有固定 id、title、markdown），<code>activeFileId</code> 指向正在開啟的文件。網站的文章內容只取目前開啟的 <code>title</code> 與 <code>markdown</code>，不合併、不輪流送出其他草稿。需要暫存多份草稿時，另存完整快照，再傳回 <code>document</code> 還原。一行安裝工具已自動處理瀏覽器草稿；下載會使用目前的檔名。一般 Web 的改名只套用此分頁中的文件，不會重新命名電腦上的原檔。</p>
+<div class="code-heading"><span>網站只取得目前這一篇文章</span><button type="button" data-copy-code="active-document-code">複製程式碼</button></div>
+<pre id="active-document-code"><code>const article = await editor.getActiveDocument();
+// article.title：目前文章標題
+// article.markdown：目前文章內容（單一字串，不含其他草稿）
+// article.activeFileId：目前文件的識別碼
+
+// 原有 onChange / onSave 的 title、markdown 也都指向目前文章。
+// files 僅用於保留草稿；不要將 files 合併成網站文章。</code></pre>
+<p>使用 SDK 時，將相同的 <code>mode</code>、<code>readOnly</code>、<code>sourcePreview</code>、<code>features</code>、<code>toolbar</code> 傳給 <code>mountLumaReader</code> 即可；外層按鈕由你的網站自行決定。這些是介面選項，資料權限仍由網站後台管理。</p>
 <p class="guide-note">讓 agent 協助嵌入：把這頁網址與你的用途交給它，例如「小說章節，只編輯現有內容、不分享、不改名」。程式可讀取 <a href="options.schema.json">完整設定規格 JSON</a> 與 <a href="novel-options.json">小說文案設定範例</a>，直接調整同一份嵌入設定。原本的一行安裝指令仍可沿用。</p>
 </section>
 <section id="updates" class="guide-section"><p class="eyebrow">嵌入版更新</p><h2>更新現有的嵌入區塊</h2>
-<p><strong>1.4.1-web.6 · 2026 年 9 月 24 日</strong></p>
-<ul><li>嵌入版新增空白起始畫面、最多 3 份 Markdown 匯入與草稿保留，可設定預設語言和語言切換。</li><li>網頁與嵌入版支援點檔名修改，副檔名固定；嵌入版沿用原文件 ID 儲存。</li><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器可選擇直接編輯、Markdown 原文或預覽，並調整開放的功能。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
+<p><strong>1.4.1-web.7 · 2026 年 9 月 24 日</strong></p>
+<ul><li>嵌入工具列預設只保留設定與編輯／儲存；格式和分享改為設定內的勾選項目。</li><li>網站以目前開啟的文件作為文章，其餘文件僅作草稿暫存。</li><li>嵌入版新增空白起始畫面、最多 3 份 Markdown 匯入與草稿保留，可設定預設語言和語言切換。</li><li>網頁與嵌入版支援點檔名修改，副檔名固定；嵌入版沿用原文件 ID 儲存。</li><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器可選擇直接編輯、Markdown 原文或預覽，並調整開放的功能。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
 <p>使用官方固定網址的嵌入區塊，重新整理網頁後，就會在快取更新時載入相容新版，不必重新安裝。正在編輯時請先儲存。</p>
 <p>若原本用一行指令安裝，可執行以下更新指令，取得目前維護的載入版本：</p>
 <div class="code-heading"><span>更新已安裝的 HTML</span><button type="button" data-copy-code="update-command">複製更新指令</button></div>

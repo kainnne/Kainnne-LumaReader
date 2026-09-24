@@ -185,7 +185,7 @@
     enabledExtensions:new Set(MARKDOWN_EXTENSIONS), typeCatalog:new Map(), documentKind:"markdown", activeAdapter:null,
     documentRequestId:0, documentAbortController:null, libraryRefreshId:0,libraryScanId:0,libraryScanTimer:null,libraryScanStartedAt:0,
     compactFormatting:false,editorMode:"direct",imageViewerActual:false,editing:false,editorDirty:false,editorSaved:false,saving:false,editorPreview:localStorage.getItem("lumareader-editor-preview")!=="false",editorPreviewTimer:null,editorSplitRatio:Math.max(.25,Math.min(.75,Number(localStorage.getItem("lumareader-editor-split")||.5))),editorScrollSyncing:false,editorScrollFrame:null,editorScrollMapFrame:null,editorPreviewBlocks:[],editorSourceToPreview:[],editorPreviewToSource:[],editorPreviewScrollIntent:false,
-    toolbarVisibility:storedToolbarVisibility(),languagePromptSeen:localStorage.getItem("lumareader-language-prompt-seen")==="true",importingImages:false,
+    embedToolbar:{formatting:false,share:false},toolbarVisibility:storedToolbarVisibility(),languagePromptSeen:localStorage.getItem("lumareader-language-prompt-seen")==="true",importingImages:false,
     creatingDocument:false,choosingCreateDirectory:false,createDirectory:"",createDirectoryPath:"",createDestinationToken:"",pendingWebFiles:[],sessionDialogPath:"",sessionDialogMode:"remove"
   };
   let mermaidLibraryPromise = null;
@@ -540,7 +540,7 @@
     const node=$("#"+id),anchor=document.createComment(id);node.before(anchor);return {node,anchor};
   });
   function syncEditorToolPlacement(){
-    const narrow=compactToolbarQuery.matches,settings=$("#web-editor-settings");
+    const narrow=compactToolbarQuery.matches||Boolean(window.LumaEmbed),settings=$("#web-editor-settings");
     for(const {node,anchor} of compactEditorTools){
       if(narrow){if(node.parentElement!==settings)settings.append(node);}
       else if(node.parentNode!==anchor.parentNode)anchor.after(node);
@@ -549,8 +549,23 @@
     $("#cancel-edit").textContent=narrow?t(state.editorDirty?"discardEdits":"exitEdit"):"×";
   }
   compactToolbarQuery.addEventListener("change",syncEditorToolPlacement);
+  function syncEmbedToolbar(){
+    const config=window.LumaEmbed?.config,zh=state.language.startsWith('zh'),section=$("#embed-toolbar-settings");
+    $("#embed-formatting-label").textContent=zh?'格式':'Formatting';
+    section.hidden=!config;
+    $("#embed-draft-hint").hidden=!config;
+    $("#embed-draft-hint").textContent=zh?'目前開啟的文章會交給網站使用，其餘保留為草稿。':'The open document is used by the website. Other files stay as drafts.';
+    if(!config)return;
+    for(const [key,id] of [['formatting','embed-formatting-toggle'],['share','embed-share-toggle']]){
+      const input=$("#"+id),allowed=config.features?.[key]!==false;
+      input.closest('label').hidden=!allowed;input.checked=allowed&&state.embedToolbar[key];
+      document.body.classList.toggle('embed-hide-'+key,!input.checked);
+    }
+    if(!state.embedToolbar.formatting&&!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);
+  }
+  for(const [key,id] of [['formatting','embed-formatting-toggle'],['share','embed-share-toggle']])$("#"+id).addEventListener('change',event=>{state.embedToolbar[key]=event.target.checked;syncEmbedToolbar();});
   function updateEditorControls(){
-    updateFilenameControl();
+    updateFilenameControl();syncEmbedToolbar();
     if(window.LumaEmbed?.attached && state.currentPath===window.LumaEmbed.managedPath){const text=state.editing?sourceEditorEl.value:state.rawText;window.lumaWeb.cacheEmbeddedText(state.currentPath,text);window.LumaEmbed.changed(text);}
     const editButton=$("#edit-document"),cancelButton=$("#cancel-edit"),label=$("#edit-document-label"),icon=$("#edit-document-icon"),editable=canEditCurrentDocument();
     editButton.hidden=!editable&&!state.editing;
@@ -1214,6 +1229,7 @@
     if(window.LumaEmbed){
       state.sidebarCollapsed=true;updateSidebarToggle();
       const config=window.LumaEmbed.config;
+      state.embedToolbar={formatting:false,share:false,...config.toolbar};syncEmbedToolbar();
       for(const [feature,enabled] of Object.entries(config.features||{}))document.body.classList.toggle('embed-no-'+feature,!enabled);
       document.body.classList.toggle('embed-readonly',config.readOnly);
       state.editorPreview=config.sourcePreview!==false;

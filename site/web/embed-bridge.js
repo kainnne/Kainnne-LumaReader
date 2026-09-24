@@ -21,7 +21,8 @@
   }
   function snapshot(refresh = true) {
     if (refresh && api) changed(api.getText());
-    return {...document,...(api?.getFiles?.()||{}),revision};
+    const workspace=api?.getFiles?.()||{},active=workspace.files?.find(file=>file.id===workspace.activeFileId);
+    return {...document,...(active?{title:active.title,markdown:active.markdown}:{}),...workspace,revision};
   }
   function persist(text) {
     changed(text);
