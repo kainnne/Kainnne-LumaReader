@@ -1,0 +1,10 @@
+{
+  "name": "@kainnne/lumareader-embed",
+  "version": "1.0.0",
+  "description": "Add the original LumaReader Web interface to an HTML page.",
+  "license": "MIT",
+  "bin": {"lumareader-embed": "embed.cjs"},
+  "files": ["embed.cjs", "LICENSE"],
+  "engines": {"node": ">=18"},
+  "homepage": "https://lumareader.kainnne.com/embed/"
+}

@@ -1,0 +1,7 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LumaReader 嵌入示範</title><link rel="stylesheet" href="demo.css"></head>
+<body><main><p class="eyebrow">LUMAREADER · EMBED DEMO</p><h1>你的網站，熟悉的編輯體驗。</h1><p class="intro">在小視窗裡修改逐字稿，放大後專心編輯。下一步加上圖片，再回來繼續寫。</p>
+<div class="steps"><span id="step-label">01 編輯逐字稿</span><span>02 加入圖片</span></div>
+<p id="notice" role="status">這是整合範例：草稿儲存在此瀏覽器，沒有上傳伺服器。請勿用無痕模式測試保留草稿。</p>
+<section id="edit-step"><div class="actions"><small>完整 LumaReader 網頁版，沿用原有語言與設定。</small><button id="expand-reader" aria-pressed="false">放大編輯器</button></div><div id="reader"></div><div class="actions"><small>編輯中的內容會自動備份到這個瀏覽器。</small><button id="backup">下載 .md 備份</button><button id="next">儲存並前往下一步 →</button></div></section>
+<section id="image-step" hidden><h2>替逐字稿加上圖片</h2><p>編輯器已暫時移除。網站仍保有完整 Markdown，回到上一步時會重新載入。</p><label>圖片網址<input id="image-url" type="url" placeholder="https://example.com/image.jpg"></label><label>圖片說明<input id="image-caption" placeholder="例如：第一章插圖"></label><div class="actions"><button id="add-image">加入文件</button><button id="back">← 回到編輯</button></div><h3>目前交給網站的 Markdown</h3><pre id="output"></pre></section>
+<details><summary>未來接到你的網站</summary><p>用 SDK 載入文件，透過 onChange 接收草稿、onSave 寫入自己的後台。下一步之前先等待 save() 成功；存檔失敗就留在編輯頁。<a href="./">一行指令加入自己的 HTML →</a></p></details></main><script type="module" src="demo.js"></script></body></html>

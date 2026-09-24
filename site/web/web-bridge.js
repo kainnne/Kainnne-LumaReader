@@ -365,12 +365,16 @@ ${desktopDownloadMarkdown}
     const candidate = baseParts.join("/");
     const asset = assets.get(candidate) || assets.get(clean) || assets.get(clean.split("/").pop());
     if (asset) return asset.url;
-    try { return new URL(value, location.href).href; } catch { return ""; }
+    try { return new URL(value, window.LumaEmbed?.config?.baseURL || location.href).href; } catch { return ""; }
   }
 
   async function saveDocument({ path, text }) {
     const document = documents.get(path);
     if (!document) return { ok: false, message: "Document is not available in LumaReader Web." };
+    if (window.LumaEmbed?.managedPath === path) {
+      try { const saved = await window.LumaEmbed.persist(String(text || "")); text = saved.markdown; }
+      catch (error) { return {ok:false,message:error.message}; }
+    }
     document.text = String(text || "");
     document.modifiedNs = String(Date.now() * 1000000);
     if (document.handle) {
@@ -386,7 +390,7 @@ ${desktopDownloadMarkdown}
         console.warn("Unable to write the original file", error);
       }
     }
-    return { ok: true, modifiedNs: document.modifiedNs, sessionOnly: true, document: payload(document) };
+    return { ok: true, modifiedNs: document.modifiedNs, sessionOnly: window.LumaEmbed?.managedPath !== path, document: payload(document) };
   }
 
   async function importImage({ path, name, bytes }) {
@@ -398,6 +402,12 @@ ${desktopDownloadMarkdown}
     if (!mime) return { ok: false, code: "UNSUPPORTED_IMAGE" };
     const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
     if (!data.length || data.byteLength > 32 * 1024 * 1024) return { ok: false, code: "INVALID_IMAGE" };
+    if (window.LumaEmbed?.managedPath === path) {
+      // Portable Markdown retains images when the host removes/recreates the iframe.
+      let binary = "";
+      for (let offset=0;offset<data.length;offset+=0x8000) binary += String.fromCharCode(...data.subarray(offset,offset+0x8000));
+      return {ok:true,image:{path:safeName,markdownPath:`data:${mime};base64,${btoa(binary)}`}};
+    }
     const documentParts = document.path.split("/");
     const documentName = documentParts.pop() || "document.md";
     const folder = documentParts.join("/");
@@ -461,16 +471,27 @@ ${desktopDownloadMarkdown}
     const browserLanguage = navigator.language || "en";
     localStorage.setItem("lumareader-language", browserLanguage.startsWith("zh") ? "zh-Hant" : browserLanguage);
   }
-  const ready = importSharedDocument().then((result) => {
+  const ready = window.LumaEmbed ? window.LumaEmbed.ready.then(config => {
+    const name = String(config.document.title || config.document.id).replace(/[\\/]/g,"-").replace(/\.md$/i,"") + ".md";
+    const document = addDocument({name,text:config.document.markdown});
+    window.LumaEmbed.managedPath = document.path;
+    return {imported:true};
+  }) : importSharedDocument().then((result) => {
     if (!result.imported) addDocument({ name: "LumaReader Web.md", text: sample, path: "LumaReader Web.md", sample: true });
     return result;
   });
 
-  window.lumaWeb = { desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
+  window.lumaWeb = { commitEmbeddedText(text) {
+    const document = documents.get(window.LumaEmbed?.managedPath);
+    if (document) {document.text=text;document.modifiedNs=String(Date.now()*1000000);}
+  }, desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
   window.lumaDesktop = {
     isDesktop: false,
     platform: "web",
-    getPreferences: async () => ({ readerDefaultsVersion: 3, ...initialPreferences }),
+    getPreferences: async () => {
+      const embed = await window.LumaEmbed?.ready;
+      return {readerDefaultsVersion:3,...(embed?.preferences || {}),...initialPreferences};
+    },
     setPreferences: async (patch) => {
       const next = { ...loadPreferences(), ...patch };
       localStorage.setItem(preferencesKey, JSON.stringify(next));
