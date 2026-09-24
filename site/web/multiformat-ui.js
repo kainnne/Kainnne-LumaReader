@@ -255,10 +255,10 @@
     const detail = { formats: formatPayload() };
     document.dispatchEvent(new CustomEvent("luma:ui-ready", { detail }));
     resolveReady(detail);
-    if (savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) {
+    if (!window.LumaEmbed && savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) {
       autoTourTimer = setTimeout(() => {
         autoTourTimer = null;
-        if (savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) startTour();
+        if (!window.LumaEmbed && savedTourVersion() < ONBOARDING_VERSION && tourStep < 0) startTour();
       }, 280);
     }
     return detail;
