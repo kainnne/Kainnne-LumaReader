@@ -29,5 +29,24 @@
     }
     root.querySelectorAll(":scope > :not(.luma-page-break) .luma-page-break").forEach(node => node.remove());
   }
-  return { marker, install, prepare };
+  // Export-only layout: retain source markers and never mutate Markdown.
+  function sections(root) {
+    return [...root.children].filter(node => !node.matches('.luma-page-break, script, style, [hidden]'));
+  }
+  function clearLayout(root) {
+    root.querySelectorAll('[data-pdf-break], [data-pdf-release-after]').forEach(node => {
+      delete node.dataset.pdfBreak; delete node.dataset.pdfReleaseAfter;
+    });
+  }
+  function applyLayout(root, choices = {}) {
+    clearLayout(root);
+    const blocks = sections(root);
+    blocks.forEach((node, index) => {
+      const mode = choices[index];
+      if (!['page', 'flow', 'keep'].includes(mode)) return;
+      node.dataset.pdfBreak = mode;
+      if (mode === 'flow' && index > 0) blocks[index - 1].dataset.pdfReleaseAfter = 'true';
+    });
+  }
+  return { marker, install, prepare, sections, applyLayout, clearLayout };
 });

@@ -6,7 +6,7 @@ async function main(){
  await fs.writeFile(path.join(root,'test.md'),original);await fs.writeFile(path.join(root,'photo.png'),image);
  const service=new LocalReaderService({rendererRoot:path.resolve('renderer'),libraryRoot:root});const port=await service.listen();let browser;
  const prefs={language:'zh-Hant',readerDefaultsVersion:6,onboardingVersion:5,languagePromptSeen:true,sidebarCollapsed:true};const results={};
- try{browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1360,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.dismiss());
+ try{browser=await chromium.launch({headless:true, ...(process.env.LUMA_CHROMIUM_EXECUTABLE ? {executablePath:process.env.LUMA_CHROMIUM_EXECUTABLE} : {})});const page=await browser.newPage({viewport:{width:1360,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.dismiss());
  await page.exposeFunction('__prefs',async patch=>Object.assign(prefs,patch||{}));
  await page.exposeFunction('__save',async p=>{try{return {ok:true,document:await service.saveMarkdownDocument(p.path,p.text,p.expectedModifiedNs,p.expectedRevision)};}catch(e){return {ok:false,code:e.code,message:e.message};}});
  await page.exposeFunction('__image',async p=>({ok:true,image:await service.importMarkdownImage(p.path,p.name,Buffer.from(p.bytes))}));

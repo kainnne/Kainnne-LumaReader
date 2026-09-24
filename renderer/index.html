@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles.css?v=1.3.1" />
   <link rel="stylesheet" href="library-ui.css?v=1.3.1" />
   <link rel="stylesheet" href="direct-editor.css" />
+  <style id="pdf-page-style"></style>
 </head>
 <body>
   <div id="app" class="app">
@@ -336,16 +337,32 @@
       </form>
     </dialog>
     <dialog id="pdf-options-dialog" class="pdf-options-dialog" aria-labelledby="pdf-options-title">
-      <form method="dialog">
-        <h2 id="pdf-options-title">Export PDF</h2>
-        <label class="pdf-option-check"><input id="pdf-include-footer" type="checkbox" /><span>Add footer name</span></label>
-        <label for="pdf-footer-text"><span>Footer name</span><input id="pdf-footer-text" type="text" maxlength="120" value="LumaReader" autocomplete="organization" /></label>
-        <label class="pdf-option-check"><input id="pdf-color-frame" type="checkbox" /><span>Add palette-colored frame</span></label>
-        <p class="pdf-style-help">Leave both unchecked for plain white pages without a footer.</p>
-        <p class="pdf-footer-help">Shown at the bottom right of each page. Leave blank to hide.</p>
-        <details><summary>Markdown → PDF</summary><p class="pdf-pagebreak-help">To start a new PDF page, add this on its own line in Markdown:</p><code>&lt;!-- lumareader:pagebreak --&gt;</code></details>
-        <footer><button class="compact-button" type="button" value="cancel">Cancel</button><button class="compact-button primary-button" type="submit" value="export">Continue</button></footer>
-      </form>
+      <header class="pdf-preview-header"><h2 id="pdf-options-title">Export PDF</h2><button id="pdf-close" class="compact-button" type="button">Cancel</button></header>
+      <div class="pdf-workspace">
+        <section class="pdf-controls">
+          <label><span data-pdf-label="paper">Paper size</span><select id="pdf-paper"><option>A4</option><option>Letter</option></select></label>
+          <label><span data-pdf-label="font">Text size</span><div class="pdf-range"><input id="pdf-font-size" type="range" min="12" max="22" step="1" value="18" /><output id="pdf-font-value">18 px</output></div></label>
+          <label><span data-pdf-label="inset">Page padding</span><select id="pdf-inset"><option value="6">Compact</option><option value="10">Standard</option><option value="14">Wide</option></select></label>
+          <label class="pdf-option-check"><input id="pdf-include-footer" type="checkbox" /><span data-pdf-label="footer">Add footer name</span></label>
+          <label for="pdf-footer-text"><span data-pdf-label="name">Footer name</span><input id="pdf-footer-text" type="text" maxlength="120" value="LumaReader" autocomplete="organization" /></label>
+          <label class="pdf-option-check"><input id="pdf-color-frame" type="checkbox" /><span data-pdf-label="frame">Add palette-colored frame</span></label>
+          <fieldset class="pdf-pagination">
+            <legend data-pdf-label="pagination">Adjust page breaks</legend>
+            <label><span data-pdf-label="section">Paragraph / block</span><select id="pdf-section"></select></label>
+            <label><span data-pdf-label="behavior">Page break</span><select id="pdf-break-mode"><option value="auto">Automatic</option><option value="page">Start on a new page</option><option value="flow">Continue from previous block</option><option value="keep">Keep this block together</option></select></label>
+            <p id="pdf-break-help"></p><p data-pdf-label="temporary">Only this export; Markdown stays unchanged.</p>
+            <button id="pdf-break-reset" type="button">Reset page breaks</button>
+          </fieldset>
+          <details><summary data-pdf-label="manual">Start a new page</summary><p data-pdf-label="marker">Insert this on its own line in Markdown:</p><code>&lt;!-- lumareader:pagebreak --&gt;</code></details>
+          <p id="pdf-preview-status" role="status" aria-live="polite"></p>
+          <button id="pdf-retry" class="compact-button" type="button" hidden>Retry preview</button>
+          <button id="pdf-save" class="compact-button primary-button" type="button" disabled>Save PDF…</button>
+        </section>
+        <section class="pdf-preview-panel" aria-label="PDF preview">
+          <nav class="pdf-page-navigation"><button id="pdf-prev" class="compact-button" type="button" aria-label="Previous page">‹</button><span id="pdf-page-count"></span><button id="pdf-next" class="compact-button" type="button" aria-label="Next page">›</button><select id="pdf-preview-zoom" aria-label="Preview zoom"><option value="fit">Fit page</option><option value="1">100%</option><option value="1.5">150%</option></select></nav>
+          <div id="pdf-preview-viewport"><canvas id="pdf-preview-canvas" role="img" aria-label="PDF page preview"></canvas></div>
+        </section>
+      </div>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <div id="language-hide-prompt" class="language-hide-prompt" role="dialog" aria-labelledby="language-hide-title" hidden>

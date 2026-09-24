@@ -1,6 +1,6 @@
 {
   "name": "kainnne-lumareader",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A local Markdown reader and editor for macOS, Windows and Linux.",
   "main": "src/main.js",
   "private": true,
@@ -18,7 +18,10 @@
     "dist:linux": "npm run build:editor && electron-builder --linux AppImage deb --x64 --publish never",
     "build:editor": "esbuild renderer/direct-editor.mjs --bundle --format=iife --global-name=LumaDirectEditor --outfile=renderer/direct-editor.bundle.js --minify && esbuild renderer/code-editor.mjs --bundle --format=iife --global-name=LumaCodeEditor --outfile=renderer/code-editor.bundle.js --minify",
     "pack:preview": "npm run build:editor && electron-builder --mac --arm64 --dir --publish never --config build/preview.config.cjs",
-    "test:direct-editor": "node scripts/direct-editor-smoke.cjs"
+    "test:direct-editor": "node scripts/direct-editor-smoke.cjs",
+    "test:embed": "node scripts/embed-smoke.cjs",
+    "build:embed": "node scripts/build-embed.cjs",
+    "preview:embed": "node scripts/serve-embed.cjs"
   },
   "devDependencies": {
     "@codemirror/commands": "6.11.1",
@@ -32,6 +35,7 @@
     "electron-builder": "26.15.3",
     "esbuild": "0.28.2",
     "markdown-it": "15.0.2",
+    "pdfjs-dist": "6.3.289",
     "playwright-core": "1.62.1",
     "prosemirror-commands": "1.7.2",
     "prosemirror-gapcursor": "1.4.1",
@@ -49,7 +53,7 @@
     "afterPack": "scripts/after-pack.js",
     "appId": "com.kainnne.lumareader",
     "productName": "Kainnne LumaReader",
-    "copyright": "Copyright \u00a9 2026 Kainnne",
+    "copyright": "Copyright © 2026 Kainnne",
     "protocols": [
       {
         "name": "Kainnne LumaReader",
@@ -97,7 +101,8 @@
       "renderer/library-ui.css",
       "renderer/direct-editor.bundle.js",
       "renderer/direct-editor.css",
-      "renderer/code-editor.bundle.js"
+      "renderer/code-editor.bundle.js",
+      "renderer/vendor/pdfjs/**/*"
     ],
     "mac": {
       "icon": "build/icon.icns",

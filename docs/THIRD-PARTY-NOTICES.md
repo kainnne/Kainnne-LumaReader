@@ -949,3 +949,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+
+## PDF.js 6.3.289 (Apache-2.0)
+
+Copyright Mozilla Foundation. Used locally to display generated PDF previews. The bundled license is in `renderer/vendor/pdfjs/LICENSE`. Source: https://github.com/mozilla/pdf.js

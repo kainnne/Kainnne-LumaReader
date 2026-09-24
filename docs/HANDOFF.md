@@ -77,3 +77,28 @@ The application should remain a polished, intuitive, local-first Markdown reader
 Future desktop releases should preserve one shared codebase and produce separate macOS, Windows, and Linux download artifacts from that source. Those artifacts belong in GitHub Releases, not in the Git repository. Browser work should continue to reuse the renderer while keeping the intentionally narrower persistence and export boundary documented in `docs/WEB-EDITION.md`.
 
 The account-free Web share and download-counter service is maintained in `cloudflare/lumareader-share/`. Deploy it with Wrangler after tests pass; its production `SHARE_LINKS` binding points to the `lumareader-share-links` KV namespace and `DOWNLOADS_DB` points to the download-count D1 database. Do not remove the 30-day share TTL or the exact reader-origin validation. The unchanged built-in sample must continue to bypass KV, and client-side sharing must retain the self-contained long-link fallback so a Worker outage does not disable sharing. Download redirects increment macOS, Windows, or Linux AppImage totals atomically and expose only their combined total to the website; no user identity or document data belongs in that database.
+
+
+## Local PDF preview 1.4.1 and compact Web toolbar
+
+The blue preview configuration is `1.4.1-preview.1`; the public desktop version stays 1.4.0. PDF export now opens a canvas preview rendered from actual Electron PDF bytes. `document:preview-pdf` keeps one snapshot per window (64 MB maximum), with a generation guard and single-flight printing. Export with a preview ID writes that snapshot without printing again; tokens are invalid across windows and after replacement/release. PDF.js 6.3.289 is bundled under `renderer/vendor/pdfjs`, with no CDN or external document upload. Tests cover pagination and exact-byte export in `scripts/pdf-preview-smoke.cjs` and snapshot lifecycle in `tests/pdf-export-main.test.js`.
+
+Only `site/web/` uses the compact reading toolbar: Edit and Settings stay visible, reading mode/language/source/media/share move into Settings, and text-size keyboard shortcuts remain without toolbar buttons. Bold text uses the sans-serif bold face in both readers for clearer CJK emphasis. `LUMA_CHROMIUM_EXECUTABLE` can select an existing browser for isolated headless smoke tests.
+
+## Local follow-up: PDF pagination + embeddable editor (2026-09-24)
+
+- Blue local `1.4.1-preview.4`: export-only block pagination overrides (new page / continue / keep together), actual-PDF preview, clear on close; Markdown and pink 1.4.0 unchanged. Reuses preview.3 footer alignment, 7 mm color-frame bottom margin, gray footer.
+- `site/embed/`: standalone iframe editor reusing the existing direct editor. `lumareader.js` provides origin/source/channel/boot-checked host API; host owns Markdown and asynchronous persistence, save acknowledgment tracks revisions, teardown refuses unsaved changes. Expand/collapse preserves instance. Demo saves browser drafts and demonstrates next-step image insertion / remount. No backend or public deployment added.
+- `docs/EMBED.md`, `docs/LOCAL-PREVIEW-1.4.1.md`, and `docs/examples/PDF-pagination-preview.md` cover integration and local testing. `npm run build:embed` prepares a portable static folder; `npm run preview:embed` serves only site assets on loopback.
+- Validation: `npm test` (142), PDF preview smoke (actual Chromium PDF), embed smoke (cross-origin, tables, source, expansion, next-step persistence, failed/stale saves, frame reload, mobile, read-only). Native packaged-App launch/signature checked separately; automated PDFs use isolated Chrome, not Electron developer launch.
+
+## Embed correction and public installer (2026-09-24)
+
+- Removed the separate prototype editor UI. Embedded Reader now loads the same `site/web/index.html`, CSS, translations, settings and editing logic as the standalone Web app; `embed-bridge.js` adds only host transport. Expansion controls live outside the Reader.
+- Public `/embed/` explains embedding, includes an interactive original-Reader demo, and offers a one-line `npx --yes https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html` installer plus copyable HTML. Homepage footer links to it. Installer preserves existing HTML, creates a backup, rejects duplicate setup and uses the permanent `/embed/install.js` loader.
+- Compatibility: stable tarball alias, archived versioned tools, v1 DOM/JSON/message protocol contract, frozen old-client fixture and browser test. Reader updates must not require customers to regenerate HTML or change document IDs/draft keys. Breaking integration changes need a separate entry point while retaining v1.
+- Public source commits: `21076c3`, `a4efad7`. Only Web/embed/tool changes were committed; local PDF preview changes remain uncommitted. Native Apps were not rebuilt or replaced during this correction.
+
+## Desktop release 1.4.1 (2026-09-24)
+
+Promotes the tested preview.4 PDF changes to the pink production build: actual PDF preview and exact-byte save, A4/Letter and layout controls, per-export pagination overrides, table flow, compact color-frame footer and gray footer text. Includes the clearer CJK bold treatment. Release builds use the existing signed/notarized macOS Universal, Windows x64 and Linux x64 CI workflows; only validated artifacts may be published. Homepage and counted download redirects advance together after assets exist. The local blue preview remains a separate build.

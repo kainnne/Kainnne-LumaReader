@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
   setCodeEditing: payload=>ipcRenderer.invoke("document:code-edit",payload),
   saveCodeDocument: payload=>ipcRenderer.invoke("document:save-code",payload),
   importImage: (payload) => ipcRenderer.invoke("document:import-image", payload),
+  previewPdf: (payload) => ipcRenderer.invoke("document:preview-pdf", payload),
+  releasePdf: () => ipcRenderer.invoke("document:release-pdf"),
   exportPdf: (payload) => ipcRenderer.invoke("document:export-pdf", payload),
   onSaveRequested: (callback) => {
     const listener = () => callback();

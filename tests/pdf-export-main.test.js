@@ -206,3 +206,29 @@ test("PDF style options default to plain and persist independently without erasi
   assert.equal(h.storedPreferences().pdfIncludeFooter,true);
   assert.equal(h.storedPreferences().pdfColorFrame,true);
 });
+
+test("PDF preview is window-local; saving uses identical cached bytes without reprinting", async t => {
+  const h=await createHarness(t);
+  const first=await h.invoke('document:preview-pdf',0,{footerText:'預覽公司',includeFooter:true,colorFrame:true,pageSize:'Letter',fontSize:16,inset:10});
+  assert.equal(first.ok,true);assert.deepEqual(Buffer.from(first.bytes),pdfBytes);
+  assert.equal(h.storedPreferences().pdfFooterText,undefined);
+  const crossWindow=await h.invoke('document:export-pdf',1,{previewId:first.previewId});assert.equal(crossWindow.code,'PDF_PREVIEW_EXPIRED');
+  const second=await h.invoke('document:preview-pdf',0,{footerText:'新版',fontSize:14});
+  assert.equal((await h.invoke('document:export-pdf',0,{previewId:first.previewId})).code,'PDF_PREVIEW_EXPIRED');
+  h.saveReplies.push({canceled:true});assert.equal((await h.invoke('document:export-pdf',0,{previewId:second.previewId})).canceled,true);
+  const output=path.join(h.root,'snapshot.pdf');h.saveReplies.push({canceled:false,filePath:output});
+  assert.equal((await h.invoke('document:export-pdf',0,{previewId:second.previewId,footerText:'Ignored mutation'})).ok,true);
+  assert.deepEqual(fs.readFileSync(output),Buffer.from(second.bytes));assert.equal(h.windows[0].printRequests.length,2);
+  assert.equal(h.storedPreferences().pdfFooterText,'新版');assert.equal(h.storedPreferences().pdfLayout.fontSize,14);
+  await h.invoke('document:release-pdf',0);
+  assert.equal((await h.invoke('document:export-pdf',0,{previewId:second.previewId})).code,'PDF_PREVIEW_EXPIRED');
+});
+
+test("PDF preview rejects overlap and a closed preview cannot retain in-flight output",async t=>{
+ const h=await createHarness(t);let finish;
+ h.windows[0].webContents.printToPDF=()=>new Promise(resolve=>finish=resolve);
+ const printing=h.invoke('document:preview-pdf',0,{});
+ assert.equal((await h.invoke('document:preview-pdf',0,{})).code,'PDF_BUSY');
+ await h.invoke('document:release-pdf',0);finish(pdfBytes);
+ assert.equal((await printing).canceled,true);
+});

@@ -12,7 +12,7 @@ const { fileURLToPath, pathToFileURL } = require("node:url");
 const { DocumentWindows } = require("./document-windows");
 const {createImagePicker}=require("./image-picker");
 const {getDocumentType}=require("./document-types");
-const { normalizeFooterText, pdfOptions } = require("./pdf-export");
+const { normalizeFooterText, pdfOptions, normalizePdfLayout } = require("./pdf-export");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
@@ -26,6 +26,7 @@ const PREFERENCE_KEYS = new Set([
   "pdfFooterText",
   "pdfIncludeFooter",
   "pdfColorFrame",
+  "pdfLayout",
   "editorSplitRatio",
   "fontSize",
   "formatSelections",
@@ -425,7 +426,7 @@ handle("document:cancel-create", (context, event, destinationToken) => {
   if (typeof destinationToken === "string") pendingCreateDestinations.delete(destinationToken);
   return true;
 });
-handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText), pdfIncludeFooter: settings.preferences.pdfIncludeFooter === true, pdfColorFrame: settings.preferences.pdfColorFrame === true }));
+handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText), pdfIncludeFooter: settings.preferences.pdfIncludeFooter === true, pdfColorFrame: settings.preferences.pdfColorFrame === true, pdfLayout: normalizePdfLayout(settings.preferences.pdfLayout) }));
 handle("preferences:set", async (context, _event, patch) => {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...context.preferences };
   const serialized = JSON.stringify(patch);
@@ -489,10 +490,41 @@ handle("document:import-image", async (context, event, payload) => {
     return { ok: false, code: error.code || "IMAGE_IMPORT_FAILED", message: error.message || "Unable to add this image." };
   }
 });
+// One bounded, window-local PDF snapshot. Saving writes these exact preview bytes.
+handle("document:preview-pdf", async (context, event, payload) => {
+  if (context.pdfPrinting) return {ok:false, code:"PDF_BUSY"};
+  context.pdfPreview = null;
+  context.pdfPrinting = true;
+  const generation = context.pdfGeneration = (context.pdfGeneration || 0) + 1;
+  try {
+    const options = {
+      footerText: normalizeFooterText(payload?.footerText),
+      includeFooter: payload?.includeFooter === true,
+      colorFrame: payload?.colorFrame === true,
+      ...normalizePdfLayout(payload),
+    };
+    const bytes = await context.window.webContents.printToPDF(pdfOptions(options.footerText, options));
+    if (generation !== context.pdfGeneration || context.window.isDestroyed()) return {ok:false,canceled:true};
+    if (bytes.length > 64 * 1024 * 1024) throw new Error("This PDF is too large to preview (64 MB limit).");
+    const previewId = crypto.randomUUID();
+    context.pdfPreview = {previewId, bytes, options, documentPath:context.documentPath};
+    return {ok:true, previewId, bytes:new Uint8Array(bytes)};
+  } catch (error) { return {ok:false, message:error.message || "Unable to prepare PDF."}; }
+  finally { context.pdfPrinting = false; }
+});
+handle("document:release-pdf", (context) => {
+  context.pdfGeneration = (context.pdfGeneration || 0) + 1;
+  context.pdfPreview = null;
+  return {ok:true};
+});
 handle("document:export-pdf", async (context, event, payload) => {
   const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
   if (!mainWindow || event.sender !== mainWindow.webContents) {
     return { ok: false, code: "INVALID_SENDER", message: "This PDF export request is not allowed." };
+  }
+  const snapshot = payload?.previewId ? context.pdfPreview : null;
+  if (payload?.previewId && (!snapshot || snapshot.previewId !== payload.previewId || snapshot.documentPath !== context.documentPath)) {
+    return {ok:false, code:"PDF_PREVIEW_EXPIRED", message:"Please refresh the PDF preview before saving."};
   }
   const result = await dialog.showSaveDialog(mainWindow, {
     title: "Export PDF",
@@ -503,12 +535,13 @@ handle("document:export-pdf", async (context, event, payload) => {
   });
   if (result.canceled || !result.filePath) return { ok: false, canceled: true };
   try {
-    const footerText = normalizeFooterText(typeof payload?.footerText === "string" ? payload.footerText : settings.preferences.pdfFooterText);
-    const pdfIncludeFooter = typeof payload?.includeFooter === "boolean" ? payload.includeFooter : settings.preferences.pdfIncludeFooter === true;
-    const pdfColorFrame = typeof payload?.colorFrame === "boolean" ? payload.colorFrame : settings.preferences.pdfColorFrame === true;
-    const pdf = await mainWindow.webContents.printToPDF(pdfOptions(footerText, { includeFooter: pdfIncludeFooter }));
+    const options = snapshot?.options || payload;
+    const footerText = normalizeFooterText(typeof options?.footerText === "string" ? options.footerText : settings.preferences.pdfFooterText);
+    const pdfIncludeFooter = typeof options?.includeFooter === "boolean" ? options.includeFooter : settings.preferences.pdfIncludeFooter === true;
+    const pdfColorFrame = typeof options?.colorFrame === "boolean" ? options.colorFrame : settings.preferences.pdfColorFrame === true;
+    const pdf = snapshot?.bytes || await mainWindow.webContents.printToPDF(pdfOptions(footerText, { includeFooter: pdfIncludeFooter, colorFrame: pdfColorFrame }));
     await fsp.writeFile(result.filePath, pdf);
-    const pdfPreferences = { pdfFooterText: footerText, pdfIncludeFooter, pdfColorFrame };
+    const pdfPreferences = { pdfFooterText: footerText, pdfIncludeFooter, pdfColorFrame, ...(snapshot ? {pdfLayout:normalizePdfLayout(options)} : {}) };
     Object.assign(context.preferences, pdfPreferences);
     settings.preferences = { ...settings.preferences, ...pdfPreferences };
     await saveSettings();

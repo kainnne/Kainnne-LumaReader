@@ -258,17 +258,24 @@
     pdfExportBusy=true;
     const previousView=state.view,button=$("#export-pdf");
     try{
-      const pdfSettings=await window.LumaPdfDialog.open(state.language);
-      if(pdfSettings===null)return;
-      document.documentElement.dataset.pdfFrame=pdfSettings.colorFrame?"color":"plain";
       if(previousView!=="rendered")setView("rendered");
-      document.body.classList.add("pdf-exporting");button.disabled=true;showToast(t("exportingPdf"));
-      await waitForPdfAssets();
-      const result=await window.lumaDesktop.exportPdf({name:state.currentName||state.currentPath,...pdfSettings});
+      button.disabled=true;
+      const result=await window.LumaPdfDialog.open(state.language, {
+        name:state.currentName||state.currentPath,
+        sections:window.LumaPdfTools.sections(contentEl).map((node,index)=>({id:index,label:(node.textContent.trim()||node.querySelector("img")?.alt||"—").replace(/\s+/g," ").slice(0,80)})),
+        prepare:async options=>{
+          window.LumaPdfTools.applyLayout(contentEl,options.breaks);
+          document.documentElement.dataset.pdfFrame=options.colorFrame?"color":"plain";
+          document.documentElement.style.setProperty("--pdf-font-size",`${options.fontSize}px`);
+          document.documentElement.style.setProperty("--pdf-inset",`${options.inset}mm`);
+          document.querySelector("#pdf-page-style").textContent=`@media print { @page { size: ${options.pageSize}; } }`;
+          document.body.classList.add("pdf-exporting");
+          await waitForPdfAssets();
+        }
+      });
       if(result?.ok)showToast(t("pdfExported"));
-      else if(!result?.canceled)showToast(result?.message||t("pdfExportFailed"));
     }catch(error){showToast(error.message||t("pdfExportFailed"));}
-    finally{delete document.documentElement.dataset.pdfFrame;pdfExportBusy=false;document.body.classList.remove("pdf-exporting");button.disabled=false;if(state.view!==previousView)setView(previousView);}
+    finally{window.LumaPdfTools.clearLayout(contentEl);document.documentElement.style.removeProperty("--pdf-font-size");document.documentElement.style.removeProperty("--pdf-inset");document.querySelector("#pdf-page-style").textContent="";delete document.documentElement.dataset.pdfFrame;pdfExportBusy=false;document.body.classList.remove("pdf-exporting");button.disabled=false;if(state.view!==previousView)setView(previousView);}
   }
 
   function toolbarVisibilityTargets(){return{

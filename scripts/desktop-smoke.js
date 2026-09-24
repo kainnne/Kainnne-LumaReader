@@ -336,7 +336,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       const selection = await input.evaluate((element) => ({ start: element.selectionStart, end: element.selectionEnd, focused: document.activeElement === element }));
       assert.deepEqual(selection, { start: 0, end: footer.length, focused: true });
       await input.fill("Cancelled footer must not be saved");
-      await page.locator('#pdf-options-dialog [value="cancel"]').click();
+      await page.locator('#pdf-close').click();
       await page.waitForSelector("#pdf-options-dialog[open]", { state: "detached" });
       await settleLayout();
       assert.equal(await page.evaluate(async () => (await window.lumaDesktop.getPreferences()).pdfFooterText), footer);
