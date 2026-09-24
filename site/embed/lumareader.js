@@ -51,7 +51,7 @@ export function mountLumaReader(container, options) {
   collapseButton.onclick=()=>expand(false);expandedBar.append(collapseButton);
   let readyResolve, readyReject;
   const ready = new Promise((resolve,reject) => {readyResolve=resolve;readyReject=reject;});
-  const startup = setTimeout(() => readyReject(new Error('LumaReader did not load. Check the URL and frame policy.')),20000);
+  const startup = setTimeout(() => readyReject(new Error('LumaReader did not load. Check the URL and frame policy.')),60000);
   function send(type, data = {}) {if (!destroyed) iframe.contentWindow?.postMessage({protocol,channel,boot,type,...data},url.origin);}
   function report(error) {options.onError?.(error);}
   function rejectRequests(message) {for (const entry of requests.values()) {clearTimeout(entry.timer);entry.reject(new Error(message));}requests.clear();}
