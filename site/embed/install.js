@@ -18,7 +18,7 @@ for(const script of document.querySelectorAll('script[data-luma-target][data-lum
   try{const saved=localStorage.getItem(key);if(saved){const doc=JSON.parse(saved);if(doc.id===initial.id&&typeof doc.markdown==='string')draft=doc;}}catch{failed();}
   function persist(value){clearTimeout(timer);timer=null;localStorage.setItem(key,JSON.stringify(value));draft=value;status.textContent='Saved in this browser / 已存於此瀏覽器';}
   tools.append(expand,download,status);mount.append(tools,container);
-  editor=mountLumaReader(container,{document:draft,onChange:value=>{draft=value;clearTimeout(timer);timer=setTimeout(()=>{try{persist(draft);}catch{failed();}},250);},onSave:async value=>persist(value),onError:failed});
+  editor=mountLumaReader(container,{document:draft,readOnly:script.dataset.lumaReadonly==='true',onChange:value=>{draft=value;clearTimeout(timer);timer=setTimeout(()=>{try{persist(draft);}catch{failed();}},250);},onSave:async value=>persist(value),onError:failed});
   expand.onclick=()=>editor.expand();
   download.onclick=async()=>{const value=await editor.getDocument();const url=URL.createObjectURL(new Blob([value.markdown],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='document.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   window.addEventListener('pagehide',()=>{if(timer)try{persist(draft);}catch{failed();}});

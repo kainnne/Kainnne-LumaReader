@@ -16,6 +16,10 @@ npx --yes https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./index.html
 npx --yes https://lumareader.kainnne.com/embed/lumareader-embed.tgz ./novel.html --markdown ./transcript.md
 ```
 
+- 嵌入後預設收起側邊欄並直接進入編輯，不搶走外層頁面的鍵盤焦點。一般 Web 閱讀模式不變。
+- 只展示文件時，在載入 `install.js` 的 script 加上 `data-luma-readonly="true"`；SDK 對應 `readOnly: true`。
+- `--markdown` 將指定文件內容存入 HTML，省略時才載入示範。這是當下的副本，不會自動同步後續 .md 修改；相對圖片路徑以網頁位置為準。
+- 瀏覽器優先還原相同文件 ID 的草稿；換一份文件請更換 JSON 的文件 ID，避免舊草稿遮蓋新內容。
 - HTML 存在：先完整備份，再插入掛載區塊與官方載入程式。
 - HTML 不存在：建立可用頁面。
 - 已有嵌入區塊時拒絕重複安裝。不修改 JS 框架元件或不完整 HTML 片段。

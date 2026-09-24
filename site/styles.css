@@ -724,3 +724,7 @@ footer {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+.embed-entry { margin-top: 22px; min-width: 240px; background: linear-gradient(110deg, rgba(183,148,255,.3), rgba(255,143,171,.28), rgba(94,234,212,.2)); }
+.embed-entry + .hero-links { margin-top: 12px; }
+@media (max-width: 360px) { .hero > h1 { font-size: 3rem; } }
