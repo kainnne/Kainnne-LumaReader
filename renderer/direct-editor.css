@@ -81,5 +81,16 @@ body[data-document-kind=code] #content { height: calc(100dvh - 108px); min-heigh
 #code-edit-control input { position: static; width: 13px; height: 13px; margin: 0; clip-path: none; accent-color: var(--accent-strong); }
 
 .editor-mode-control { padding: 0; border: 0; background: transparent; }
-#show-markdown { min-height: 34px; padding: 0 10px; border: 1px solid var(--line); background: var(--paper); }
+#show-markdown { display: inline-grid; place-items: center; white-space: nowrap; min-height: 34px; padding: 0 10px; border: 1px solid var(--line); background: var(--paper); }
 #show-markdown[aria-pressed=true] { background: var(--accent-strong); color: white; }
+
+/* Both labels size the same cell, so changing modes never shifts adjacent actions. */
+#show-markdown > span { grid-area: 1 / 1; }
+#show-markdown[aria-pressed=false] .mode-show-direct,
+#show-markdown[aria-pressed=true] .mode-show-source { visibility: hidden; }
+#editor-preview-control.preview-unavailable { visibility: hidden; pointer-events: none; }
+#edit-document { min-inline-size: 7em; }
+/* The hidden Settings control should not leave a gap in the compact toolbar. */
+.appearance-control:has(> #palette-toggle[data-user-hidden=true]) { display: none; }
+/* Keep the primary action explicit, including in a narrow desktop window. */
+#edit-document #edit-document-label { display: inline; }

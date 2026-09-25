@@ -1,4 +1,4 @@
-import {annotationCapabilities,cleanActions,cleanSnapshot} from './annotation-contract.js?v=1.4.1-web.10';
+import {annotationCapabilities,cleanActions,cleanSnapshot} from './annotation-contract.js?v=1.4.2-web.1';
 /** LumaReader iframe SDK v1. Host owns persistence; no remote storage is assumed. */
 export function normalizeEmbedOptions(options={}) {
   const mode=options.mode ?? 'direct';

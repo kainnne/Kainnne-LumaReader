@@ -11,6 +11,12 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
   chooseCreateDirectory: (payload) => ipcRenderer.invoke("document:choose-directory", payload),
   cancelCreateDocument: (destinationToken) => ipcRenderer.invoke("document:cancel-create", destinationToken),
   getLibrary: () => ipcRenderer.invoke("library:get"),
+  updateSettingsMenu: (snapshot) => ipcRenderer.invoke("settings:menu", snapshot),
+  onSettingsRequested: (callback) => {
+    const listener = (_event, command) => callback(command);
+    ipcRenderer.on("settings:requested", listener);
+    return () => ipcRenderer.removeListener("settings:requested", listener);
+  },
   getPreferences: () => ipcRenderer.invoke("preferences:get"),
   setPreferences: (patch) => ipcRenderer.invoke("preferences:set", patch),
   createDocument: (payload) => ipcRenderer.invoke("document:create", payload),

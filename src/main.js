@@ -13,11 +13,13 @@ const { DocumentWindows } = require("./document-windows");
 const {createImagePicker}=require("./image-picker");
 const {getDocumentType}=require("./document-types");
 const { normalizeFooterText, pdfOptions, normalizePdfLayout } = require("./pdf-export");
+const { normalizeSettingsMenu, settingsMenuTemplate } = require("./settings-menu");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
+const ANNOTATION_PREVIEW = PREVIEW_BUILD && packageMetadata.lumareaderPreviewSeries === "1.4.2";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
-const APP_ID = PREVIEW_BUILD ? "com.kainnne.lumareader.bluepreview" : "com.kainnne.lumareader";
-const APP_TITLE = PREVIEW_BUILD ? "LumaReader Blue Preview" : "Kainnne LumaReader";
+const APP_ID = ANNOTATION_PREVIEW ? "com.kainnne.lumareader.preview142" : PREVIEW_BUILD ? "com.kainnne.lumareader.bluepreview" : "com.kainnne.lumareader";
+const APP_TITLE = ANNOTATION_PREVIEW ? "LumaReader 1.4.2 Preview" : PREVIEW_BUILD ? "LumaReader Blue Preview" : "Kainnne LumaReader";
 const PREFERENCE_KEYS = new Set([
   "appMode",
   "editorPreview",
@@ -318,6 +320,9 @@ function installMenu() {
       ],
     },
   ];
+  template.push(settingsMenuTemplate(focusedContext()?.settingsMenu, command => {
+    focusedContext()?.window.webContents.send("settings:requested", command);
+  }));
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
@@ -369,6 +374,7 @@ async function createWindow(target = null) {
     if (target) context.preferences.lastDocumentPath = null;
     contexts.set(window.webContents.id, context);
     documents.add(context, target?.key || null);
+    window.on("focus", installMenu);
     const session = window.webContents.session;
     session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     session.setPermissionCheckHandler(() => false);
@@ -390,6 +396,7 @@ async function createWindow(target = null) {
     const contentsId = window.webContents.id;
     window.on("closed", () => {
       contexts.delete(contentsId);
+      installMenu();
       documents.remove(context);
       const closing = readerService.close().finally(() => closingServices.delete(closing));
       closingServices.add(closing);
@@ -425,6 +432,14 @@ handle("document:cancel-create", (context, event, destinationToken) => {
   if (!mainWindow || event.sender !== mainWindow.webContents) return false;
   if (typeof destinationToken === "string") pendingCreateDestinations.delete(destinationToken);
   return true;
+});
+handle("settings:menu", (context, _event, snapshot) => {
+  if (Buffer.byteLength(JSON.stringify(snapshot) || "", "utf8") > 16 * 1024) throw new Error("Settings menu is too large");
+  const model = normalizeSettingsMenu(snapshot);
+  if (JSON.stringify(model) !== JSON.stringify(context.settingsMenu)) {
+    context.settingsMenu = model;
+    if (context === focusedContext()) installMenu();
+  }
 });
 handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText), pdfIncludeFooter: settings.preferences.pdfIncludeFooter === true, pdfColorFrame: settings.preferences.pdfColorFrame === true, pdfLayout: normalizePdfLayout(settings.preferences.pdfLayout) }));
 handle("preferences:set", async (context, _event, patch) => {

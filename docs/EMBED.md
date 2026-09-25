@@ -107,3 +107,9 @@ Web 與嵌入版使用相同的 `bootstrap.bundle.js`、`reader.bundle.js`，以
 以 `features:{annotations:true}` 開啟同一套直接編輯器的重點、註解與拖入圖片註記；`selectionActions/onAction` 可接宿主選圖。正文與註記共同存入完整快照，位置與 Undo／Redo 由 Reader 管理，產生素材與後台儲存由宿主管理。正文 readOnly 與 annotationReadOnly 分開。第一版僅 direct 模式；原文偏移以 exact-or-unavailable 明示，不能用重複句子的 indexOf 補猜。
 
 完整公開契約與範例：[`site/embed/annotations-api.md`](../site/embed/annotations-api.md)、[`site/embed/annotations.js`](../site/embed/annotations.js)。在網站 `/embed/annotations.html` 可試用。`node scripts/annotations-smoke.cjs` 驗證跨來源選取、定位、原生歷程、存檔失敗、重載、多文件與權限；`tests/annotations.test.js` 驗證來源範圍、表格／格式與映射。
+
+### 選取選單位置（1.4.2）
+
+註記選單使用半透明背景，右側箭頭在下方置中與右下角之間切換；位置儲存在該 Reader 網站的瀏覽器偏好中。若瀏覽器禁止儲存，當次操作仍可切換。桌面 1.4.2 另支援閱讀時反白加註記，閱讀註記自動另存並提供失敗重試，Markdown 不變；嵌入 SDK 的註記能力仍以 direct 模式為契約。
+
+後台整合驗證：`scripts/annotations-smoke.cjs` 會透過跨來源 iframe 取出完整快照與 `getAttachment()` 圖片，向隔離 HTTP 後台送出，再比對伺服器存下的 JSON 和圖片內容。這驗證 SDK 的資料傳輸能力，並不代表任意宿主網站已實作保存。宿主必須等待 `onSave` 的真正後台寫入成功，才顯示已儲存或進入下一步。

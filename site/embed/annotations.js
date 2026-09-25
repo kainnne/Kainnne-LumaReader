@@ -1,4 +1,4 @@
-import {mountLumaReader,setExpandIcon} from './lumareader.js?v=1.4.1-web.10';
+import {mountLumaReader,setExpandIcon} from './lumareader.js?v=1.4.2-web.1';
 const $=s=>document.querySelector(s),key='lumareader-annotation-demo-v1';
 let draft={id:'annotation-example',title:'閱讀與註記',markdown:'# 一段文字，多一點補充\n\n她推開門，走進午後的光裡。\n\n反白這段文字，試著替它加上圖片或重點。\n\n她推開門，走進午後的光裡。\n\n這兩句完全相同。只要反白其中一句，註記就只會綁在那一句。\n'},selection,timer;
 try{const saved=localStorage.getItem(key);if(saved)draft=JSON.parse(saved);}catch{$('#status').textContent='無法讀取瀏覽器草稿。';}

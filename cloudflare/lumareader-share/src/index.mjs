@@ -8,9 +8,9 @@ const SHARE_ID_PATTERN = /^[23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWX
 const SHARE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
 const SOCIAL_IMAGE = "https://lumareader.kainnne.com/icon.png";
 const DOWNLOADS = Object.freeze({
-  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.1/Kainnne-LumaReader-1.4.1-macOS-universal.dmg",
-  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.1/Kainnne-LumaReader-1.4.1-Windows-x64-Setup.exe",
-  linux: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.1/Kainnne-LumaReader-1.4.1-Linux-x64.AppImage",
+  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-macOS-universal.dmg",
+  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-Windows-x64-Setup.exe",
+  linux: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-Linux-x64.AppImage",
 });
 
 function corsHeaders(origin) {

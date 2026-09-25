@@ -176,15 +176,58 @@ export function reconcileAnnotations(text,snapshot){
  const {doc}=parseMarkdown(text);return {schemaVersion:1,fingerprint:fingerprint(text),treeFingerprint:treeFingerprint(doc),items:restoreAnnotations(snapshot,doc,text)};
 }
 
-// Apply persisted anchors to the existing reading renderer only when all text
-// blocks match the same native document in order. Never search repeated text.
+// Reading and editing use the same document positions. Match complete text
+// blocks structurally; never search for a selected phrase in Markdown.
+function readingTextNodes(el){
+ const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>{let parent=n.parentElement;while(parent&&parent!==el){if(['UL','OL','BUTTON'].includes(parent.tagName))return NodeFilter.FILTER_REJECT;parent=parent.parentElement;}return NodeFilter.FILTER_ACCEPT;}}),nodes=[];let n;while(n=walker.nextNode())nodes.push(n);return nodes;
+}
+function readingBlocks(root,doc){
+ const blocks=[];doc.descendants((node,pos)=>{if(node.isTextblock)blocks.push({node,pos});});
+ const elements=[...root.querySelectorAll('p,h1,h2,h3,h4,h5,h6,td,th,pre > code,li,.mermaid')].filter(el=>!el.closest('.katex')&&!el.parentElement.closest('td,th,.mermaid')&&!(el.tagName==='LI'&&el.querySelector(':scope > p')));
+ if(elements.length!==blocks.length)return [];
+ return blocks.map((b,i)=>({...b,el:elements[i]})).filter(({node,el})=>node.textContent===readingTextNodes(el).map(n=>n.textContent).join(''));
+}
 export function paintAnnotations(root,text,snapshot){
  if(!snapshot?.items?.length)return ()=>{};
- const parsed=parseMarkdown(text),items=restoreAnnotations(snapshot,parsed.doc,text),blocks=[];
- parsed.doc.descendants((node,pos)=>{if(node.isTextblock)blocks.push({node,pos});});
- const elements=[...root.querySelectorAll('p,h1,h2,h3,h4,h5,h6,td,th,pre > code,li')].filter(el=>!el.closest('.katex')&&!el.parentElement.closest('td,th')&&!(el.tagName==='LI'&&el.querySelector(':scope > p')));
- const pairs=elements.length===blocks.length?blocks.map((b,i)=>({...b,el:elements[i]})):[];
- const textNodes=el=>{const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>{let parent=n.parentElement;while(parent&&parent!==el){if(['UL','OL','BUTTON'].includes(parent.tagName))return NodeFilter.FILTER_REJECT;parent=parent.parentElement;}return NodeFilter.FILTER_ACCEPT;}}),nodes=[];let n;while(n=walker.nextNode())nodes.push(n);return nodes;};
- for(const {node,pos,el} of pairs){if(node.textContent!==textNodes(el).map(n=>n.textContent).join(''))continue;for(const item of items){if(item.status==='orphaned')continue;const start=Math.max(0,item.anchor.from-pos-1),end=Math.min(node.content.size,item.anchor.to-pos-1);if(start>=end)continue;const segments=[];let offset=0;for(const t of textNodes(el)){const a=Math.max(0,start-offset),b=Math.min(t.length,end-offset);if(a<b)segments.push({t,a,b});offset+=t.length;}for(const {t,a,b} of segments.reverse()){const range=document.createRange();range.setStart(t,a);range.setEnd(t,b);const mark=document.createElement('span');mark.className='luma-annotation-mark '+item.kind+' '+item.status;mark.dataset.lumaAnnotation=item.id;range.surroundContents(mark);}}}
+ const parsed=parseMarkdown(text),items=restoreAnnotations(snapshot,parsed.doc,text);
+ for(const {node,pos,el} of readingBlocks(root,parsed.doc)){for(const item of items){if(item.status==='orphaned')continue;const start=Math.max(0,item.anchor.from-pos-1),end=Math.min(node.content.size,item.anchor.to-pos-1);if(start>=end)continue;const segments=[];let offset=0;for(const t of readingTextNodes(el)){const a=Math.max(0,start-offset),b=Math.min(t.length,end-offset);if(a<b)segments.push({t,a,b});offset+=t.length;}for(const {t,a,b} of segments.reverse()){const range=document.createRange();range.setStart(t,a);range.setEnd(t,b);const mark=document.createElement('span');mark.className='luma-annotation-mark '+item.kind+' '+item.status;mark.dataset.lumaAnnotation=item.id;range.surroundContents(mark);}}}
  const hover=bindAnnotationHover(()=>items);const show=e=>hover.show(e),hide=e=>hover.hide(e);root.addEventListener('pointerover',show);root.addEventListener('pointerout',hide);root.addEventListener('click',show);return ()=>{root.removeEventListener('pointerover',show);root.removeEventListener('pointerout',hide);root.removeEventListener('click',show);hover.destroy();};
+}
+
+// A read-only state drives the existing annotation menu and history. The
+// rendered document is never converted into a contenteditable surface.
+export function createReadingAnnotations({root,text,options,onChange}){
+ const parsed=parseMarkdown(text),doc=parsed.doc.type.create({lumaAnnotations:restoreAnnotations(options.snapshot,parsed.doc,text)},parsed.doc.content);
+ let state=EditorState.create({doc,plugins:[history()]}),paint,disposed=false;
+ const annotations=createAnnotations({options,getText:()=>text,sourceRanges:(from,to)=>selectionSourceRanges(state.doc,parsed,from,to)});
+ const view={get state(){return state;},dispatch(tr){
+  if(disposed||!tr.doc.content.eq(state.doc.content))return;
+  state=state.apply(tr);
+  if(tr.docChanged){const snapshot=annotations.getSnapshot();getSelection()?.removeAllRanges();state=state.apply(state.tr.setSelection(TextSelection.near(state.doc.resolve(0))));draw(snapshot);onChange(snapshot);}
+  annotations.afterTransaction(tr);
+ }};
+ function draw(snapshot){paint?.();for(const el of [...root.querySelectorAll('[data-luma-annotation]')].reverse())el.replaceWith(...el.childNodes);paint=paintAnnotations(root,text,snapshot);}
+ function selectionChanged(){
+  if(disposed||root.hidden)return;
+  const selected=getSelection();let from=0,to=0;
+  if(selected?.rangeCount&&!selected.isCollapsed){
+   const range=selected.getRangeAt(0).cloneRange(),blocks=readingBlocks(root,state.doc),bounds=document.createRange();bounds.selectNodeContents(root);
+   // Browser paragraph selection can end just outside the final paragraph.
+   // Clip that boundary to the reader; never include surrounding app controls.
+   if(root.contains(range.startContainer)||root.contains(range.endContainer)){
+    if(range.compareBoundaryPoints(Range.START_TO_START,bounds)<0)range.setStart(root,0);
+    if(range.compareBoundaryPoints(Range.END_TO_END,bounds)>0)range.setEnd(root,root.childNodes.length);
+    const offset=(container,index,end)=>{const block=blocks.find(({el})=>el===container||el.contains(container));if(block){const prefix=document.createRange();prefix.setStart(block.el,0);prefix.setEnd(container,index);const n=prefix.toString().length;return n<=block.node.content.size?block.pos+1+n:null;}
+     const point=document.createRange();point.setStart(container,index);point.collapse(true);const candidate=end?[...blocks].reverse().find(({el})=>point.comparePoint(el,el.childNodes.length)<=0):blocks.find(({el})=>point.comparePoint(el,0)>=0);return candidate?candidate.pos+1+(end?candidate.node.content.size:0):null;};
+    const a=offset(range.startContainer,range.startOffset,false),b=offset(range.endContainer,range.endOffset,true);
+    if(a!==null&&b!==null&&a<b&&range.toString().replace(/\n/g,'')===state.doc.textBetween(a,b,'').replace(/\n/g,'')){from=a;to=b;}
+   }
+  }
+  const selection=from===to?TextSelection.near(state.doc.resolve(0)):TextSelection.create(state.doc,from,to);
+  if(!selection.eq(state.selection))view.dispatch(state.tr.setSelection(selection));
+ }
+ function click(event){if(getSelection()?.isCollapsed!==false&&event.target.closest('[data-luma-annotation]')){event.preventDefault();annotations.plugin.props.handleClick(view,0,event);}}
+ function keydown(event){if(!(event.metaKey||event.ctrlKey)||event.key.toLowerCase()!=='z'||document.querySelector('dialog[open]'))return;const selected=getSelection();if(!root.contains(document.activeElement)&&!root.contains(selected?.anchorNode))return;if((event.shiftKey?redo:undo)(state,view.dispatch)){event.preventDefault();event.stopPropagation();}}
+ annotations.attach(view);draw(annotations.getSnapshot());document.addEventListener('selectionchange',selectionChanged);root.addEventListener('click',click,true);root.addEventListener('keydown',keydown);selectionChanged();
+ return {setSaveError:annotations.setSaveError,getSnapshot:annotations.getSnapshot,destroy(){disposed=true;document.removeEventListener('selectionchange',selectionChanged);root.removeEventListener('click',click,true);root.removeEventListener('keydown',keydown);paint?.();annotations.destroy();}};
 }

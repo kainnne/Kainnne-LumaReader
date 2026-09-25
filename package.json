@@ -1,6 +1,6 @@
 {
   "name": "kainnne-lumareader",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A local Markdown reader and editor for macOS, Windows and Linux.",
   "main": "src/main.js",
   "private": true,

@@ -98,15 +98,15 @@
           <p id="file-path" data-i18n="ready">Ready</p>
         </div>
         <div class="reader-actions" data-i18n-aria="readerSettings">
-          <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
-          <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
-          <div id="editor-mode-control" class="editor-mode-control" hidden><button id="show-markdown" type="button" aria-pressed="false">Show Markdown</button></div>
-          <label id="code-edit-control" class="editor-preview-control" hidden><input id="code-edit-toggle" type="checkbox" /><span id="code-edit-label">Enable code editing</span></label>
-          <span id="image-picker-status" class="image-picker-status" role="status" hidden></span>
           <label id="editor-preview-control" class="editor-preview-control" hidden>
             <input id="editor-preview-toggle" type="checkbox" />
             <span data-i18n="comparisonPreview">Preview</span>
           </label>
+          <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
+          <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
+          <div id="editor-mode-control" class="editor-mode-control" hidden><button id="show-markdown" type="button" aria-pressed="false"><span class="mode-show-source" aria-hidden="true">Show source</span><span class="mode-show-direct" aria-hidden="true">Visual editor</span></button></div>
+          <label id="code-edit-control" class="editor-preview-control" hidden><input id="code-edit-toggle" type="checkbox" /><span id="code-edit-label">Enable code editing</span></label>
+          <span id="image-picker-status" class="image-picker-status" role="status" hidden></span>
           <div id="editor-insert-control" class="toolbar-dropdown editor-insert-control" hidden>
             <button id="editor-insert-toggle" class="toolbar-select-button editor-insert-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="editor-insert-menu">
               <span class="dropdown-leading-icon" aria-hidden="true">＋</span>
@@ -206,6 +206,7 @@
                 <label><span data-i18n="media">Media</span><input type="checkbox" data-toolbar-visibility="media" /></label>
                 <label><span data-i18n="textSize">Text size</span><input type="checkbox" data-toolbar-visibility="textSize" checked /></label>
                 <label><span data-i18n="exportPdf">Export PDF</span><input type="checkbox" data-toolbar-visibility="exportPdf" /></label>
+                <label><span data-i18n="settingsButton">Settings button</span><input type="checkbox" data-toolbar-visibility="settings" checked /></label>
                 <button id="toolbar-reset" class="toolbar-reset" type="button" data-i18n="restoreToolbar">Restore default toolbar</button>
               </section>
             </div>

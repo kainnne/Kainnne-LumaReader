@@ -120,9 +120,9 @@
   };
 
   const featureTranslations = {
-    en:{insertMarkdown:"Insert",insertStructure:"Structure",insertInline:"Inline",insertBlock:"Blocks",insertLink:"Link",insertImage:"Image",insertQuote:"Quote",insertCode:"Code",insertTask:"Task",insertTable:"Table",appearanceSettings:"Appearance & toolbar",appearanceHint:"Keep the reader focused on what you use.",colorMode:"Color mode",toolbarVisibility:"Toolbar visibility",textSize:"Text size",restoreToolbar:"Restore default toolbar",languageChanged:"Language updated",languageHideQuestion:"Move the language button into Settings?",keepLanguageButton:"Keep it",hideLanguageButton:"Move to Settings",dropImages:"Drop images to add them",addingImages:"Adding images…",imagesAdded:"Images added",imageImportFailed:"Unable to add this image.",editorTextPlaceholder:"text",editorLinkPlaceholder:"link text",appearance:"Appearance and toolbar settings"},
-    "zh-Hant":{insertMarkdown:"插入",insertStructure:"結構",insertInline:"行內格式",insertBlock:"區塊",insertLink:"連結",insertImage:"圖片",insertQuote:"引用",insertCode:"程式碼",insertTask:"待辦",insertTable:"表格",appearanceSettings:"外觀與工具列",appearanceHint:"只留下你常用的功能，讓閱讀畫面更乾淨。",colorMode:"顯示模式",toolbarVisibility:"工具列顯示項目",textSize:"文字大小",restoreToolbar:"恢復預設工具列",languageChanged:"語言已切換",languageHideQuestion:"之後要把語言按鈕收進設定嗎？",keepLanguageButton:"保留在工具列",hideLanguageButton:"收進設定",dropImages:"放開以加入圖片",addingImages:"正在加入圖片…",imagesAdded:"圖片已加入",imageImportFailed:"無法加入這張圖片。",editorTextPlaceholder:"文字",editorLinkPlaceholder:"連結文字",appearance:"外觀與工具列設定"},
-    "zh-Hans":{insertMarkdown:"插入",insertStructure:"结构",insertInline:"行内格式",insertBlock:"区块",insertLink:"链接",insertImage:"图片",insertQuote:"引用",insertCode:"代码",insertTask:"待办",insertTable:"表格",appearanceSettings:"外观与工具栏",appearanceHint:"只保留常用功能，让阅读界面更清爽。",colorMode:"显示模式",toolbarVisibility:"工具栏显示项目",textSize:"文字大小",restoreToolbar:"恢复默认工具栏",languageChanged:"语言已切换",languageHideQuestion:"以后要把语言按钮收进设置吗？",keepLanguageButton:"保留在工具栏",hideLanguageButton:"收进设置",dropImages:"松开以添加图片",addingImages:"正在添加图片…",imagesAdded:"图片已添加",imageImportFailed:"无法添加这张图片。",editorTextPlaceholder:"文字",editorLinkPlaceholder:"链接文字",appearance:"外观与工具栏设置"}
+    en:{openSettings:"Open Settings…",settingsButton:"Settings button",insertMarkdown:"Insert",insertStructure:"Structure",insertInline:"Inline",insertBlock:"Blocks",insertLink:"Link",insertImage:"Image",insertQuote:"Quote",insertCode:"Code",insertTask:"Task",insertTable:"Table",appearanceSettings:"Appearance & toolbar",appearanceHint:"Keep the reader focused on what you use.",colorMode:"Color mode",toolbarVisibility:"Toolbar visibility",textSize:"Text size",restoreToolbar:"Restore default toolbar",languageChanged:"Language updated",languageHideQuestion:"Move the language button into Settings?",keepLanguageButton:"Keep it",hideLanguageButton:"Move to Settings",dropImages:"Drop images to add them",addingImages:"Adding images…",imagesAdded:"Images added",imageImportFailed:"Unable to add this image.",editorTextPlaceholder:"text",editorLinkPlaceholder:"link text",appearance:"Appearance and toolbar settings"},
+    "zh-Hant":{openSettings:"開啟設定…",settingsButton:"設定按鈕",insertMarkdown:"插入",insertStructure:"結構",insertInline:"行內格式",insertBlock:"區塊",insertLink:"連結",insertImage:"圖片",insertQuote:"引用",insertCode:"程式碼",insertTask:"待辦",insertTable:"表格",appearanceSettings:"外觀與工具列",appearanceHint:"只留下你常用的功能，讓閱讀畫面更乾淨。",colorMode:"顯示模式",toolbarVisibility:"工具列顯示項目",textSize:"文字大小",restoreToolbar:"恢復預設工具列",languageChanged:"語言已切換",languageHideQuestion:"之後要把語言按鈕收進設定嗎？",keepLanguageButton:"保留在工具列",hideLanguageButton:"收進設定",dropImages:"放開以加入圖片",addingImages:"正在加入圖片…",imagesAdded:"圖片已加入",imageImportFailed:"無法加入這張圖片。",editorTextPlaceholder:"文字",editorLinkPlaceholder:"連結文字",appearance:"外觀與工具列設定"},
+    "zh-Hans":{openSettings:"打开设置…",settingsButton:"设置按钮",insertMarkdown:"插入",insertStructure:"结构",insertInline:"行内格式",insertBlock:"区块",insertLink:"链接",insertImage:"图片",insertQuote:"引用",insertCode:"代码",insertTask:"待办",insertTable:"表格",appearanceSettings:"外观与工具栏",appearanceHint:"只保留常用功能，让阅读界面更清爽。",colorMode:"显示模式",toolbarVisibility:"工具栏显示项目",textSize:"文字大小",restoreToolbar:"恢复默认工具栏",languageChanged:"语言已切换",languageHideQuestion:"以后要把语言按钮收进设置吗？",keepLanguageButton:"保留在工具栏",hideLanguageButton:"收进设置",dropImages:"松开以添加图片",addingImages:"正在添加图片…",imagesAdded:"图片已添加",imageImportFailed:"无法添加这张图片。",editorTextPlaceholder:"文字",editorLinkPlaceholder:"链接文字",appearance:"外观与工具栏设置"}
   };
 
   const toolbarTooltips = {
@@ -157,7 +157,7 @@
   ].map(([id,name,zh,colors]) => ({id,name,zh,colors}));
 
   const emojiMap = { smile:"😊",heart:"❤️",sparkles:"✨",star:"⭐",warning:"⚠️",info:"ℹ️",check:"✅",x:"❌",rocket:"🚀",bulb:"💡",book:"📖",memo:"📝",fire:"🔥",tada:"🎉",eyes:"👀",wave:"👋",thumbsup:"👍",coffee:"☕" };
-  const DEFAULT_TOOLBAR_VISIBILITY = Object.freeze({language:true,readingMode:true,source:false,media:false,textSize:true,exportPdf:false});
+  const DEFAULT_TOOLBAR_VISIBILITY = Object.freeze({language:true,readingMode:true,source:false,media:false,textSize:true,exportPdf:false,settings:true,...(window.lumaDesktop?.isDesktop?{language:false,textSize:false,settings:true}:{})});
   function storedToolbarVisibility(){try{return{...DEFAULT_TOOLBAR_VISIBILITY,...JSON.parse(localStorage.getItem("lumareader-toolbar-visibility")||"{}")} }catch{return{...DEFAULT_TOOLBAR_VISIBILITY}}}
   const librarySearchTranslations = {
     en:{chooseScannedFile:"Choose a document from the sidebar to start reading.",search:"Search files and folders",scanProgress:"Finding documents… {count} found. You can open results now.",scanWaiting:"Waiting for a folder to respond. Existing results remain available; check cloud downloads or disk access.",scanPartial:"Some files or folders could not be checked. Verify their access or cloud download, then refresh.",scanLimited:"This library is too large to finish safely. Select a smaller folder to find the remaining documents.",scanComplete:"{count} documents found.",scanInterrupted:"The scan stopped before completion. Use Refresh to try again.",searchScanningHint:"The scan is still running; more subfolder results may appear shortly.",searchRefreshHint:"Try Refresh above, check the selected folder and file formats, and make sure cloud files are downloaded and accessible.",searchWebHint:"Search the documents currently open in this session, or open another Markdown file.",showMoreFiles:"Show more",showMoreMatches:"Show more matches ({shown} of {total})",scanFinished:"Library scan complete"},
@@ -211,7 +211,35 @@
     if(extension===".log")return{kind:"log",mime:"text/plain",binary:false,capabilities:{paged:true,source:true,wrap:true}};
     return null;
   }
+  let settingsMenuUpdateQueued=false;
+  function syncNativeSettingsMenu(){
+    if(!window.lumaDesktop?.updateSettingsMenu||settingsMenuUpdateQueued)return;
+    settingsMenuUpdateQueued=true;
+    queueMicrotask(()=>{
+      settingsMenuUpdateQueued=false;
+      const snapshot={
+        labels:{open:t("openSettings"),visibility:t("toolbarVisibility"),theme:t("colorMode"),palette:t("palette"),language:t("language"),restore:t("restoreToolbar")},
+        visibility:[...document.querySelectorAll("[data-toolbar-visibility]")].map(input=>({id:input.dataset.toolbarVisibility,label:input.closest("label").querySelector("span").textContent,checked:state.toolbarVisibility[input.dataset.toolbarVisibility]!==false})),
+        themes:[{id:"light",label:t("lightMode"),checked:!document.documentElement.classList.contains("dark")},{id:"dark",label:t("darkMode"),checked:document.documentElement.classList.contains("dark")}],
+        palettes:palettes.map(p=>({id:p.id,label:paletteLabel(p),checked:p.id===state.palette})),
+        languages:[...languageEl.options].map(o=>({id:o.value,label:o.textContent,checked:o.value===state.language}))
+      };
+      window.lumaDesktop.updateSettingsMenu(snapshot).catch(error=>console.warn("Unable to update settings menu",error));
+    });
+  }
+  function handleNativeSettings(command){
+    if(!command||typeof command!=="object")return;
+    switch(command.type){
+      case "open":openPalette();paletteMenuEl.querySelector("button,select,input")?.focus({preventScroll:true});break;
+      case "visibility":if(typeof command.checked==="boolean")setToolbarVisibility(command.value,command.checked);break;
+      case "theme":if(["light","dark"].includes(command.value))setTheme(command.value);break;
+      case "palette":if(palettes.some(p=>p.id===command.value))applyPalette(command.value);break;
+      case "language":if([...languageEl.options].some(o=>o.value===command.value))applyLanguage(command.value);break;
+      case "restore":resetToolbarVisibility();break;
+    }
+  }
   function persistPreferences(patch){
+    syncNativeSettingsMenu();
     window.lumaDesktop?.setPreferences?.(patch).catch((error)=>console.warn("Unable to persist preferences",error));
   }
   async function hydratePreferences(){
@@ -285,7 +313,8 @@
     source:[$("#source-view")],
     media:[$("#media-view")],
     textSize:[$("#font-down"),$("#font-up")],
-    exportPdf:[$("#export-pdf")]
+    exportPdf:[$("#export-pdf")],
+    settings:[paletteToggleEl]
   }}
   function applyToolbarVisibility(){
     const targets=toolbarVisibilityTargets();
@@ -430,7 +459,15 @@
   let directEditor=null;
   function updateDirectLayout(){
     const code=state.documentKind==="code",active=state.editing&&!code&&state.editorMode==="direct";
-    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code;showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;showMarkdownButton.textContent=state.language.startsWith("zh")?"顯示 Markdown":"Show Markdown";
+    directHost.hidden=!active;editorModeControl.hidden=!state.editing||code;showMarkdownButton.setAttribute("aria-pressed",String(state.editorMode==="source"));showMarkdownButton.disabled=state.saving||state.importingImages;const zh=state.language.startsWith("zh"),source=state.editorMode==="source";
+    const sourceLabel=zh?"顯示原文":"Show source",directLabel=zh?"返回直接編輯":"Visual editor";
+    if(!showMarkdownButton.querySelector(".mode-show-source")){
+      const labels=["mode-show-source","mode-show-direct"].map(className=>{const span=document.createElement("span");span.className=className;span.setAttribute("aria-hidden","true");return span;});showMarkdownButton.replaceChildren(...labels);
+    }
+    showMarkdownButton.querySelector(".mode-show-source").textContent=sourceLabel;
+    showMarkdownButton.querySelector(".mode-show-direct").textContent=directLabel;
+    showMarkdownButton.setAttribute("aria-label",source?directLabel:sourceLabel);
+    showMarkdownButton.title=source?(zh?"目前為原文編輯；切換回直接編輯":"Editing Markdown source; switch to visual editing"):(zh?"顯示 Markdown 原文與對照預覽":"Show Markdown source and comparison preview");
 
     updateFormattingLabels();
     $("#code-edit-control").hidden=!code||state.sourceType!=="project"||!window.lumaDesktop?.setCodeEditing;$("#code-edit-toggle").checked=code&&state.editing;$("#code-edit-toggle").disabled=state.saving||state.codeEditPending;$("#code-edit-label").textContent=state.language.startsWith("zh")?"允許編輯程式碼":"Enable code editing";
@@ -440,9 +477,22 @@
     if(state.editing)sourceEditorEl.hidden=active||code;
     if(active){contentEl.hidden=true;rawEl.hidden=true;directEditor?.setEditable(!state.saving);}
   }
-  let annotationSnapshot=null,annotationDirty=false,annotationRevision=0,annotationSession=crypto.randomUUID(),annotationPaint;
+  let annotationSnapshot=null,annotationDirty=false,annotationRevision=0,annotationSession=crypto.randomUUID(),annotationPaint,annotationReader,readingSaveTasks=0;
   function nativeAnnotationOptions(){if(!window.lumaDesktop?.getAnnotations)return;return {snapshot:annotationSnapshot,session:annotationSession,context:()=>({sessionId:annotationSession,id:state.currentPath,activeFileId:state.currentPath,revision:annotationRevision}),writable:true,reviewTools:document.querySelector('#palette-menu')};}
-  function paintNativeAnnotations(){annotationPaint?.();annotationPaint=window.LumaDirectEditor.paintAnnotations(contentEl,state.rawText,annotationSnapshot);}
+  function clearReadingAnnotations(){annotationReader?.destroy();annotationReader=null;annotationPaint?.();annotationPaint=null;}
+  async function persistReadingAnnotations(){
+    const session=annotationSession;readingSaveTasks++;stopLiveRefresh();
+    try{await saveNativeAnnotations();if(session===annotationSession){annotationReader?.setSaveError(null);if(!annotationDirty)showToast(t("saved"));}}
+    catch(error){if(session===annotationSession){annotationReader?.setSaveError(()=>void persistReadingAnnotations());showToast(state.language.startsWith("zh")?"註記尚未儲存，請按「重試儲存」。":"Notes are not saved. Choose Retry save.");}}
+    finally{readingSaveTasks--;if(session===annotationSession&&!annotationDirty&&!state.editing)startLiveRefresh();}
+  }
+  function paintNativeAnnotations(){
+    clearReadingAnnotations();
+    if(canEditCurrentDocument()&&!state.editing&&state.view!=="source"&&state.rawText.length<=500000&&window.lumaDesktop?.getAnnotations){
+      annotationReader=window.LumaDirectEditor.createReadingAnnotations({root:contentEl,text:state.rawText,options:{...nativeAnnotationOptions(),language:state.language},onChange:snapshot=>{annotationSnapshot=snapshot;annotationDirty=true;annotationRevision++;void persistReadingAnnotations();}});
+      if(annotationDirty&&!readingSaveTasks)annotationReader.setSaveError(()=>void persistReadingAnnotations());
+    }else annotationPaint=window.LumaDirectEditor.paintAnnotations(contentEl,state.rawText,annotationSnapshot);
+  }
   async function saveNativeAnnotations(){if(!annotationDirty)return;const snapshot=annotationSnapshot;await window.lumaDesktop.saveAnnotations({path:state.currentPath,snapshot});if(annotationSnapshot===snapshot)annotationDirty=false;}
   function activateDirectEditor(){
     if(sourceEditorEl.value.length>500000){state.editorMode="source";showToast(state.language.startsWith("zh")?"大型文件請使用原文編輯。":"Use source editing for this large document.");updateEditorPreviewLayout({render:true});return;}
@@ -550,7 +600,7 @@
   }
   function scheduleEditorPreview(immediate=false){clearTimeout(state.editorPreviewTimer);if(!editorPreviewIsActive())return;state.editorPreviewTimer=setTimeout(()=>renderEditorPreview().catch((error)=>console.warn("Unable to render the editor preview",error)),immediate?0:180);}
   function updateEditorPreviewLayout({render=false}={}){
-    const active=editorPreviewIsActive();editorPreviewControlEl.hidden=!state.editing||state.editorMode!=="source"||state.documentKind!=="markdown";editorPreviewToggleEl.checked=state.editorPreview;editorPreviewToggleEl.disabled=state.saving;editorPreviewResizerEl.hidden=!active;editorPreviewEndEl.hidden=true;document.body.classList.toggle("editor-preview-enabled",active);applyEditorSplitRatio();
+    const active=editorPreviewIsActive();editorPreviewControlEl.hidden=!state.editing||state.documentKind!=="markdown";const unavailable=state.editorMode!=="source";editorPreviewControlEl.classList.toggle("preview-unavailable",unavailable);editorPreviewControlEl.inert=unavailable;editorPreviewControlEl.setAttribute("aria-hidden",String(unavailable));editorPreviewToggleEl.checked=state.editorPreview;editorPreviewToggleEl.disabled=state.saving||unavailable;editorPreviewResizerEl.hidden=!active;editorPreviewEndEl.hidden=true;document.body.classList.toggle("editor-preview-enabled",active);applyEditorSplitRatio();
     if(active)contentEl.setAttribute("aria-label",t("comparisonPreview"));else contentEl.removeAttribute("aria-label");
     if(state.view==="source")contentEl.hidden=!active;if(render&&active)scheduleEditorPreview(true);
     updateDirectLayout();
@@ -580,9 +630,10 @@
     updateEditorPreviewLayout();
     updateToolbarTooltips();
   }
-  function resetEditorState(){if(state.documentKind==="code"){state.activeAdapter?.setEditable?.(false);state.activeAdapter?.setText?.(state.rawText);window.lumaDesktop?.setCodeEditing?.({enabled:false}).catch(()=>{});}directEditor?.destroy();directEditor=null;directHost.hidden=true;document.body.classList.remove("direct-editing");clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
-  function blockWhileEditing(){if(!state.editing)return false;showEditingBlockedNotice();return true;}
+  function resetEditorState(){clearReadingAnnotations();if(state.documentKind==="code"){state.activeAdapter?.setEditable?.(false);state.activeAdapter?.setText?.(state.rawText);window.lumaDesktop?.setCodeEditing?.({enabled:false}).catch(()=>{});}directEditor?.destroy();directEditor=null;directHost.hidden=true;document.body.classList.remove("direct-editing");clearTimeout(state.editorPreviewTimer);cancelAnimationFrame(state.editorScrollFrame);cancelAnimationFrame(state.editorScrollMapFrame);state.editorPreviewTimer=null;state.editorScrollFrame=null;state.editorScrollMapFrame=null;state.editorScrollSyncing=false;state.editorPreviewBlocks=[];state.editorSourceToPreview=[];state.editorPreviewToSource=[];state.editorPreviewScrollIntent=false;state.editing=false;state.editorDirty=false;state.editorSaved=false;state.saving=false;state.importingImages=false;sourceEditorEl.value="";sourceEditorEl.hidden=true;editorPreviewControlEl.hidden=true;editorPreviewResizerEl.hidden=true;editorInsertControlEl.hidden=true;editorImageDropEl.hidden=true;document.body.classList.remove("editing-document","editor-preview-enabled","editor-image-dragging");contentEl.removeAttribute("aria-label");if(!editorInsertMenuEl.hidden)closeToolbarMenu(editorInsertMenuEl,editorInsertToggleEl);if($("#toast")?.dataset.tone==="editing")hideToast();}
+  function blockWhileEditing(){if(annotationDirty&&!state.editing){showToast(state.language.startsWith("zh")?"請先完成註記儲存。":"Save your annotations first.");return true;}if(!state.editing)return false;showEditingBlockedNotice();return true;}
   function beginEditing(){
+    if(annotationDirty&&!state.editing){blockWhileEditing();return;}clearReadingAnnotations();
     if(state.documentKind==="code"){void beginCodeEditing();return;}
     state.editorMode="direct";
     if(!canEditCurrentDocument()){showToast(t("editUnavailable"));return;}
@@ -706,7 +757,8 @@
 
   function dropdownPairs(){return[[readingModeMenuEl,readingModeToggleEl],[paletteMenuEl,paletteToggleEl],[languageMenuEl,languageToggleEl],[editorInsertMenuEl,editorInsertToggleEl]];}
   function positionToolbarMenu(menu,toggle){
-    const rect=toggle.getBoundingClientRect();
+    const anchor=toggle.getBoundingClientRect();
+    const rect=anchor.width?anchor:{left:innerWidth-8,top:8,bottom:8};
     menu.style.visibility="hidden";menu.hidden=false;
     const width=menu.offsetWidth,height=Math.min(menu.scrollHeight,innerHeight-16);
     const left=Math.max(8,Math.min(innerWidth-width-8,rect.left));
@@ -832,7 +884,7 @@
   }
   function buildOutline(){ outlineEl.innerHTML="";const headings=[...contentEl.querySelectorAll("h1,h2,h3,h4")];if(!headings.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noOutline");outlineEl.appendChild(p);return;}headings.forEach((heading)=>{const button=document.createElement("button");button.type="button";button.className=`outline-item level-${heading.tagName.slice(1)}`;button.textContent=heading.textContent;button.addEventListener("click",()=>{heading.scrollIntoView({behavior:"smooth",block:"start"});sidebarEl.classList.remove("open");});outlineEl.appendChild(button);});}
 
-  async function renderDocument(preserve=false,requestId=state.documentRequestId,markdownText=state.renderText){ if(requestId!==state.documentRequestId)return false;const position=preserve?captureReadingPosition():{ratio:0};closeImageViewer();if(state.activeAdapter)disposeActiveAdapter();state.documentKind="markdown";document.body.dataset.documentKind="markdown";contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");if(!markdownText){contentEl.replaceChildren();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(updatePagination);return true;}if(markdownText.length>500000){const note=document.createElement("p");note.textContent=state.language==="zh-Hant"?"大型文件以純文字預覽，仍可編輯與儲存。":"Large document: plain-text preview. Editing and saving remain available.";const plain=document.createElement("pre");plain.className="large-document-preview";plain.textContent=markdownText;contentEl.replaceChildren(note,plain);rawEl.querySelector("code").textContent=state.rawText;state.editorPreviewBlocks=[];buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:false});return true;}const extensions=extractExtensions(markdownText);const protectedMath=protectMath(extensions.source);const normalizedStrong=window.LumaReaderUtils.normalizeStrongEmphasis(protectedMath.source);const parsedText=protectSubscript(normalizedStrong);let html=window.marked.parse(parsedText,{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,()=>escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);window.LumaPdfTools.prepare(contentEl,state.language.startsWith("zh")?"PDF 換頁":"PDF page break");const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceDocumentImages(contentEl);enhanceAlerts(contentEl);
+  async function renderDocument(preserve=false,requestId=state.documentRequestId,markdownText=state.renderText){ if(requestId!==state.documentRequestId)return false;clearReadingAnnotations();const position=preserve?captureReadingPosition():{ratio:0};closeImageViewer();if(state.activeAdapter)disposeActiveAdapter();state.documentKind="markdown";document.body.dataset.documentKind="markdown";contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");if(!markdownText){contentEl.replaceChildren();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(updatePagination);return true;}if(markdownText.length>500000){const note=document.createElement("p");note.textContent=state.language==="zh-Hant"?"大型文件以純文字預覽，仍可編輯與儲存。":"Large document: plain-text preview. Editing and saving remain available.";const plain=document.createElement("pre");plain.className="large-document-preview";plain.textContent=markdownText;contentEl.replaceChildren(note,plain);rawEl.querySelector("code").textContent=state.rawText;state.editorPreviewBlocks=[];buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:false});return true;}const extensions=extractExtensions(markdownText);const protectedMath=protectMath(extensions.source);const normalizedStrong=window.LumaReaderUtils.normalizeStrongEmphasis(protectedMath.source);const parsedText=protectSubscript(normalizedStrong);let html=window.marked.parse(parsedText,{gfm:true,breaks:false});protectedMath.tokens.forEach((math,index)=>{html=html.replaceAll(`LUMAMATHTOKEN${index}END`,()=>escapeHtml(math));});contentEl.innerHTML=sanitizeHtml(html);window.LumaPdfTools.prepare(contentEl,state.language.startsWith("zh")?"PDF 換頁":"PDF page break");const used=new Set();contentEl.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading)=>{heading.id=slugify(heading.textContent,used);});rewriteMedia(contentEl);enhanceDocumentImages(contentEl);enhanceAlerts(contentEl);
     if(window.renderMathInElement){try{window.renderMathInElement(contentEl,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:"ignore",ignoredTags:["script","noscript","style","textarea","pre","code"]});}catch(error){console.warn("KaTeX",error);}}
     enhanceTextNodes(contentEl,extensions.abbreviations);contentEl.querySelectorAll("pre code").forEach((code)=>{if(code.classList.contains("language-mermaid")){const container=document.createElement("div");container.className="mermaid";container.textContent=code.textContent;code.parentElement.replaceWith(container);return;}try{window.hljs?.highlightElement(code);}catch{}const pre=code.closest("pre");if(pre&&!pre.querySelector(".copy-code")){const copy=document.createElement("button");copy.type="button";copy.className="copy-code";copy.textContent=t("copy");copy.addEventListener("click",async()=>{await navigator.clipboard.writeText(code.textContent);copy.textContent=t("copied");setTimeout(()=>copy.textContent=t("copy"),1200);});pre.appendChild(copy);}});
     const mermaidNodes=[...contentEl.querySelectorAll(".mermaid")];if(mermaidNodes.length){mermaidNodes.forEach((node)=>node.classList.add("mermaid-loading"));void renderMermaidLater(mermaidNodes,requestId);}
@@ -905,7 +957,7 @@
     shellEl.dataset.mode=state.mode;shellEl.dataset.pageDirection=state.pagedDirection;readingModeEl.value=currentReadingLayout();renderReadingModeMenu();
     if(!state.activeAdapter){contentEl.scrollLeft=0;contentEl.scrollTop=0;}window.scrollTo({top:0,behavior:"auto"});requestAnimationFrame(()=>{updatePagination();updateToolbarCapabilities(state.documentKind,state.activeAdapter?.document?.meta?.capabilities||{});});
   }
-  function setView(view){const sourceButton=$("#source-view");if(view==="source"&&sourceButton.hidden)return false;if(state.editing&&view!=="source"){blockWhileEditing();return false;}state.view=view;const source=view==="source",comparison=source&&state.editing&&state.editorPreview;contentEl.hidden=source&&!comparison;rawEl.hidden=!source||state.editing;sourceEditorEl.hidden=!source||!state.editing;shellEl.dataset.view=source?"source":"rendered";sourceButton.classList.toggle("active",source);sourceButton.setAttribute("aria-label",t(source?"renderedView":"sourceView"));sourceButton.removeAttribute("title");updateEditorPreviewLayout();requestAnimationFrame(updatePagination);return true;}
+  function setView(view){const previousView=state.view;const sourceButton=$("#source-view");if(view==="source"&&sourceButton.hidden)return false;if(state.editing&&view!=="source"){blockWhileEditing();return false;}state.view=view;const source=view==="source",comparison=source&&state.editing&&state.editorPreview;contentEl.hidden=source&&!comparison;rawEl.hidden=!source||state.editing;sourceEditorEl.hidden=!source||!state.editing;shellEl.dataset.view=source?"source":"rendered";sourceButton.classList.toggle("active",source);sourceButton.setAttribute("aria-label",t(source?"renderedView":"sourceView"));sourceButton.removeAttribute("title");updateEditorPreviewLayout();if(previousView!==view&&!state.editing&&state.documentKind==="markdown"){if(source)clearReadingAnnotations();else paintNativeAnnotations();}requestAnimationFrame(updatePagination);return true;}
   function sourceScrollTarget(){return state.editing?sourceEditorEl:rawEl;}
   function activeScrollTarget(){return state.activeAdapter?.viewport||null;}
   function readingRatio(){const adapterTarget=activeScrollTarget();if(adapterTarget){const horizontal=adapterTarget.scrollWidth>adapterTarget.clientWidth&&adapterTarget.scrollHeight<=adapterTarget.clientHeight*1.2;const max=horizontal?adapterTarget.scrollWidth-adapterTarget.clientWidth:adapterTarget.scrollHeight-adapterTarget.clientHeight;return max>0?(horizontal?adapterTarget.scrollLeft:adapterTarget.scrollTop)/max:0;}if(state.editing){const max=sourceEditorEl.scrollHeight-sourceEditorEl.clientHeight;return max>0?sourceEditorEl.scrollTop/max:0;}if(state.mode==="vertical"){const max=document.documentElement.scrollHeight-innerHeight;return max>0?scrollY/max:0;}const target=state.view==="source"?sourceScrollTarget():contentEl,vertical=usesVerticalAxis(),max=vertical?target.scrollHeight-target.clientHeight:target.scrollWidth-target.clientWidth;return max>0?(vertical?target.scrollTop:target.scrollLeft)/max:0;}
@@ -1002,8 +1054,8 @@
   sourceEditorEl.addEventListener("wheel",(event)=>{if(!editorPreviewIsActive())return;event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);},{passive:false});
   [contentEl,rawEl].forEach((target)=>target.addEventListener("wheel",(event)=>{if(target===contentEl&&editorPreviewIsActive()){event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);return;}if(state.mode==="vertical")return;event.preventDefault();if(state.mode==="horizontal"){target.scrollBy({left:event.deltaY+event.deltaX,behavior:"auto"});return;}const now=Date.now();if(now-state.lastWheelAt<420||Math.abs(event.deltaY)+Math.abs(event.deltaX)<12)return;state.lastWheelAt=now;moveReading(event.deltaY+event.deltaX>0?1:-1);},{passive:false}));
 
-  document.addEventListener("keydown",(event)=>{const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(newMarkdownDialogEl.open&&event.key==="Escape"){event.preventDefault();closeNewMarkdownDialog();return;}if(command&&!event.shiftKey&&key==="s"){event.preventDefault();if(state.editing)saveEditing();return;}if(!window.lumaDesktop?.isDesktop&&command&&!event.altKey&&(["-","_","+","=","0"].includes(key))){event.preventDefault();event.stopPropagation();adjustFontSize(key==="0"?0:(["-","_"].includes(key)?-1:1));return;}if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(event.key==="Escape"){closeToolbarMenus();closeMediaPanel();closeSidebarOnNarrow();}});
-  window.addEventListener("beforeunload",(event)=>{if(!state.editing||!state.editorDirty)return;event.preventDefault();event.returnValue="";});
+  document.addEventListener("keydown",(event)=>{const target=event.target,key=event.key.toLowerCase(),command=event.metaKey||event.ctrlKey;if(newMarkdownDialogEl.open&&event.key==="Escape"){event.preventDefault();closeNewMarkdownDialog();return;}if(command&&!event.shiftKey&&key==="s"){event.preventDefault();if(state.editing)saveEditing();else if(annotationDirty)void persistReadingAnnotations();return;}if(!window.lumaDesktop?.isDesktop&&command&&!event.altKey&&(["-","_","+","=","0"].includes(key))){event.preventDefault();event.stopPropagation();adjustFontSize(key==="0"?0:(["-","_"].includes(key)?-1:1));return;}if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable){if(event.key==="Escape")target.blur();return;}if(event.key==="Escape"){closeToolbarMenus();closeMediaPanel();closeSidebarOnNarrow();}});
+  window.addEventListener("beforeunload",(event)=>{if(!annotationDirty&&(!state.editing||!state.editorDirty))return;event.preventDefault();event.returnValue="";});
 
   async function initialize(){
     const localTheme=localStorage.getItem("lumareader-theme");document.documentElement.classList.toggle("dark",localTheme==="dark");
@@ -1012,8 +1064,12 @@
     if(Number(saved.readerDefaultsVersion||0)<3){state.mode="vertical";localStorage.setItem("lumareader-mode","vertical");persistPreferences({readingMode:"vertical",readerDefaultsVersion:3});}
     if(Number(saved.readerDefaultsVersion||0)<4){state.toolbarVisibility={...state.toolbarVisibility,source:false,media:false};localStorage.setItem("lumareader-toolbar-visibility",JSON.stringify(state.toolbarVisibility));persistPreferences({toolbarVisibility:state.toolbarVisibility,readerDefaultsVersion:4});}
     if(Number(saved.readerDefaultsVersion||0)<5){state.toolbarVisibility={...state.toolbarVisibility,exportPdf:false};localStorage.setItem("lumareader-toolbar-visibility",JSON.stringify(state.toolbarVisibility));persistPreferences({toolbarVisibility:state.toolbarVisibility,readerDefaultsVersion:5});}
-    if(Number(saved.readerDefaultsVersion||0)<6){state.editorPreview=true;localStorage.setItem("lumareader-editor-preview","true");persistPreferences({editorPreview:true,readerDefaultsVersion:6});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();applyToolbarVisibility();
-    window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();});window.lumaDesktop?.onFontSizeRequested?.((change)=>adjustFontSize(Number(change)));
+    // Adopt the quieter desktop defaults once; subsequent user choices remain intact.
+    if(window.lumaDesktop?.isDesktop&&Number(saved.readerDefaultsVersion||0)<8){state.toolbarVisibility={...state.toolbarVisibility,language:false,textSize:false,settings:true};localStorage.setItem("lumareader-toolbar-visibility",JSON.stringify(state.toolbarVisibility));persistPreferences({toolbarVisibility:state.toolbarVisibility,readerDefaultsVersion:8});}
+    if(Number(saved.readerDefaultsVersion||0)<6){state.editorPreview=true;localStorage.setItem("lumareader-editor-preview","true");persistPreferences({editorPreview:true,readerDefaultsVersion:window.lumaDesktop?.isDesktop?8:6});}applySidebarWidth(state.sidebarWidth);applyPalette(state.palette);applyLanguage(state.language);updateThemeButton();applyFontSize();setMode(state.mode);updateSidebarToggle();applyToolbarVisibility();
+    window.lumaDesktop?.onSettingsRequested?.(handleNativeSettings);
+    syncNativeSettingsMenu();
+    window.lumaDesktop?.onSaveRequested?.(()=>{if(state.editing)saveEditing();else if(annotationDirty)void persistReadingAnnotations();});window.lumaDesktop?.onFontSizeRequested?.((change)=>adjustFontSize(Number(change)));
     window.lumaDesktop?.onLibraryChanged(async(payload)=>{const refreshId=++state.libraryRefreshId;state.libraryRoot=payload.root||null;state.openFolders.clear();showEmptyLibrary();try{await loadFiles({showProgress:true});if(refreshId!==state.libraryRefreshId)return;const first=state.files.find(currentFormatIsEnabled);if(first)await openProjectFile(first.path);else showEmptyLibrary();showToast(t("libraryChanged"));}catch(error){if(refreshId!==state.libraryRefreshId)return;showEmptyLibrary();showToast(error.message||t("loadError"));}});
 
     const params=new URLSearchParams(location.search),requested=params.get("source")||params.get("url")||params.get("file");

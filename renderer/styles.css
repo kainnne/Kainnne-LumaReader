@@ -2620,3 +2620,8 @@ body.editor-preview-enabled .prose :is(p, li, blockquote, h1, h2, h3, h4, h5, h6
   .prose > [data-pdf-release-after] { break-after: auto !important; page-break-after: auto !important; }
   .prose > [data-pdf-break="keep"] { break-inside: avoid-page !important; page-break-inside: avoid !important; }
 }
+
+/* The reading action is a centered text label; save retains its existing treatment. */
+.reader-actions #edit-document:not(.is-editing) { justify-content: center; gap: 0; }
+#edit-document:not(.is-editing) #edit-document-icon { display: none; }
+.reader-actions #edit-document:not(.is-editing) #edit-document-label { display: inline; }
