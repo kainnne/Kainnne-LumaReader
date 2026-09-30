@@ -299,6 +299,7 @@
     localStorage.setItem("lumareader-language", state.language);
     persistPreferences({language:state.language});
     document.documentElement.lang = state.language;
+    scheduleLocalMediaNotice();
     languageEl.value = state.language;
     settingsLanguageEl.value = state.language;
     languageNameEl.textContent = languageEl.selectedOptions[0]?.textContent || "English";
@@ -781,6 +782,7 @@
       const result=await window.lumaWeb.createShareUrl({name:state.currentName||state.currentPath.split("/").pop(),text});
       if(!result?.ok){showToast(t(result?.code==="SHARE_TOO_LARGE"?"shareTooLarge":"shareFailed"));return;}
       openShareDialog(result);
+      if(markdownImageReferences(text).some(raw=>window.lumaWeb.mediaInfo(raw,state.currentPath).local))shareDialogCopyEl.textContent += state.language.startsWith("zh") ? " 本機圖片不包含在此連結內；其他人需要另外選取圖片，或使用公開圖片網址。" : " Local images are not included. Recipients must select the image files separately, or the document must use public image URLs.";
     }catch(error){console.warn("Unable to share Markdown",error);showToast(t("shareFailed"));}
     finally{shareButtonEl.disabled=false;shareButtonEl.removeAttribute("aria-busy");}
   }
@@ -921,10 +923,89 @@
   const allowedTags=new Set("a abbr audio blockquote br code del details div em h1 h2 h3 h4 h5 h6 hr img input kbd li mark ol p pre s section source span strong sub summary sup table tbody td th thead tr ul video".split(" "));
   const allowedAttrs=new Set("alt aria-label aria-hidden checked class colspan controls disabled href id loop muted open poster preload role rowspan src start title type".split(" "));
   function safeLink(value){const url=String(value||"").trim();if(!url)return"";const normalized=url.replace(/[\u0000-\u0020\u007f]/g,"");if(/^[a-z][a-z0-9+.-]*:/i.test(normalized)&&! /^(https?:|file:|blob:|data:image\/(?:png|jpeg|gif|webp);base64,)/i.test(normalized))return"#";return url;}
-  function sanitizeHtml(html){ const doc=new DOMParser().parseFromString(`<main>${html}</main>`,"text/html"),root=doc.body.firstElementChild; [...root.querySelectorAll("*")].forEach((el)=>{const tag=el.tagName.toLowerCase();if(!allowedTags.has(tag)){if(["script","style","iframe","object","embed","form"].includes(tag))el.remove();else el.replaceWith(...el.childNodes);return;}[...el.attributes].forEach((attr)=>{const name=attr.name.toLowerCase();if(name.startsWith("on")||name==="style"||!allowedAttrs.has(name))el.removeAttribute(attr.name);});if(el.hasAttribute("href"))el.setAttribute("href",safeLink(el.getAttribute("href")));if(el.hasAttribute("src"))el.setAttribute("src",safeLink(el.getAttribute("src")));if(tag==="input"){if(el.getAttribute("type")!=="checkbox"){el.remove();return;}el.setAttribute("disabled","");}});return root.innerHTML; }
+  function sanitizeHtml(html){ const doc=new DOMParser().parseFromString(`<main>${html}</main>`,"text/html"),root=doc.body.firstElementChild; [...root.querySelectorAll("*")].forEach((el)=>{const tag=el.tagName.toLowerCase();if(!allowedTags.has(tag)){if(["script","style","iframe","object","embed","form"].includes(tag))el.remove();else el.replaceWith(...el.childNodes);return;}[...el.attributes].forEach((attr)=>{const name=attr.name.toLowerCase();if(name.startsWith("on")||name==="style"||!allowedAttrs.has(name))el.removeAttribute(attr.name);});if(el.hasAttribute("href"))el.setAttribute("href",safeLink(el.getAttribute("href")));if(el.hasAttribute("src")){const raw=el.getAttribute("src");el.dataset.originalSrc=raw;const resolved=mediaUrl(raw);if(resolved)el.setAttribute("src",resolved);else el.removeAttribute("src");}if(tag==="input"){if(el.getAttribute("type")!=="checkbox"){el.remove();return;}el.setAttribute("disabled","");}});return root.innerHTML; }
+
+  let mediaNoticeTimer, mediaImportController, mediaReferenceText, mediaReferences;
+  function markdownImageReferences(text) {
+    text = String(text || "");
+    if (text === mediaReferenceText) return mediaReferences;
+    if (text.length > 500000) return []; // Match the reader's large-document text-only fallback.
+    const refs = new Set();
+    const tokens = window.marked.lexer(String(text || ""));
+    window.marked.walkTokens(tokens, token => {
+      if (token.type === "image") refs.add(token.href);
+      if (token.type === "html") {
+        const template = document.createElement("template"); template.innerHTML = token.text;
+        template.content.querySelectorAll('img[src]').forEach(img => refs.add(img.getAttribute('src')));
+      }
+    });
+    mediaReferenceText = text; mediaReferences = [...refs];
+    return mediaReferences;
+  }
+  function scheduleLocalMediaNotice() {
+    clearTimeout(mediaNoticeTimer);
+    mediaNoticeTimer = setTimeout(updateLocalMediaNotice, 150);
+  }
+  function updateLocalMediaNotice() {
+    const panel = $("#local-media-notice");
+    if (mediaImportController || !window.lumaWeb || !panel) return;
+    const zh = state.language.startsWith("zh");
+    const text = state.editing ? sourceEditorEl.value : state.renderText;
+    const missing = state.currentPath && isMarkdown(state.currentPath) ? markdownImageReferences(text).filter(raw => window.lumaWeb.mediaInfo(raw, state.currentPath).missing) : [];
+    panel.hidden = !missing.length;
+    if (!missing.length) return;
+    $("#local-media-copy").textContent = zh ? `有 ${missing.length} 張本機圖片尚未連結。選取圖片或所在資料夾即可顯示；只在此分頁讀取，不會上傳。` : `${missing.length} local image(s) need files. Choose the images or their folder. Files stay in this tab; nothing is uploaded.`;
+    $("#local-media-files-button").textContent = zh ? "選取圖片" : "Choose images";
+    $("#local-media-folder-button").textContent = zh ? "圖片資料夾" : "Image folder";
+    $("#local-media-details").textContent = missing.join("\n");
+    $("#local-media-details-label").textContent = zh ? "查看缺少的路徑" : "Missing paths";
+    $("#local-media-progress").hidden = true;
+    $("#local-media-cancel").hidden = true;
+  }
+  function refreshLocalMedia() {
+    // Update image DOM only: preserve the editor document, selection and undo history.
+    contentEl.querySelectorAll('img[data-original-src],audio[data-original-src],video[data-original-src]').forEach(el => {
+      const src = mediaUrl(el.dataset.originalSrc);
+      if (src) el.setAttribute('src', src); else el.removeAttribute('src');
+    });
+    directEditor?.view.state.doc.descendants((node, pos) => {
+      if (node.type.name !== 'image') return;
+      const img = directEditor.view.nodeDOM(pos)?.querySelector('img');
+      const src = mediaUrl(node.attrs.src);
+      if (img) { if (src) img.src = src; else img.removeAttribute('src'); img.loading = 'lazy'; }
+    });
+    rebuildMedia();
+    scheduleLocalMediaNotice();
+    requestAnimationFrame(updatePagination);
+  }
+  async function attachLocalImages(files) {
+    if (mediaImportController || !files?.length) return;
+    const controller = new AbortController(); mediaImportController = controller;
+    const zh = state.language.startsWith('zh');
+    const panel = $("#local-media-notice"), progress = $("#local-media-progress");
+    panel.hidden = false; progress.hidden = false;
+    $("#local-media-cancel").hidden = false;
+    $("#local-media-cancel").textContent = zh ? '取消' : 'Cancel';
+    progress.max = files.length; progress.value = 0;
+    try {
+      const result = await window.lumaWeb.importAssets(files, { signal: controller.signal, onProgress: ({processed,total}) => {
+        progress.value = processed;
+        $("#local-media-copy").textContent = zh ? `正在比對圖片 ${processed} / ${total}（不上傳）` : `Matching images ${processed} / ${total} (no upload)`;
+      }});
+      refreshLocalMedia();
+      showToast(result.assetsSkipped ? (zh ? '部分圖片超過限制：單檔 32 MB、此分頁共 256 MB，最多 2,000 個媒體檔。' : 'Some images exceed the limits: 32 MB each, 256 MB / 2,000 media files per tab.') : (zh ? `已讀取 ${result.assetsAdded} 個媒體檔；未修改 Markdown。` : `Read ${result.assetsAdded} media files. Markdown is unchanged.`));
+    } catch { showToast(zh ? '無法讀取圖片，請重新選取檔案。' : 'Unable to read images. Please select the files again.'); }
+    finally { mediaImportController = null; updateLocalMediaNotice(); }
+  }
+  $("#local-media-files-button").addEventListener('click', () => $("#local-media-picker").click());
+  $("#local-media-folder-button").addEventListener('click', () => $("#local-media-folder-picker").click());
+  $("#local-media-cancel").addEventListener('click', () => mediaImportController?.abort());
+  for (const id of ['#local-media-picker', '#local-media-folder-picker']) $(id).addEventListener('change', async event => { await attachLocalImages(event.target.files); event.target.value = ''; });
+  sourceEditorEl.addEventListener('input', scheduleLocalMediaNotice);
+  new MutationObserver(scheduleLocalMediaNotice).observe(directHost, {childList:true, subtree:true, characterData:true});
 
   function mediaUrl(raw){ const value=String(raw||"").trim().replace(/^<|>$/g,"");if(window.lumaWeb?.mediaUrl)return window.lumaWeb.mediaUrl(value,state.currentPath);if(/^(data:image\/|blob:)/i.test(value))return value;if(/^https?:/i.test(value))return value;if(state.sourceType==="remote"){try{return new URL(value,state.currentBase).href;}catch{return"";}}if(state.sourceType==="upload")return"";const query=new URLSearchParams({path:value,from:state.currentPath});return`/api/media?${query}`; }
-  function rewriteMedia(root){ root.querySelectorAll("img, audio, video").forEach((el)=>{const raw=el.getAttribute("src")||"";el.dataset.originalSrc=raw;const resolved=mediaUrl(raw);if(resolved)el.setAttribute("src",resolved);else el.removeAttribute("src");el.setAttribute("loading","lazy");}); }
+  function rewriteMedia(root){ scheduleLocalMediaNotice();root.querySelectorAll("img, audio, video").forEach((el)=>{const raw=el.dataset.originalSrc||el.getAttribute("src")||"";el.dataset.originalSrc=raw;const resolved=mediaUrl(raw);if(resolved)el.setAttribute("src",resolved);else el.removeAttribute("src");el.setAttribute("loading","lazy");}); }
 
   function updateImageViewerLabels(){
     $("#image-viewer-title").textContent=imageT("preview");
@@ -1019,6 +1100,7 @@
     sessionDialogConfirmEl.hidden=true;sessionDialogCancelEl.textContent=t("limitDismiss");if(!sessionDialogEl.open)sessionDialogEl.showModal();requestAnimationFrame(()=>sessionDialogFilesEl.querySelector("button")?.focus());
   }
   async function consumeWebImportResult(result){
+    if(result?.assetsAdded)refreshLocalMedia();
     if(result?.path)$("#embed-welcome")?.remove();
     await loadFiles({showProgress:true});if(result?.path)await openProjectFile(result.path);
     if(result?.pendingFiles?.length)openSessionLimitDialog(result.pendingFiles);
@@ -1096,7 +1178,7 @@
   async function handleFileDrop(event){
     if(event.defaultPrevented){hideDropOverlay();return;}if(!dragContainsFiles(event))return;event.preventDefault();const files=event.dataTransfer?.files;hideDropOverlay();
     if(window.LumaEmbed?.config?.readOnly||!files?.length)return;const hasDocument=Array.from(files).some((file)=>SUPPORTED_EXTENSION_SET.has(extensionOf(file.name)));
-    if(!hasDocument){showToast(t("dropUnsupported"));return;}await openUploadedFile(files);
+    if(!hasDocument){if([...files].some(file=>file.type.startsWith("image/")))await attachLocalImages(files);else showToast(t("dropUnsupported"));return;}await openUploadedFile(files);
   }
   async function changeLibrary(){if(blockWhileEditing())return;if(!window.lumaDesktop?.chooseLibrary){showToast(t("folderSelectionUnavailable"));return;}try{await window.lumaDesktop.chooseLibrary();}catch(error){cancelDocumentRequest();showToast(error.message||t("loadError"));}}
 

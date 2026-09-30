@@ -85,3 +85,15 @@ body.embedded-reader #sidebar .appearance-button{display:flex;align-items:center
 body.embedded-reader #sidebar .appearance-theme-icon{width:20px;font-size:20px}
 body.embedded-reader .embed-library-controls{display:flex!important;gap:8px;flex-wrap:wrap}
 body.embed-readonly #choose-file{display:none}
+
+/* Missing local images stay near the document, outside the reading content. */
+.local-media-notice { margin: 10px 20px 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff8fb); color: var(--ink); font-size: 13px; line-height: 1.5; flex-shrink: 0; }
+.local-media-notice[hidden] { display: none; }
+.local-media-notice p { margin: 0 0 8px; }
+.local-media-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.local-media-notice details { margin-top: 8px; color: var(--muted); }
+.local-media-notice pre { max-height: 90px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
+.local-media-notice progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
+@media (max-width: 600px) { .local-media-notice { margin: 8px 10px 0; padding: 10px; font-size: 12px; } }
+.local-media-notice [hidden] { display: none !important; }
+body.editor-preview-enabled .reader-shell:has(.local-media-notice:not([hidden])) { grid-template-rows: auto auto minmax(0, 1fr); }

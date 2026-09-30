@@ -9,6 +9,8 @@
   const SHARE_SERVICE_URL = "https://lumareader-share.chaos60649.workers.dev";
   const documents = new Map();
   const assets = new Map();
+  const assetSuffixes = new Map();
+  let assetBytes = 0;
   const objectUrls = new Set();
   const originalFetch = window.fetch.bind(window);
   const preferencesKey = "lumareader-web-preferences-v1";
@@ -304,16 +306,53 @@ ${desktopDownloadMarkdown}
     return document;
   }
 
+  function normalizeAssetPath(value) {
+    const parts = [];
+    for (const part of String(value || "").replace(/\\/g, "/").normalize("NFC").split("/")) {
+      if (!part || part === ".") continue;
+      if (part === "..") parts.pop(); else parts.push(part);
+    }
+    return parts.join("/");
+  }
+
   function addAsset(file, path = "") {
-    const finalPath = path || uniquePath(file.name);
-    const url = URL.createObjectURL(file);
-    objectUrls.add(url);
-    assets.set(finalPath, { file, url });
-    assets.set(file.name, { file, url });
+    const finalPath = normalizeAssetPath(path || file.webkitRelativePath || file.name);
+    if (!finalPath) return false;
+    const previous = assets.get(finalPath);
+    if (file.size > 32 * 1024 * 1024 || (!previous && assets.size >= 2000) || assetBytes - (previous?.file.size || 0) + file.size > 256 * 1024 * 1024) return false;
+    if (previous?.url) { URL.revokeObjectURL(previous.url); objectUrls.delete(previous.url); }
+    assetBytes += file.size - (previous?.file.size || 0);
+    const asset = { file, url: "", path: finalPath };
+    assets.set(finalPath, asset);
+    const parts = finalPath.split("/");
+    for (let i = 0; i < parts.length; i++) {
+      const suffix = parts.slice(i).join("/");
+      if (!assetSuffixes.has(suffix)) assetSuffixes.set(suffix, new Set());
+      assetSuffixes.get(suffix).add(finalPath);
+    }
+    return true;
+  }
+
+  async function importAssets(files, { onProgress = () => {}, signal } = {}) {
+    let added = 0, skipped = 0, processed = 0;
+    const list = Array.from(files || []);
+    for (const file of list) {
+      if (signal?.aborted) break;
+      if (/^(image|audio|video)\//.test(file.type) || /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)$/i.test(file.name)) {
+        if (addAsset(file)) added++; else skipped++;
+      }
+      processed++;
+      if (processed % 50 === 0 || processed === list.length) {
+        onProgress({ processed, total: list.length, added, skipped });
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    return { assetsAdded: added, assetsSkipped: skipped, canceled: Boolean(signal?.aborted) };
   }
 
   async function importFiles(files, handles = []) {
     if(window.LumaEmbed?.config?.readOnly)return {canceled:true};
+    const importedAssets = await importAssets(files);
     let lastDocument = "";
     const pendingFiles = [];
     let added = 0;
@@ -324,17 +363,15 @@ ${desktopDownloadMarkdown}
         if(window.LumaEmbed&&file.size>16*1024*1024)throw new Error("Markdown must be under 16 MB.");
         // An untouched blank welcome document is replaced by the first import.
         if(window.LumaEmbed&&documents.size===1){const first=[...documents.values()][0];if(first.blankWelcome&&!first.text.trim())documents.clear();}
-        const document = addDocument({ name: file.name, text: await file.text(), handle: window.LumaEmbed?null:handleByName.get(file.name) || null });
+        const document = addDocument({ name: file.name, text: await file.text(), handle: window.LumaEmbed?null:handleByName.get(file.name) || null, path: file.webkitRelativePath ? uniquePath(normalizeAssetPath(file.webkitRelativePath)) : "" });
         if (document) {
           added += 1;
           lastDocument = document.path;
         } else pendingFiles.push(file);
-      } else if (/^(image|audio|video)\//.test(file.type)) {
-        addAsset(file);
       }
     }
     if(added)window.LumaEmbed?.workspaceChanged();
-    return { path: lastDocument, added, pendingFiles, ...sessionInfo() };
+    return { path: lastDocument, added, pendingFiles, ...importedAssets, ...sessionInfo() };
   }
 
   async function chooseFiles() {
@@ -356,23 +393,46 @@ ${desktopDownloadMarkdown}
     }
   }
 
-  function mediaUrl(raw, from) {
+  function mediaInfo(raw, from) {
     const value = String(raw || "").trim().replace(/^<|>$/g, "");
-    if (!value) return "";
-    if (/^(?:data:|blob:|https?:)/i.test(value)) return value;
-    const clean = decodeURIComponent(value.split(/[?#]/)[0]).replace(/^\.\//, "");
-    const baseParts = String(from || "").split("/");
-    baseParts.pop();
-    for (const part of clean.split("/")) {
-      if (!part || part === ".") continue;
-      if (part === "..") baseParts.pop();
-      else baseParts.push(part);
+    if (!value || value === "#") return { url: "", local: false };
+    if (/^(?:data:(?:image|audio|video)\/|blob:|https?:|\/\/)/i.test(value)) return { url: value, local: false };
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value) && !/^(?:file:|[a-z]:[\\/])/i.test(value)) return { url: "", local: false };
+    let clean = value.split(/[?#]/)[0];
+    try { clean = decodeURIComponent(clean); } catch { /* A literal % in a filename is valid. */ }
+    clean = clean.replace(/^file:\/\/(?:localhost)?/i, "").replace(/\\/g, "/");
+    const document = documents.get(from);
+    const local = Boolean(document && !document.sample && !document.remoteBase && !window.LumaEmbed?.config?.baseURL);
+    const base = String(from || "").replace(/\\/g, "/").split("/").slice(0, -1).join("/");
+    const absolute = /^(?:file:|[a-z]:[\\/]|\/)/i.test(value);
+    const candidate = normalizeAssetPath(absolute ? clean : `${base}/${clean}`);
+    let asset = assets.get(candidate);
+    let ambiguous = false;
+    if (!asset) {
+      const parts = normalizeAssetPath(clean).split("/");
+      for (let i = 0; i < parts.length; i++) {
+        const matches = assetSuffixes.get(parts.slice(i).join("/"));
+        if (!matches?.size) continue;
+        if (matches.size === 1) asset = assets.get(matches.values().next().value);
+        else ambiguous = true;
+        break;
+      }
     }
-    const candidate = baseParts.join("/");
-    const asset = assets.get(candidate) || assets.get(clean) || assets.get(clean.split("/").pop());
-    if (asset) return asset.url;
-    try { return new URL(value, window.LumaEmbed?.config?.baseURL || location.href).href; } catch { return ""; }
+    if (asset) {
+      if (!asset.url) { asset.url = URL.createObjectURL(asset.file); objectUrls.add(asset.url); }
+      return { url: asset.url, local: true, asset };
+    }
+    // Remote Markdown and the built-in example retain their own URL base.
+    if (!local && (document?.sample || document?.remoteBase || window.LumaEmbed?.config?.baseURL)) {
+      if (!/^(?:file:|[a-z]:[\\/])/i.test(value)) {
+        try { return { url: new URL(value, document?.remoteBase || window.LumaEmbed?.config?.baseURL || location.href).href, local: false }; } catch {}
+      }
+    }
+    // Never turn a private path into a request to the public website.
+    return { url: "", local: true, missing: true, ambiguous };
   }
+
+  function mediaUrl(raw, from) { return mediaInfo(raw, from).url; }
 
   async function saveDocument({ path, text }) {
     const document = documents.get(path);
@@ -421,7 +481,7 @@ ${desktopDownloadMarkdown}
     const requestedPath = [folder, assetFolder, safeName].filter(Boolean).join("/");
     const assetPath = uniquePath(requestedPath);
     const file = new File([data], assetPath.split("/").pop(), { type: mime });
-    addAsset(file, assetPath);
+    if (!addAsset(file, assetPath)) return { ok: false, code: "INVALID_IMAGE" };
     const markdownPath = assetPath.slice(folder ? folder.length + 1 : 0).split("/").map(encodeURIComponent).join("/");
     return { ok: true, image: { path: assetPath, markdownPath } };
   }
@@ -461,6 +521,7 @@ ${desktopDownloadMarkdown}
         if (!response.ok) return json({ error: `Unable to open source (${response.status})` }, response.status);
         const name = decodeURIComponent(new URL(source).pathname.split("/").pop() || "Remote.md");
         const document = addDocument({ name, text: await response.text() });
+        if (document) document.remoteBase = source;
         return document ? json(payload(document)) : json({ error: "LumaReader Web document limit reached", code: "SESSION_DOCUMENT_LIMIT" }, 409);
       } catch (error) {
         return json({ error: error?.message || "Unable to open source" }, 400);
@@ -509,7 +570,7 @@ ${desktopDownloadMarkdown}
   }, commitEmbeddedText(text) {
     const document = documents.get(window.LumaEmbed?.managedPath);
     if (document) {document.text=text;document.modifiedNs=String(Date.now()*1000000);}
-  }, desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
+  }, desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, importAssets, mediaInfo, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
   window.lumaDesktop = {
     isDesktop: false,
     platform: "web",

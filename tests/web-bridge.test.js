@@ -177,3 +177,62 @@ test("Web detects the preferred platform while the demo always offers all operat
     });
   }
 });
+
+function imageFile(name, relativePath = name, size = 8) {
+  const file = new Blob([new Uint8Array(size)], {type:'image/png'});
+  Object.defineProperties(file, {name:{value:name},webkitRelativePath:{value:relativePath}});
+  return file;
+}
+
+test('local images resolve folder paths, Unicode, parent paths and absolute paths without network access', async () => {
+  let requests = 0;
+  const w = loadWebBridge('', async () => { requests++; throw Error('No network expected'); });
+  await w.lumaWeb.ready;
+  const md = {...markdownFile('筆記.md'), webkitRelativePath:'專案/docs/筆記.md'};
+  await w.lumaWeb.importFiles([md, imageFile('圖 一.png', '專案/assets/圖 一.png')]);
+  const from = '專案/docs/筆記.md';
+  const url = w.lumaWeb.mediaUrl('../assets/%E5%9C%96%20%E4%B8%80.png', from);
+  assert.match(url, /^blob:/);
+  for (const raw of ['../assets/圖 一.png','file:///Users/person/專案/assets/圖%20一.png','C:\\專案\\assets\\圖 一.png']) assert.equal(w.lumaWeb.mediaUrl(raw,from),url);
+  assert.equal(w.lumaWeb.mediaUrl('private/missing.png',from),'');
+  assert.equal(w.lumaWeb.mediaUrl('broken%name.png',from),'');
+  assert.equal(w.lumaWeb.mediaUrl('javascript:alert(1)',from),'');
+  assert.equal(requests,0);
+  const doc = await (await w.fetch('/api/file?path='+encodeURIComponent(from))).json();
+  assert.equal(doc.text,'# 筆記.md\n');
+});
+
+test('matching duplicate image names uses folders and never chooses an ambiguous basename', async () => {
+  const w=loadWebBridge(); await w.lumaWeb.ready;
+  await w.lumaWeb.importFiles([markdownFile('Draft.md')]);
+  await w.lumaWeb.importAssets([imageFile('same.png','root/a/same.png'),imageFile('same.png','root/b/same.png')]);
+  assert.equal(w.lumaWeb.mediaInfo('same.png','Draft.md').ambiguous,true);
+  assert.equal(w.lumaWeb.mediaUrl('same.png','Draft.md'),'');
+  const a=w.lumaWeb.mediaUrl('a/same.png','Draft.md'),b=w.lumaWeb.mediaUrl('b/same.png','Draft.md');
+  assert.match(a,/^blob:/);assert.match(b,/^blob:/);assert.notEqual(a,b);
+});
+
+test('media-only imports refresh a session, preserve documents, report progress and support cancellation', async () => {
+  const w=loadWebBridge(); await w.lumaWeb.ready;
+  await w.lumaWeb.importFiles([markdownFile('Draft.md')]);
+  assert.equal(w.lumaWeb.mediaUrl('photo.png','Draft.md'),'');
+  const imported=await w.lumaWeb.importFiles([imageFile('photo.png')]);
+  assert.equal(imported.assetsAdded,1);assert.equal(imported.count,1);assert.equal(imported.path,'');
+  assert.match(w.lumaWeb.mediaUrl('photo.png','Draft.md'),/^blob:/);
+  const progress=[],controller=new AbortController();
+  const result=await w.lumaWeb.importAssets(Array.from({length:120},(_,i)=>imageFile(`image-${i}.png`)),{signal:controller.signal,onProgress:p=>{progress.push(p.processed);controller.abort();}});
+  assert.equal(result.assetsAdded,50);assert.equal(result.canceled,true);assert.deepEqual(progress,[50]);
+  const large={name:'large.png',type:'image/png',size:33*1024*1024};
+  assert.equal((await w.lumaWeb.importAssets([large])).assetsSkipped,1);
+});
+
+test('remote and sample images keep their URL base while missing local paths never become public requests', async () => {
+  const w=loadWebBridge('',async()=>new Response('# Remote\n\n![Photo](./images/a.png)'));
+  await w.lumaWeb.ready;
+  assert.equal(w.lumaWeb.mediaUrl('../icon-content.webp','LumaReader Web.md'),'https://example.test/icon-content.webp');
+  const remote=await (await w.fetch('/api/open?source='+encodeURIComponent('https://docs.test/folder/note.md'))).json();
+  assert.equal(w.lumaWeb.mediaUrl('./images/a.png',remote.path),'https://docs.test/folder/images/a.png');
+  await w.lumaWeb.importFiles([markdownFile('Local.md')]);
+  assert.equal(w.lumaWeb.mediaUrl('/Users/me/private.png','Local.md'),'');
+  assert.equal(w.lumaWeb.mediaUrl('https://images.test/a.png','Local.md'),'https://images.test/a.png');
+});

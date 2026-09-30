@@ -10,6 +10,10 @@ LumaReader Web is the static, account-free browser edition served from `/web/`. 
 - Opened content stays in memory for the current tab. Reloading or closing the tab clears it.
 - Each file row has a remove action. Removal requires confirmation and does not delete the original local file.
 - No document content is uploaded during ordinary reading or editing.
+- Missing local images show a **Choose images / Image folder** notice. Selecting a folder reads image/media files from that chosen folder and its subfolders; it does not add every Markdown document in the folder or upload its contents. The browser cannot automatically access a local path written in Markdown.
+- Relative paths, parent paths, Unicode/percent-encoded filenames, and selected Windows/macOS absolute paths are matched in memory. Exact paths take priority; suffix/name fallback only works when unambiguous. Missing private paths never become requests to the public website.
+- Media indexing yields every 50 files and reports cancellable progress. Object URLs are created on demand; ordinary previews keep original image quality. Limits are 32 MiB per file, 256 MiB and 2,000 media files per tab. Reloading clears these files. Remote image URLs retain their existing behavior.
+- Supplementing images updates the reading/editor DOM without changing Markdown, editor selection, or undo history. Sharing warns that session-local images are not included in the existing text-only share link.
 - Folder-library import, durable cloud libraries, document download, and PDF export are desktop-only.
 - The rest of the reading and editing interface should stay aligned with the desktop renderer, including Settings, toolbar visibility, Markdown insertion, image insertion, and unsaved-change confirmation.
 - The built-in sample begins with a practical English and Traditional Chinese explanation of why the local-first Desktop edition is the primary product. Its footer offers direct macOS, Windows and Linux downloads plus a homepage link.
@@ -41,3 +45,11 @@ Interface preferences use local storage. Document names, paths, and content do n
 9. Share the current Markdown, confirm the dialog shows a short `workers.dev/s/…` link, then open it in a clean tab and confirm the same filename and content render.
 10. Share the unchanged built-in sample and confirm the result is the permanent `/web/` URL with no new KV record.
 11. Confirm the built-in sample is bilingual, retains its OS-specific download footer, and has no download toolbar button.
+
+## Image-sharing assessment (2026-09-30)
+
+This Web fix does not introduce cloud image uploads. The current Worker accepts 128 KiB requests containing a maximum 100,000-character reader URL; embedding many base64 images in that URL is not a viable image-sharing design. Local preview does not need compression or cloud storage.
+
+For a separate image-sharing implementation, use object storage (such as Cloudflare R2) behind the Worker, rather than GitHub Pages or the existing short-link payload. Upload only images referenced by the active document after an explicit share action. Proposed starting points to validate: longest edge 2,048 px, WebP quality 0.82 for photographs, preserve PNG/text diagrams and animation where needed, two concurrent uploads, per-file and total-byte progress, cancellation, bounded retries, and 30-day object expiry. Keep the original local files unchanged; map document image references to opaque asset IDs in a share manifest. Confirm storage billing, abuse controls and capacity limits before enabling the public upload endpoint. Possessing a share link grants access; this is not private authenticated storage.
+
+Cloudflare references: [R2 pricing](https://developers.cloudflare.com/r2/pricing/) and [Workers KV limits](https://developers.cloudflare.com/kv/platform/limits/).
