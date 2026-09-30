@@ -5,3 +5,9 @@
 .library-show-more:hover{background:var(--accent-soft)}
 .file-row{display:flex;min-width:0;align-items:center}.file-row>.file-button{flex:1;min-width:0}
 .library-scan-status{max-width:36rem;line-height:1.7;overflow-wrap:anywhere}
+
+.library-scan-detail{display:block;margin-top:5px;font-size:.72rem;font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.library-scan-track{display:block;position:relative;height:3px;margin-top:10px;overflow:hidden;border-radius:999px;background:var(--accent-soft)}
+.library-scan-track::after{content:"";display:block;width:35%;height:100%;border-radius:inherit;background:var(--accent);animation:library-scan-progress 1.8s ease-in-out infinite}
+@keyframes library-scan-progress{0%{transform:translateX(-100%)}100%{transform:translateX(390%)}}
+@media(prefers-reduced-motion:reduce){.library-scan-track::after{animation:none;transform:translateX(90%)}}

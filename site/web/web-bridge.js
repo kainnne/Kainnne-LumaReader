@@ -10,6 +10,7 @@
   const documents = new Map();
   const assets = new Map();
   const assetSuffixes = new Map();
+  const documentMediaPaths = new Map();
   let assetBytes = 0;
   const objectUrls = new Set();
   const originalFetch = window.fetch.bind(window);
@@ -302,6 +303,7 @@ ${desktopDownloadMarkdown}
     const extension = extensionOf(finalPath);
     if (!TEXT_EXTENSIONS.includes(extension)) return null;
     const document = { id:window.LumaEmbed?(crypto.randomUUID?.()||[...crypto.getRandomValues(new Uint8Array(16))].map(n=>n.toString(16).padStart(2,"0")).join("")):finalPath, path: finalPath, name: finalPath.split("/").pop(), extension, text: String(text || ""), handle, sample, modifiedNs: String(Date.now() * 1000000) };
+    documentMediaPaths.delete(finalPath);
     documents.set(finalPath, document);
     return document;
   }
@@ -348,6 +350,115 @@ ${desktopDownloadMarkdown}
       }
     }
     return { assetsAdded: added, assetsSkipped: skipped, canceled: Boolean(signal?.aborted) };
+  }
+
+  function imageReferencePath(raw) {
+    const value = String(raw || "").trim().replace(/^<|>$/g, "");
+    if (!value || /^(?:https?:|data:|blob:|\/\/)/i.test(value)) return null;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value) && !/^(?:file:|[a-z]:[\\/])/i.test(value)) return null;
+    let clean = value.split(/[?#]/)[0];
+    try { clean = decodeURIComponent(clean); } catch {}
+    return { clean: clean.replace(/^file:\/\/(?:localhost)?/i, "").replace(/\\/g, "/"), absolute: /^(?:file:|[a-z]:[\\/]|\/)/i.test(value) };
+  }
+
+  // Directory permission gives us names/handles, not permission to upload anything.
+  // Read only the images referenced by this document; never import sibling Markdown.
+  async function importReferencedImages(entries, { from, references = [], onProgress = () => {}, signal, truncated = false } = {}) {
+    const doc = documents.get(from);
+    if (truncated || entries.length > 20000) return { assetsAdded: 0, assetsSkipped: 0, truncated: true, canceled: Boolean(signal?.aborted) };
+    if (!doc) return { assetsAdded: 0, assetsSkipped: 0, canceled: false };
+    const byPath = new Map(), suffixes = new Map();
+    const normalizedFrom = normalizeAssetPath(from);
+    const documentPaths = [];
+    for (const entry of entries) {
+      const path = normalizeAssetPath(entry.path || entry.file?.webkitRelativePath || entry.file?.name);
+      if (path.split('/').pop() === normalizedFrom.split('/').pop()) documentPaths.push(path);
+      if (!/\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)$/i.test(path)) continue;
+      byPath.set(path, entry);
+      const parts = path.split('/');
+      for (let i = 0; i < parts.length; i++) {
+        const suffix = parts.slice(i).join('/');
+        if (!suffixes.has(suffix)) suffixes.set(suffix, []);
+        suffixes.get(suffix).push(path);
+      }
+    }
+    const exactDocument = documentPaths.filter(path => path === normalizedFrom || path.endsWith('/' + normalizedFrom));
+    const inferred = exactDocument.length === 1 ? exactDocument[0] : documentPaths.length === 1 ? documentPaths[0] : null;
+    const base = inferred?.split('/').slice(0, -1).join('/');
+    const bindings = new Map(documentMediaPaths.get(from));
+    let added = 0, skipped = 0, processed = 0, ambiguous = 0;
+    const refs = [...new Set(references)];
+    const loaded = new Set();
+    for (const raw of refs) {
+      if (signal?.aborted) break;
+      const ref = imageReferencePath(raw);
+      let path;
+      if (!bindings.has(raw)) bindings.set(raw, null);
+      if (ref) {
+        if (base !== undefined && !ref.absolute) {
+          const candidate = normalizeAssetPath(`${base}/${ref.clean}`);
+          if (byPath.has(candidate)) path = candidate;
+          // A known Markdown location is authoritative. Never substitute an unrelated basename.
+        } else {
+          const parts = normalizeAssetPath(ref.clean).split('/');
+          for (let i = 0; i < parts.length; i++) {
+            const matches = suffixes.get(parts.slice(i).join('/'));
+            if (!matches?.length) continue;
+            if (matches.length === 1) path = matches[0]; else ambiguous++;
+            break;
+          }
+        }
+      }
+      if (path) {
+        try {
+          if (!loaded.has(path)) {
+            const entry = byPath.get(path);
+            const file = entry.file || await entry.handle.getFile();
+            if (signal?.aborted) break;
+            if (!addAsset(file, path)) { skipped++; path = null; }
+            else { loaded.add(path); added++; }
+          }
+          if (path) bindings.set(raw, path);
+        } catch { skipped++; }
+      }
+      processed++;
+      if (processed % 25 === 0 || processed === refs.length) {
+        onProgress({ phase: 'matching', processed, total: refs.length, added, skipped });
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    documentMediaPaths.set(from, bindings);
+    return { assetsAdded: added, assetsSkipped: skipped, ambiguous, truncated, canceled: Boolean(signal?.aborted) };
+  }
+
+  async function chooseImageFolder(options = {}) {
+    if (typeof window.showDirectoryPicker !== 'function') return { supported: false };
+    let root;
+    try { root = await window.showDirectoryPicker({ id: 'lumareader-images', mode: 'read' }); }
+    catch (error) {
+      if (error?.name === 'AbortError') return { supported: true, canceled: true, assetsAdded: 0 };
+      if (error?.name === 'SecurityError' || error?.name === 'NotAllowedError') return { supported: false };
+      throw error;
+    }
+    const entries = [], pending = [{ handle: root, path: root.name }];
+    let scanned = 0, truncated = false;
+    while (pending.length && !options.signal?.aborted) {
+      const directory = pending.pop();
+      for await (const [name, handle] of directory.handle.entries()) {
+        if (options.signal?.aborted) break;
+        if (++scanned > 20000) { truncated = true; break; }
+        const path = `${directory.path}/${name}`;
+        if (handle.kind === 'directory') {
+          pending.push({handle, path});
+        } else entries.push({handle, path});
+        if (scanned % 100 === 0) {
+          options.onProgress?.({ phase: 'scanning', processed: scanned });
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      }
+      if (truncated) break;
+    }
+    return { supported: true, ...await importReferencedImages(entries, {...options, truncated}) };
   }
 
   async function importFiles(files, handles = []) {
@@ -406,7 +517,10 @@ ${desktopDownloadMarkdown}
     const base = String(from || "").replace(/\\/g, "/").split("/").slice(0, -1).join("/");
     const absolute = /^(?:file:|[a-z]:[\\/]|\/)/i.test(value);
     const candidate = normalizeAssetPath(absolute ? clean : `${base}/${clean}`);
-    let asset = assets.get(candidate);
+    const links = documentMediaPaths.get(from);
+    if (links?.has(raw) && !links.get(raw)) return { url: "", local: true, missing: true };
+    const linked = links?.get(raw);
+    let asset = assets.get(linked || candidate);
     let ambiguous = false;
     if (!asset) {
       const parts = normalizeAssetPath(clean).split("/");
@@ -491,6 +605,7 @@ ${desktopDownloadMarkdown}
     const document = documents.get(path);
     if (!document) return { ok: false, code: "DOCUMENT_NOT_FOUND" };
     documents.delete(path);
+    documentMediaPaths.delete(path);
     const remaining = [...documents.values()];
     return { ok: true, removedPath: path, nextPath: remaining[0]?.path || "", ...sessionInfo() };
   }
@@ -570,7 +685,7 @@ ${desktopDownloadMarkdown}
   }, commitEmbeddedText(text) {
     const document = documents.get(window.LumaEmbed?.managedPath);
     if (document) {document.text=text;document.modifiedNs=String(Date.now()*1000000);}
-  }, desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, importAssets, mediaInfo, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
+  }, desktopDownloads, preferredDesktopDownload, chooseFiles, importFiles, importAssets, importReferencedImages, chooseImageFolder, mediaInfo, mediaUrl, removeDocument, sessionInfo, createShareUrl, ready, maxSessionDocuments: MAX_SESSION_DOCUMENTS };
   window.lumaDesktop = {
     isDesktop: false,
     platform: "web",

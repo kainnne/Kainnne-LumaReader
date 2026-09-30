@@ -353,23 +353,44 @@
   function clampSidebarWidth(value){return Math.round(Math.max(240,Math.min(520,Math.min(innerWidth-360,Number(value)||320))));}
   function applySidebarWidth(width,{save=false}={}){state.sidebarWidth=clampSidebarWidth(width);document.documentElement.style.setProperty("--sidebar-width",`${state.sidebarWidth}px`);sidebarResizerEl.setAttribute("aria-valuemin","240");sidebarResizerEl.setAttribute("aria-valuemax",String(clampSidebarWidth(520)));sidebarResizerEl.setAttribute("aria-valuenow",String(state.sidebarWidth));if(save){localStorage.setItem("lumareader-sidebar-width",String(state.sidebarWidth));persistPreferences({sidebarWidth:state.sidebarWidth});}}
   function updateSidebarToggle(){const collapsed=isNarrow()?!sidebarEl.classList.contains("open"):state.sidebarCollapsed;const label=t(collapsed?"expandSidebar":"collapseSidebar");sidebarToggleEl.textContent=collapsed?"☰":"‹";sidebarToggleEl.title=label;sidebarToggleEl.setAttribute("aria-label",label);sidebarToggleEl.setAttribute("aria-expanded",collapsed?"false":"true");document.body.classList.toggle("sidebar-collapsed",!isNarrow()&&state.sidebarCollapsed);}
+  let readingInteractionVersion = 0, layoutRefreshFrame = 0, layoutRefreshTimer = 0;
+  function cancelPendingReadingRestore(event) {
+    if(event?.type === "keydown" && !["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","PageUp","PageDown","Home","End"," "].includes(event.key))return;
+    readingInteractionVersion++;
+    clearTimeout(layoutRefreshTimer);
+  }
+  for(const type of ["wheel","touchstart","touchmove","pointerdown","keydown"])window.addEventListener(type,cancelPendingReadingRestore,{capture:true,passive:true});
   function captureReadingPosition(){
-    if(state.editing)return{ratio:readingRatio()};
-    if(state.activeAdapter)return{ratio:readingRatio()};
-    const blocks=[...contentEl.children];if(!blocks.length)return{ratio:readingRatio()};
+    const position={ratio:readingRatio(),requestId:state.documentRequestId,interaction:readingInteractionVersion,view:state.view,mode:state.mode};
+    if(state.editing||state.activeAdapter||state.view==="source")return position;
+    const blocks=[...contentEl.children];if(!blocks.length)return position;
     const horizontal=!usesVerticalAxis();const boundary=horizontal?contentEl.getBoundingClientRect().left+12:Math.max(0,$(".reader-bar")?.getBoundingClientRect().bottom||0)+12;
     let index=blocks.findIndex((block)=>{const rect=block.getBoundingClientRect();return horizontal?rect.right>=boundary:rect.bottom>=boundary;});if(index<0)index=blocks.length-1;
-    const block=blocks[index];return{blockId:block.id||"",index,ratio:readingRatio()};
+    const block=blocks[index],rect=block.getBoundingClientRect();
+    return{...position,blockId:block.id||"",index,offset:(horizontal?rect.left:rect.top)-boundary};
   }
   function restoreReadingPosition(position){
     if(!position||typeof position==="number"){restoreReadingRatio(Number(position)||0);return;}
-    if(state.activeAdapter){restoreReadingRatio(position.ratio||0);return;}
-    const block=(position.blockId&&document.getElementById(position.blockId))||contentEl.children[position.index];
+    if(position.requestId!==undefined&&(position.requestId!==state.documentRequestId||position.interaction!==readingInteractionVersion||position.view!==state.view||position.mode!==state.mode))return;
+    if(state.activeAdapter||state.view==="source"){restoreReadingRatio(position.ratio||0);return;}
+    const block=(position.blockId&&[...contentEl.children].find(el=>el.id===position.blockId))||contentEl.children[position.index];
     if(!block){restoreReadingRatio(position.ratio||0);return;}
-    if(state.mode==="vertical")block.scrollIntoView({block:"start",behavior:"auto"});else if(usesVerticalAxis())contentEl.scrollTop=Math.max(0,block.offsetTop-parseFloat(getComputedStyle(contentEl).paddingTop||0));else contentEl.scrollLeft=Math.max(0,block.offsetLeft-parseFloat(getComputedStyle(contentEl).paddingLeft||0));
+    const horizontal=!usesVerticalAxis(),rect=block.getBoundingClientRect();
+    const boundary=horizontal?contentEl.getBoundingClientRect().left+12:Math.max(0,$(".reader-bar")?.getBoundingClientRect().bottom||0)+12;
+    const delta=(horizontal?rect.left:rect.top)-boundary-(position.offset||0);
+    if(Math.abs(delta)>.5){if(state.mode==="vertical")window.scrollBy({top:delta,behavior:"instant"});else if(usesVerticalAxis())contentEl.scrollTop+=delta;else contentEl.scrollLeft+=delta;}
     updatePagination();
   }
-  function scheduleLayoutRefresh(position=captureReadingPosition()){requestAnimationFrame(()=>{updatePagination();clearTimeout(scheduleLayoutRefresh.timer);scheduleLayoutRefresh.timer=setTimeout(()=>{if(!state.editing&&!dropdownPairs().some(([menu])=>!menu.hidden))restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();},240);});}
+  // Background reflow only updates measurements. Restore an anchor only when
+  // an explicit layout action supplies one, and abandon it after new user input.
+  function scheduleLayoutRefresh(position=null){
+    cancelAnimationFrame(layoutRefreshFrame);clearTimeout(layoutRefreshTimer);
+    layoutRefreshFrame=requestAnimationFrame(()=>{
+      updatePagination();
+      if(position)layoutRefreshTimer=setTimeout(()=>{if(!state.editing&&!dropdownPairs().some(([menu])=>!menu.hidden))restoreReadingPosition(position);},240);
+      if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();
+    });
+  }
   function toggleSidebar(){if(window.LumaEmbed?.config?.features?.sidebar===false)return;const position=captureReadingPosition();if(isNarrow()){sidebarEl.classList.toggle("open");document.body.classList.toggle("sidebar-open",sidebarEl.classList.contains("open"));}else{state.sidebarCollapsed=!state.sidebarCollapsed;localStorage.setItem("lumareader-sidebar-collapsed",String(state.sidebarCollapsed));persistPreferences({sidebarCollapsed:state.sidebarCollapsed});}updateSidebarToggle();scheduleLayoutRefresh(position);}
   function closeSidebarOnNarrow(){if(!isNarrow())return;sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");updateSidebarToggle();}
   function disposeActiveAdapter(){state.activeAdapter?.dispose?.();state.activeAdapter=null;contentEl.classList.add("prose");contentEl.classList.remove("adapter-content");document.body.removeAttribute("data-document-kind");}
@@ -828,7 +849,7 @@
       onEdit:text=>{if(!state.editing||state.activeAdapter!==adapter)return;sourceEditorEl.value=text;state.editorDirty=text!==state.rawText;state.editorSaved=false;pathEl.textContent=t("editing");updateEditorControls();},
       onPageChange:(page)=>{if(requestId!==state.documentRequestId||state.activeAdapter!==adapter)return;state.activeAdapter.currentPage=page;updatePagination();},
       onPageModelChange:(model)=>{if(requestId!==state.documentRequestId||state.activeAdapter!==adapter)return;if(Number.isFinite(model?.current))state.activeAdapter.currentPage=model.current;updatePagination();},
-      onLayoutChange:()=>{if(requestId===state.documentRequestId&&state.activeAdapter===adapter)scheduleLayoutRefresh(readingRatio());},
+      onLayoutChange:()=>{if(requestId===state.documentRequestId&&state.activeAdapter===adapter)scheduleLayoutRefresh();},
     });
     if(requestId!==state.documentRequestId||state.activeAdapter!==adapter){adapter.dispose?.();return false;}
     rawEl.querySelector("code").textContent=data.text||"";outlineEl.replaceChildren();const empty=document.createElement("p");empty.className="sidebar-empty";empty.textContent=t("noOutline");outlineEl.appendChild(empty);
@@ -954,11 +975,11 @@
     const missing = state.currentPath && isMarkdown(state.currentPath) ? markdownImageReferences(text).filter(raw => window.lumaWeb.mediaInfo(raw, state.currentPath).missing) : [];
     panel.hidden = !missing.length;
     if (!missing.length) return;
-    $("#local-media-copy").textContent = zh ? `有 ${missing.length} 張本機圖片尚未連結。選取圖片或所在資料夾即可顯示；只在此分頁讀取，不會上傳。` : `${missing.length} local image(s) need files. Choose the images or their folder. Files stay in this tab; nothing is uploaded.`;
-    $("#local-media-files-button").textContent = zh ? "選取圖片" : "Choose images";
-    $("#local-media-folder-button").textContent = zh ? "圖片資料夾" : "Image folder";
+    $("#local-media-copy").textContent = zh ? `這份文件有 ${missing.length} 張圖片在你的裝置上。允許讀取後，選擇文件所在的資料夾，就會自動顯示圖片；不必逐張配對，也不會上傳。` : `This document uses ${missing.length} image(s) on your device. Allow access and choose the document’s folder to display them automatically. No manual matching or upload.`;
+    $("#local-media-files-button").textContent = zh ? "改選圖片" : "Choose images instead";
+    $("#local-media-folder-button").textContent = zh ? "允許讀取圖片" : "Allow image access";
     $("#local-media-details").textContent = missing.join("\n");
-    $("#local-media-details-label").textContent = zh ? "查看缺少的路徑" : "Missing paths";
+    $("#local-media-details-label").textContent = zh ? "尚未讀取的圖片" : "Images not yet available";
     $("#local-media-progress").hidden = true;
     $("#local-media-cancel").hidden = true;
   }
@@ -978,27 +999,56 @@
     scheduleLocalMediaNotice();
     requestAnimationFrame(updatePagination);
   }
-  async function attachLocalImages(files) {
-    if (mediaImportController || !files?.length) return;
+  async function attachLocalImages(files, { chooseFolder = false } = {}) {
+    if (mediaImportController || (!chooseFolder && !files?.length)) return;
     const controller = new AbortController(); mediaImportController = controller;
     const zh = state.language.startsWith('zh');
     const panel = $("#local-media-notice"), progress = $("#local-media-progress");
+    const references = markdownImageReferences(state.editing ? sourceEditorEl.value : state.renderText).filter(raw => window.lumaWeb.mediaInfo(raw, state.currentPath).missing);
+    const from = state.currentPath;
     panel.hidden = false; progress.hidden = false;
     $("#local-media-cancel").hidden = false;
     $("#local-media-cancel").textContent = zh ? '取消' : 'Cancel';
-    progress.max = files.length; progress.value = 0;
+    $("#local-media-files-button").disabled = true;
+    $("#local-media-folder-button").disabled = true;
+    progress.removeAttribute('value');
+    $("#local-media-copy").textContent = zh ? '請選擇 Markdown 所在的資料夾（或包含圖片的上層資料夾）。' : 'Choose the Markdown folder, or a parent folder that contains its images.';
+    let fallback = false;
     try {
-      const result = await window.lumaWeb.importAssets(files, { signal: controller.signal, onProgress: ({processed,total}) => {
-        progress.value = processed;
-        $("#local-media-copy").textContent = zh ? `正在比對圖片 ${processed} / ${total}（不上傳）` : `Matching images ${processed} / ${total} (no upload)`;
-      }});
+      const options = { from, references, signal: controller.signal, onProgress: ({phase,processed,total}) => {
+        if (phase === 'scanning') {
+          progress.removeAttribute('value');
+          $("#local-media-copy").textContent = zh ? `正在尋找文件的圖片…已查看 ${processed} 個項目` : `Finding document images… ${processed} items checked`;
+        } else {
+          progress.max = total || 1; progress.value = processed;
+          $("#local-media-copy").textContent = zh ? `正在讀取圖片 ${processed} / ${total}` : `Reading images ${processed} / ${total}`;
+        }
+      }};
+      const result = chooseFolder ? await window.lumaWeb.chooseImageFolder(options) : references.length
+        ? await window.lumaWeb.importReferencedImages(Array.from(files, file => ({file})), options)
+        : await window.lumaWeb.importAssets(files, options);
+      if (result.supported === false) { fallback = true; return; }
       refreshLocalMedia();
-      showToast(result.assetsSkipped ? (zh ? '部分圖片超過限制：單檔 32 MB、此分頁共 256 MB，最多 2,000 個媒體檔。' : 'Some images exceed the limits: 32 MB each, 256 MB / 2,000 media files per tab.') : (zh ? `已讀取 ${result.assetsAdded} 個媒體檔；未修改 Markdown。` : `Read ${result.assetsAdded} media files. Markdown is unchanged.`));
-    } catch { showToast(zh ? '無法讀取圖片，請重新選取檔案。' : 'Unable to read images. Please select the files again.'); }
-    finally { mediaImportController = null; updateLocalMediaNotice(); }
+      if (result.canceled) return;
+      const message = result.truncated ? (zh ? '資料夾範圍太大，請改選文件附近的資料夾。' : 'This folder is too large. Choose a folder closer to your document.')
+        : result.assetsSkipped ? (zh ? '部分圖片無法讀取或超過限制：單檔 32 MB、此分頁共 256 MB。' : 'Some images are unavailable or exceed 32 MB each / 256 MB per tab.')
+        : result.assetsAdded ? (zh ? `已顯示 ${result.assetsAdded} 張圖片；Markdown 內容不變。` : `${result.assetsAdded} images are ready. Markdown is unchanged.`)
+        : (zh ? '這個位置找不到對應圖片，請選擇包含 Markdown 與圖片的資料夾。' : 'No matching images here. Choose the folder containing the Markdown and its images.');
+      showToast(message);
+    } catch { showToast(zh ? '無法讀取這個位置，請重新選擇資料夾。' : 'Unable to read this location. Please choose the folder again.'); }
+    finally {
+      mediaImportController = null;
+      $("#local-media-files-button").disabled = false;
+      $("#local-media-folder-button").disabled = false;
+      updateLocalMediaNotice();
+      if (fallback) $("#local-media-folder-picker").click();
+    }
   }
   $("#local-media-files-button").addEventListener('click', () => $("#local-media-picker").click());
-  $("#local-media-folder-button").addEventListener('click', () => $("#local-media-folder-picker").click());
+  $("#local-media-folder-button").addEventListener('click', () => {
+    if (typeof window.showDirectoryPicker !== 'function') $("#local-media-folder-picker").click();
+    else void attachLocalImages(null, {chooseFolder:true});
+  });
   $("#local-media-cancel").addEventListener('click', () => mediaImportController?.abort());
   for (const id of ['#local-media-picker', '#local-media-folder-picker']) $(id).addEventListener('change', async event => { await attachLocalImages(event.target.files); event.target.value = ''; });
   sourceEditorEl.addEventListener('input', scheduleLocalMediaNotice);
@@ -1060,7 +1110,7 @@
       mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:document.documentElement.classList.contains("dark")?"dark":"default",fontFamily:"-apple-system, BlinkMacSystemFont, sans-serif",suppressErrorRendering:true});
       await mermaid.run({nodes:currentNodes});
       currentNodes.forEach((node)=>node.removeAttribute("aria-busy"));
-      requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh(captureReadingPosition());});
+      requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh();});
     }catch(error){nodes.forEach((node)=>node.removeAttribute("aria-busy"));console.warn("Mermaid",error);}
   }
   function slugify(text,used){const base=text.trim().toLowerCase().replace(/\s+/g,"-").replace(/[^\p{L}\p{N}_-]/gu,"")||"section";let id=base,index=2;while(used.has(id))id=`${base}-${index++}`;used.add(id);return id;}
@@ -1071,7 +1121,7 @@
     enhanceTextNodes(contentEl,extensions.abbreviations);contentEl.querySelectorAll("pre code").forEach((code)=>{if(code.classList.contains("language-mermaid")){const container=document.createElement("div");container.className="mermaid";container.textContent=code.textContent;code.parentElement.replaceWith(container);return;}try{window.hljs?.highlightElement(code);}catch{}const pre=code.closest("pre");if(pre&&!pre.querySelector(".copy-code")){const copy=document.createElement("button");copy.type="button";copy.className="copy-code";copy.textContent=t("copy");copy.addEventListener("click",async()=>{await navigator.clipboard.writeText(code.textContent);copy.textContent=t("copied");setTimeout(()=>copy.textContent=t("copy"),1200);});pre.appendChild(copy);}});
     void renderMermaidDiagrams(contentEl,requestId);
     if(requestId!==state.documentRequestId)return false;if(editorPreviewIsActive())assignEditorPreviewBlocks(parsedText);else state.editorPreviewBlocks=[];
-    if(!state.editing)paintEmbeddedAnnotations();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(preserve)restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();});document.fonts?.ready?.then(()=>{if(requestId!==state.documentRequestId)return;if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh(position);});contentEl.querySelectorAll("img").forEach((image)=>image.addEventListener("load",()=>{if(requestId!==state.documentRequestId)return;if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh(captureReadingPosition());},{once:true}));return true; }
+    if(!state.editing)paintEmbeddedAnnotations();rawEl.querySelector("code").textContent=state.rawText;buildOutline();rebuildMedia();updateToolbarCapabilities("markdown",{paged:true,source:true,media:true});requestAnimationFrame(()=>{if(requestId!==state.documentRequestId)return;updatePagination();if(preserve)restoreReadingPosition(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();});document.fonts?.ready?.then(()=>{if(requestId!==state.documentRequestId)return;if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh();});contentEl.querySelectorAll("img").forEach((image)=>image.addEventListener("load",()=>{if(requestId!==state.documentRequestId)return;if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();else scheduleLayoutRefresh();},{once:true}));return true; }
 
   function rebuildMedia(){state.media=[...contentEl.querySelectorAll("img,audio,video")].map((el)=>({tag:el.tagName.toLowerCase(),src:el.currentSrc||el.src||"",alt:el.alt||el.title||""})).filter((item)=>item.src);mediaGridEl.innerHTML="";$("#media-count").textContent=state.media.length?` · ${state.media.length}`:"";if(!state.media.length){const p=document.createElement("p");p.className="sidebar-empty";p.textContent=t("noMedia");mediaGridEl.appendChild(p);return;}state.media.forEach((item,index)=>{const figure=document.createElement("figure");if(item.tag==="img"){const img=document.createElement("img");img.src=item.src;img.alt=item.alt;img.loading="lazy";img.tabIndex=0;img.setAttribute("role","button");img.setAttribute("aria-label",`${imageT("open")}: ${item.alt||index+1}`);img.addEventListener("click",()=>openImageViewer(img));img.addEventListener("keydown",(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openImageViewer(img);}});figure.appendChild(img);}else{const media=document.createElement(item.tag);media.src=item.src;media.controls=true;figure.appendChild(media);}const caption=document.createElement("figcaption");caption.textContent=item.alt||`${t("media")} ${index+1}`;figure.appendChild(caption);mediaGridEl.appendChild(figure);});}
 
@@ -1305,7 +1355,7 @@
   sourceEditorEl.addEventListener("dragover",(event)=>{if(!state.editing)return;event.preventDefault();event.stopPropagation();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";});
   sourceEditorEl.addEventListener("dragleave",(event)=>{event.stopPropagation();editorDragDepth=Math.max(0,editorDragDepth-1);if(!editorDragDepth&&!state.importingImages){editorImageDropEl.hidden=true;document.body.classList.remove("editor-image-dragging");}});
   sourceEditorEl.addEventListener("drop",(event)=>{if(!state.editing)return;event.preventDefault();event.stopPropagation();editorDragDepth=0;if(window.LumaEmbed&&[...(event.dataTransfer?.files||[])].some(file=>/\.(md|markdown|mkd|mdx)$/i.test(file.name)))void openUploadedFile(event.dataTransfer.files);else void importEditorImages(event.dataTransfer?.files);});
-  window.addEventListener("scroll",()=>{updateProgress();closeToolbarMenus();},{passive:true});window.addEventListener("resize",()=>{hideToolbarTooltip();closeToolbarMenus();languageHidePromptEl.hidden=true;const position=captureReadingPosition();sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");applySidebarWidth(state.sidebarWidth);applyEditorSplitRatio();updateSidebarToggle();scheduleLayoutRefresh(position);if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();});contentEl.addEventListener("scroll",()=>{updatePagination();syncEditorSourceFromPreview();},{passive:true});rawEl.addEventListener("scroll",updatePagination,{passive:true});sourceEditorEl.addEventListener("scroll",()=>{updatePagination();syncEditorPreviewFromSource();},{passive:true});
+  window.addEventListener("scroll",()=>{updateProgress();closeToolbarMenus();},{passive:true});window.addEventListener("resize",()=>{hideToolbarTooltip();closeToolbarMenus();languageHidePromptEl.hidden=true;sidebarEl.classList.remove("open");document.body.classList.remove("sidebar-open");applySidebarWidth(state.sidebarWidth);applyEditorSplitRatio();updateSidebarToggle();scheduleLayoutRefresh();if(editorPreviewIsActive())scheduleEditorScrollMapRefresh();});contentEl.addEventListener("scroll",()=>{updatePagination();syncEditorSourceFromPreview();},{passive:true});rawEl.addEventListener("scroll",updatePagination,{passive:true});sourceEditorEl.addEventListener("scroll",()=>{updatePagination();syncEditorPreviewFromSource();},{passive:true});
   if("ResizeObserver" in window){const paginationObserver=new ResizeObserver(()=>requestAnimationFrame(()=>{updatePagination();if(editorPreviewIsActive())scheduleEditorScrollMapRefresh({sync:false});}));paginationObserver.observe(shellEl);paginationObserver.observe(contentEl);paginationObserver.observe(rawEl);paginationObserver.observe(sourceEditorEl);}
   sourceEditorEl.addEventListener("wheel",(event)=>{if(!editorPreviewIsActive())return;event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);},{passive:false});
   [contentEl,rawEl].forEach((target)=>target.addEventListener("wheel",(event)=>{if(target===contentEl&&editorPreviewIsActive()){event.preventDefault();const scale=event.deltaMode===1?18:event.deltaMode===2?Math.max(1,sourceEditorEl.clientHeight):1;sourceEditorEl.scrollBy({top:event.deltaY*scale,left:event.deltaX*scale,behavior:"auto"});requestAnimationFrame(updateEditorPreviewEndAction);return;}if(state.mode==="vertical")return;event.preventDefault();if(state.mode==="horizontal"){target.scrollBy({left:event.deltaY+event.deltaX,behavior:"auto"});return;}const now=Date.now();if(now-state.lastWheelAt<420||Math.abs(event.deltaY)+Math.abs(event.deltaX)<12)return;state.lastWheelAt=now;moveReading(event.deltaY+event.deltaX>0?1:-1);},{passive:false}));

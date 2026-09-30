@@ -236,3 +236,43 @@ test('remote and sample images keep their URL base while missing local paths nev
   assert.equal(w.lumaWeb.mediaUrl('/Users/me/private.png','Local.md'),'');
   assert.equal(w.lumaWeb.mediaUrl('https://images.test/a.png','Local.md'),'https://images.test/a.png');
 });
+
+test('permission folder infers Markdown location and reads only its referenced images', async () => {
+  const w=loadWebBridge(); await w.lumaWeb.ready;
+  await w.lumaWeb.importFiles([markdownFile('筆記.md')]);
+  const reads=[];
+  function file(path) {return {kind:'file',getFile:async()=>{reads.push(path);return imageFile(path.split('/').pop(),path);}};}
+  function dir(name, entries) {return {name,kind:'directory',async *entries(){yield* entries;}};}
+  const root=dir('project',[
+    ['docs',dir('docs', [['筆記.md',file('project/docs/筆記.md')],['images',dir('images',[['same.png',file('project/docs/images/same.png')]])]])],
+    ['other',dir('other',[['same.png',file('project/other/same.png')],['unrelated.md',file('project/other/unrelated.md')]])],
+    ['shared',dir('shared',[['圖 一.png',file('project/shared/圖 一.png')]])],
+  ]);
+  w.showDirectoryPicker=async options=>{assert.equal(options.mode,'read');return root;};
+  const before=(await(await w.fetch('/api/file?path='+encodeURIComponent('筆記.md'))).json()).text;
+  const result=await w.lumaWeb.chooseImageFolder({from:'筆記.md',references:['images/same.png','../shared/%E5%9C%96%20%E4%B8%80.png','missing/same.png']});
+  assert.equal(result.assetsAdded,2);
+  assert.deepEqual(reads,['project/docs/images/same.png','project/shared/圖 一.png']);
+  assert.match(w.lumaWeb.mediaUrl('images/same.png','筆記.md'),/^blob:/);
+  assert.match(w.lumaWeb.mediaUrl('../shared/%E5%9C%96%20%E4%B8%80.png','筆記.md'),/^blob:/);
+  assert.equal(w.lumaWeb.mediaUrl('missing/same.png','筆記.md'),'');
+  assert.equal(w.lumaWeb.sessionInfo().count,1);
+  assert.equal((await(await w.fetch('/api/file?path='+encodeURIComponent('筆記.md'))).json()).text,before);
+});
+
+test('folder permission handles cancellation, fallback, duplicate paths, absolute links and scope limits', async () => {
+  const w=loadWebBridge(); await w.lumaWeb.ready; await w.lumaWeb.importFiles([markdownFile('Draft.md')]);
+  assert.equal((await w.lumaWeb.chooseImageFolder()).supported,false);
+  w.showDirectoryPicker=async()=>{throw Object.assign(new Error('cancel'),{name:'AbortError'});};
+  assert.equal((await w.lumaWeb.chooseImageFolder()).canceled,true);
+  const entries=[{file:imageFile('same.png','project/a/same.png')},{file:imageFile('same.png','project/b/same.png')}];
+  const result=await w.lumaWeb.importReferencedImages(entries,{from:'Draft.md',references:['same.png','file:///Users/me/project/a/same.png','C:\\project\\b\\same.png']});
+  assert.equal(result.ambiguous,1);assert.equal(result.assetsAdded,2);
+  assert.equal(w.lumaWeb.mediaUrl('same.png','Draft.md'),'');
+  assert.match(w.lumaWeb.mediaUrl('file:///Users/me/project/a/same.png','Draft.md'),/^blob:/);
+  assert.match(w.lumaWeb.mediaUrl('C:\\project\\b\\same.png','Draft.md'),/^blob:/);
+  const limited=await w.lumaWeb.importReferencedImages(entries,{from:'Draft.md',references:['a/same.png'],truncated:true});
+  assert.equal(limited.assetsAdded,0); assert.equal(limited.truncated,true);
+  const controller=new AbortController();controller.abort();
+  assert.equal((await w.lumaWeb.importReferencedImages(entries,{from:'Draft.md',references:['a/same.png'],signal:controller.signal})).assetsAdded,0);
+});

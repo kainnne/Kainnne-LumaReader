@@ -49,8 +49,27 @@ async function main(){
   assert.ok(await page.locator('.direct-image img').evaluate(img=>img.complete&&img.naturalWidth>0));
   const batch=await page.evaluate(async()=>{const list=Array.from({length:500},(_,i)=>new File([new Uint8Array([1])],`batch-${i}.png`,{type:'image/png'}));let ticks=0;const timer=setInterval(()=>ticks++,0);const progress=[];const result=await window.lumaWeb.importAssets(list,{onProgress:p=>progress.push(p.processed)});clearInterval(timer);return{...result,ticks,progress};});
   assert.equal(batch.assetsAdded,500);assert.ok(batch.ticks>0);assert.equal(batch.progress.at(-1),500);
+  // Exercise the primary permission button with a mocked native folder grant.
+  await page.locator('#cancel-edit').click();
+  await page.locator('#file-picker').setInputFiles({name:'Permission.md',mimeType:'text/markdown',buffer:Buffer.from('# Permission\n\n![Auto](../assets/auto.png)\n')});
+  await page.locator('#local-media-notice').waitFor();
+  assert.match(await page.locator('#local-media-copy').textContent(),/允許讀取/);
+  await page.evaluate(bytes=>{
+    window.testImageReads=[];
+    const file=(name)=>({kind:'file',getFile:async()=>{window.testImageReads.push(name);return new File([new Uint8Array(bytes)],name,{type:'image/png'});}});
+    const dir=(name,children)=>({name,kind:'directory',async *entries(){yield* children;}});
+    window.showDirectoryPicker=async options=>{window.testFolderMode=options.mode;return dir('project',[
+      ['docs',dir('docs',[['Permission.md',file('Permission.md')],['secret.md',file('secret.md')]])],
+      ['assets',dir('assets',[['auto.png',file('auto.png')],['unrelated.png',file('unrelated.png')]])],
+    ]);};
+  },[...png]);
+  await page.locator('#local-media-folder-button').click();
+  await page.locator('#local-media-notice').waitFor({state:'hidden'});
+  await page.waitForFunction(()=>{const img=document.querySelector('#content img');return img?.complete&&img.naturalWidth>0;});
+  assert.equal(await page.evaluate(()=>window.testFolderMode),'read');
+  assert.deepEqual(await page.evaluate(()=>window.testImageReads),['auto.png']);
   assert.deepEqual(privateRequests,[]);assert.deepEqual(writes,[]);assert.deepEqual(errors,[]);
-  console.log('PASS: local image folder, Chinese/encoded paths, reading + direct editing, unchanged Markdown/undo, 500-file responsive progress, no uploads/private-path requests, 1280/768/390/320 widths.');
+  console.log('PASS: proactive readonly folder permission (only referenced bytes), local image folder, Chinese/encoded paths, reading + direct editing, unchanged Markdown/undo, 500-file responsive progress, no uploads/private-path requests, 1280/768/390/320 widths.');
  }finally{await browser?.close();await new Promise(r=>server.close(r));await fs.rm(fixture,{recursive:true,force:true});}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

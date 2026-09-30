@@ -97,3 +97,5 @@ body.embed-readonly #choose-file{display:none}
 @media (max-width: 600px) { .local-media-notice { margin: 8px 10px 0; padding: 10px; font-size: 12px; } }
 .local-media-notice [hidden] { display: none !important; }
 body.editor-preview-enabled .reader-shell:has(.local-media-notice:not([hidden])) { grid-template-rows: auto auto minmax(0, 1fr); }
+
+#local-media-folder-button { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }

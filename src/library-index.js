@@ -49,6 +49,8 @@ class LibraryIndex {
     this.root = root ? path.resolve(root) : null;
     this.resolvedRoot = null;
     this.id = crypto.randomUUID();
+    this.startedAt = Date.now();
+    this.finishedAt = null;
     this.isDocument = isDocument;
     this.publicFileRecord = publicFileRecord;
     this.ignoredDirectories = ignoredDirectories;
@@ -222,6 +224,7 @@ class LibraryIndex {
     const stalled = [...this.cursors].filter((cursor) => cursor.pending && Date.now() - cursor.startedAt >= this.limits.stalledAfterMs);
     const waiting = outstanding > 0 && stalled.length > 0 && stalled.length === this.cursors.size;
     const hasMore = !this.disposed && !this.limitReason && outstanding > 0;
+    if (!hasMore && this.finishedAt === null) this.finishedAt = Date.now();
     const status = this.limitReason ? "limited" : hasMore ? (waiting ? "waiting" : "scanning") : this.issueCount ? "partial" : "complete";
     return {
       ...(includeFiles ? { files: this.sortedFiles } : {}),
@@ -229,10 +232,11 @@ class LibraryIndex {
         id: this.id, status, complete: status === "complete", hasMore,
         filesFound: this.records.size, directoriesScanned: this.directoriesScanned,
         pendingDirectories: outstanding, entriesSeen: this.entriesSeen,
+        elapsedMs: Math.max(0, (this.finishedAt ?? Date.now()) - this.startedAt),
         issueCount: this.issueCount, issues: [...this.issues],
         stalledPaths: stalled.slice(0, this.limits.maxIssues).map((cursor) => cursor.file?.relative || cursor.relative || "."),
         limitReason: this.limitReason,
-        retryAfterMs: waiting ? 2_000 : 500,
+        retryAfterMs: waiting ? 2_000 : 75,
       },
     };
   }

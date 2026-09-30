@@ -50,10 +50,17 @@ test("resumes beyond 256 directories and 2000 files without dropping deep Chines
   const first = await index.advance();
   assert.equal(first.scan.hasMore, true);
   assert.equal(first.scan.complete, false);
+  assert.equal(first.scan.retryAfterMs, 75);
+  assert.ok(first.scan.pendingDirectories > 0);
+  assert.ok(first.scan.elapsedMs >= 0);
   const result = await finish(index);
   assert.equal(result.scan.status, "complete");
   assert.equal(result.files.length, 2_161);
   assert.equal(result.scan.directoriesScanned, 541);
+  assert.equal(result.scan.pendingDirectories, 0);
+  assert.ok(result.scan.elapsedMs >= first.scan.elapsedMs);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(index.snapshot().scan.elapsedMs, result.scan.elapsedMs);
   assert.ok(result.files.some((file) => file.path === target));
   assert.equal(new Set(result.files.map((file) => file.path)).size, result.files.length);
 });
@@ -85,6 +92,10 @@ test("a slow folder remains pending and resumes without extra outstanding filesy
   assert.equal(calls.size, 2);
   assert.ok([...calls.values()].every((count) => count === 1));
   assert.equal(result.scan.stalledPaths.length, 2);
+  assert.equal(result.scan.retryAfterMs, 2_000);
+  const waitingElapsed = result.scan.elapsedMs;
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.ok(index.snapshot().scan.elapsedMs > waitingElapsed);
   await Promise.all(releases.splice(0).map((release) => release()));
   result = await finish(index);
   assert.equal(result.scan.status, "complete");
