@@ -213,13 +213,14 @@ test("PDF preview is window-local; saving uses identical cached bytes without re
   assert.equal(first.ok,true);assert.deepEqual(Buffer.from(first.bytes),pdfBytes);
   assert.equal(h.storedPreferences().pdfFooterText,undefined);
   const crossWindow=await h.invoke('document:export-pdf',1,{previewId:first.previewId});assert.equal(crossWindow.code,'PDF_PREVIEW_EXPIRED');
-  const second=await h.invoke('document:preview-pdf',0,{footerText:'新版',fontSize:14});
+  const second=await h.invoke('document:preview-pdf',0,{footerText:'新版',fontSize:14,pageSize:'16:9',orientation:'portrait'});
   assert.equal((await h.invoke('document:export-pdf',0,{previewId:first.previewId})).code,'PDF_PREVIEW_EXPIRED');
   h.saveReplies.push({canceled:true});assert.equal((await h.invoke('document:export-pdf',0,{previewId:second.previewId})).canceled,true);
   const output=path.join(h.root,'snapshot.pdf');h.saveReplies.push({canceled:false,filePath:output});
   assert.equal((await h.invoke('document:export-pdf',0,{previewId:second.previewId,footerText:'Ignored mutation'})).ok,true);
   assert.deepEqual(fs.readFileSync(output),Buffer.from(second.bytes));assert.equal(h.windows[0].printRequests.length,2);
   assert.equal(h.storedPreferences().pdfFooterText,'新版');assert.equal(h.storedPreferences().pdfLayout.fontSize,14);
+  assert.equal(h.storedPreferences().pdfLayout.pageSize,'16:9');assert.equal(h.storedPreferences().pdfLayout.orientation,'portrait');
   await h.invoke('document:release-pdf',0);
   assert.equal((await h.invoke('document:export-pdf',0,{previewId:second.previewId})).code,'PDF_PREVIEW_EXPIRED');
 });
@@ -231,4 +232,14 @@ test("PDF preview rejects overlap and a closed preview cannot retain in-flight o
  assert.equal((await h.invoke('document:preview-pdf',0,{})).code,'PDF_BUSY');
  await h.invoke('document:release-pdf',0);finish(pdfBytes);
  assert.equal((await printing).canceled,true);
+});
+
+test("native drop IPC opens only local supported files and reuses an existing window", async t => {
+  const h=await createHarness(t);
+  const dropped=path.join(h.root,'拖放.MD');fs.writeFileSync(dropped,'# Dropped\n');
+  assert.equal((await h.invoke('document:drop',0,['https://example.com/file.md'])).code,'DROP_INVALID');
+  assert.equal((await h.invoke('document:drop',0,Array(9).fill(dropped))).code,'DROP_LIMIT');
+  const result=await h.invoke('document:drop',0,[dropped,dropped]);assert.equal(result.opened,1);assert.equal(h.windows.length,3);
+  assert.equal((await h.invoke('document:drop',0,[dropped])).opened,1);assert.equal(h.windows.length,3);
+  const directory=path.join(h.root,'folder.md');fs.mkdirSync(directory);assert.equal((await h.invoke('document:drop',0,[directory])).ok,false);assert.equal(h.windows.length,3);
 });

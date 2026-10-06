@@ -102,3 +102,7 @@ Only `site/web/` uses the compact reading toolbar: Edit and Settings stay visibl
 ## Desktop release 1.4.1 (2026-09-24)
 
 Promotes the tested preview.4 PDF changes to the pink production build: actual PDF preview and exact-byte save, A4/Letter and layout controls, per-export pagination overrides, table flow, compact color-frame footer and gray footer text. Includes the clearer CJK bold treatment. Release builds use the existing signed/notarized macOS Universal, Windows x64 and Linux x64 CI workflows; only validated artifacts may be published. Homepage and counted download redirects advance together after assets exist. The local blue preview remains a separate build.
+
+## Desktop and Web release 1.5.0 (2026-10-06)
+
+Promotes the tested 1.5 preview implementation to the pink production App. Reading mode is visible by default (desktop preference migration v12), with shared icon assets and immediate hover/focus hints across desktop, Web and embed. Native PDF document-layout drafts are stored separately from Markdown; the editing menu has four native modes and three Web modes. Public usage is documented in `PDF-EXPORT.md` and `AGENT-PDF.md`; the old local-preview sections above are historical. Stable embed installer URLs and annotation/document contracts remain unchanged. Release assets require successful exact-commit macOS, Windows and Linux workflows before publication.

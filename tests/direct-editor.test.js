@@ -27,3 +27,13 @@ test('editing beside an inline fraction or footnote preserves the syntax',()=>{
 });
 test('unsafe active image and link schemes are rejected',()=>{for(const value of ['javascript:alert(1)','java\nscript:alert(1)','file:///etc/passwd','data:text/html,x','//example.com/a'])assert.equal(editor.safeURL(value),'');assert.equal(editor.safeURL('assets/photo.png'),'assets/photo.png');assert.equal(editor.safeURL('https://example.com/a'),'https://example.com/a');});
 test('CJK adjacent emphasis stays visually bold and code stays literal',()=>{const parsed=editor.parseMarkdown('**中文：**文字與 `**程式：**文字`\n');let marks=0;parsed.doc.descendants(n=>{if(n.isText&&n.marks.some(m=>m.type.name==='strong'))marks++;});assert.equal(marks,1);});
+
+test('typed inline Markdown creates valid marks and serializes as syntax instead of escaped text',()=>{
+  for(const [input,mark,content]of [['**中文**','strong','中文'],['*text*','em','text'],['~~text~~','strike','text'],['`a*b`','code','a*b']]){
+    const before=input.slice(0,-1),doc=editor.schema.nodes.doc.create(null,editor.schema.nodes.paragraph.create(null,editor.schema.text(before)));
+    const state=EditorState.create({doc}),rule=editor.markdownInputRules().find(r=>r.match.test(input)),match=rule.match.exec(input);
+    const changed=state.apply(rule.handler(state,match,1,1+before.length));changed.doc.check();
+    assert.equal(changed.doc.firstChild.textContent,content);assert.equal(changed.doc.firstChild.firstChild.marks[0].type.name,mark);
+    assert.equal(editor.serializeMarkdown(changed.doc,editor.parseMarkdown('')).trim(),input);
+  }
+});

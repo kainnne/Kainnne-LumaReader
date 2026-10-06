@@ -1,7 +1,7 @@
 "use strict";
 
 // Renderer supplies the existing localized choices; no second palette/label registry.
-const VISIBILITY_KEYS = new Set(["language", "readingMode", "source", "media", "textSize", "exportPdf", "settings"]);
+const VISIBILITY_KEYS = new Set(["language", "readingMode", "source", "media", "textSize", "exportPdf", "previewForm", "settings"]);
 const cleanLabel = value => typeof value === "string" ? value.replace(/[\u0000-\u001f]/g, "").slice(0, 120) : "";
 function normalizeSettingsMenu(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;

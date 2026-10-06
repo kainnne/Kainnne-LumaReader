@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 async function checkEditorBehavior(page) {
   const editor = page.locator("#source-editor");
   await page.locator("#edit-document").click();
-  if(await page.locator("#editor-mode-control").count())await page.locator("#show-markdown").click();
+  if(await page.locator("#editor-mode-control").count()){await page.locator("#show-markdown").click();if(await page.locator("[data-editor-mode=split]").count())await page.locator("[data-editor-mode=split]").click();}
   assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true);
   async function fixture(text, start=0, end=start) {
     await editor.evaluate((el, value) => {

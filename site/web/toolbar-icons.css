@@ -1,0 +1,23 @@
+/* Native toolbar: preserve translated labels for accessibility and state code. */
+.reader-actions .luma-icon-only {
+  display:inline-flex; align-items:center; justify-content:center; gap:0;
+  width:36px!important; min-width:36px!important; height:36px; min-height:36px; padding:0!important;
+  flex:0 0 36px; position:relative;
+}
+.reader-actions .luma-icon-only > :not(.luma-action-icon) {
+  position:absolute!important; width:1px!important; height:1px!important;
+  padding:0!important; margin:-1px!important; overflow:hidden!important;
+  clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important;
+}
+.luma-action-icon { display:flex; align-items:center; justify-content:center; width:20px; height:20px; pointer-events:none; }
+.luma-action-icon svg { display:block; width:20px; height:20px; }
+.reader-actions label.luma-icon-only { border:1px solid var(--line); border-radius:10px; cursor:pointer; }
+.reader-actions label.luma-icon-only:has(input:checked) { background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent); }
+.reader-actions label.luma-icon-only:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+.reader-actions .luma-icon-only[hidden] { display:none!important; }
+.reader-actions #export-pdf.luma-icon-only { order:100; }
+
+.dark .reader-actions #edit-document.is-editing.luma-icon-only { color:var(--page); }
+
+/* Folded settings retain names, with no duplicate legacy glyphs. */
+.luma-icon-only > span[aria-hidden=true]:not(.luma-action-icon) { display:none; }

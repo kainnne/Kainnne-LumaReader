@@ -1,11 +1,15 @@
 "use strict";
 
+if(process.argv.includes("--luma-agent")){require("./agent-cli").start();}
+else {
+
 const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const packageMetadata = require("../package.json");
+const {initialLanguage}=require("./interface-defaults");
 const { LocalReaderService } = require("./local-server");
 const { markdownSources, sourceFromFileArgument } = require("./open-target");
 const { fileURLToPath, pathToFileURL } = require("node:url");
@@ -16,10 +20,11 @@ const { normalizeFooterText, pdfOptions, normalizePdfLayout } = require("./pdf-e
 const { normalizeSettingsMenu, settingsMenuTemplate } = require("./settings-menu");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
+const REPORT_PREVIEW = PREVIEW_BUILD && packageMetadata.lumareaderPreviewSeries === '1.5';
 const ANNOTATION_PREVIEW = PREVIEW_BUILD && packageMetadata.lumareaderPreviewSeries === "1.4.2";
 const PROTOCOL = PREVIEW_BUILD ? "kainnne-lumareader-preview" : "kainnne-lumareader";
-const APP_ID = ANNOTATION_PREVIEW ? "com.kainnne.lumareader.preview142" : PREVIEW_BUILD ? "com.kainnne.lumareader.bluepreview" : "com.kainnne.lumareader";
-const APP_TITLE = ANNOTATION_PREVIEW ? "LumaReader 1.4.2 Preview" : PREVIEW_BUILD ? "LumaReader Blue Preview" : "Kainnne LumaReader";
+const APP_ID = REPORT_PREVIEW ? 'com.kainnne.lumareader.preview150' : ANNOTATION_PREVIEW ? "com.kainnne.lumareader.preview142" : PREVIEW_BUILD ? "com.kainnne.lumareader.bluepreview" : "com.kainnne.lumareader";
+const APP_TITLE = REPORT_PREVIEW ? 'LumaReader 1.5 Preview' : ANNOTATION_PREVIEW ? "LumaReader 1.4.2 Preview" : PREVIEW_BUILD ? "LumaReader Blue Preview" : "Kainnne LumaReader";
 const PREFERENCE_KEYS = new Set([
   "appMode",
   "editorPreview",
@@ -57,6 +62,8 @@ if (!singleInstance) app.quit();
 
 let settingsPath = null;
 let settings = { libraryRoot: null, preferences: {} };
+// These dismissals last for this process only, including renderer reloads.
+const sessionPreferences = { pdfLayoutHelpHidden: false, pdfDeleteConfirmHidden: false, codeDarkPromptHidden: false };
 let settingsWrite = Promise.resolve();
 let ready = false;
 const pendingSources = [];
@@ -200,6 +207,7 @@ async function loadSettings() {
   } catch {
     settings = { libraryRoot: null, preferences: {} };
   }
+  settings.preferences.language=initialLanguage(settings.preferences,packageMetadata);
   const commandLineRoot = process.argv.find((argument) => argument.startsWith("--library="))?.slice("--library=".length);
   const environmentRoot = process.env.LUMAREADER_LIBRARY_ROOT;
   settings.libraryRoot = validDirectory(commandLineRoot) || validDirectory(environmentRoot) || settings.libraryRoot;
@@ -293,7 +301,7 @@ function installMenu() {
         { label: "Open Markdown…", accelerator: "CmdOrCtrl+O", click: () => chooseFiles().catch((error) => dialog.showErrorBox("Unable to open document", error.message)) },
         { label: "Change Document Library…", click: () => chooseLibrary().catch((error) => dialog.showErrorBox("Unable to choose folder", error.message)) },
         { label: "Save Markdown", accelerator: "CmdOrCtrl+S", click: () => focusedContext()?.window.webContents.send("editor:save-requested") },
-        { label: "Export as PDF…", accelerator: "CmdOrCtrl+Shift+E", click: () => focusedContext()?.window.webContents.send("document:export-pdf-requested") },
+        { label: "Edit / Export PDF…", accelerator: "CmdOrCtrl+Shift+E", click: () => focusedContext()?.window.webContents.send("document:export-pdf-requested") },
         { type: "separator" },
         process.platform === "darwin" ? { role: "close" } : { role: "quit" },
       ],
@@ -415,6 +423,20 @@ async function createWindow(target = null) {
 handle("library:get", (context) => ({ selected: Boolean(context.service.getLibraryRoot()), root: context.service.getLibraryRoot() }));
 handle("library:choose", (context) => chooseLibrary(context));
 handle("document:open", (context) => chooseFiles(context));
+handle("document:drop", async (_context, _event, paths) => {
+  if (!Array.isArray(paths) || !paths.length || paths.length > 8) return {ok:false,code:"DROP_LIMIT"};
+  if (paths.some(value => typeof value !== "string" || value.length > 32768 || value.includes("\0") || !path.isAbsolute(value) || !["markdown","code"].includes(getDocumentType(value)?.kind))) return {ok:false,code:"DROP_INVALID"};
+  const task = openQueue.then(async () => {
+    let opened=0; const errors=[];
+    for(const filePath of new Set(paths)) {
+      try { await openDocumentWindow(pathToFileURL(filePath).href); opened++; }
+      catch(error) { errors.push(error.message || String(error)); }
+    }
+    return {ok:!errors.length,opened,errors};
+  });
+  openQueue=task.catch(()=>{});
+  return task;
+});
 handle("document:activated", (context, _event, documentPath) => {
   context.codeEditPath = null;
   try { documents.update(context, context.service.resolveProjectDocument(documentPath)); context.window.setTitle(`${path.basename(documentPath)} — ${APP_TITLE}`); } catch { documents.update(context, null); }
@@ -441,18 +463,19 @@ handle("settings:menu", (context, _event, snapshot) => {
     if (context === focusedContext()) installMenu();
   }
 });
-handle("preferences:get", (context) => ({ ...context.preferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText), pdfIncludeFooter: settings.preferences.pdfIncludeFooter === true, pdfColorFrame: settings.preferences.pdfColorFrame === true, pdfLayout: normalizePdfLayout(settings.preferences.pdfLayout) }));
+handle("preferences:get", (context) => ({ ...context.preferences, ...sessionPreferences, pdfFooterText: normalizeFooterText(settings.preferences.pdfFooterText), pdfIncludeFooter: settings.preferences.pdfIncludeFooter === true, pdfColorFrame: settings.preferences.pdfColorFrame === true, pdfLayout: normalizePdfLayout(settings.preferences.pdfLayout) }));
 handle("preferences:set", async (context, _event, patch) => {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) return { ...context.preferences };
   const serialized = JSON.stringify(patch);
   if (Buffer.byteLength(serialized, "utf8") > 16 * 1024) throw new Error("Preference update is too large");
+  for (const key of Object.keys(sessionPreferences)) if (typeof patch[key] === "boolean") sessionPreferences[key] = patch[key];
   const safePatch = sanitizePreferences(patch);
   context.preferences = { ...context.preferences, ...safePatch };
   const sharedPatch = { ...safePatch };
   if (context.service.getLibraryRoot() !== settings.libraryRoot) delete sharedPatch.lastDocumentPath;
   settings.preferences = { ...settings.preferences, ...sharedPatch };
-  await saveSettings();
-  return { ...context.preferences };
+  if(Object.keys(safePatch).length)await saveSettings();
+  return { ...context.preferences, ...sessionPreferences };
 });
 handle("document:save", async (context, event, payload) => {
   const { window: mainWindow, service: readerService, pendingCreateDestinations } = context;
@@ -474,6 +497,11 @@ handle("document:save", async (context, event, payload) => {
   }
 });
 const chooseImages=createImagePicker({showOpenDialog:(window,options)=>dialog.showOpenDialog(window,options),defaultPath:app.getPath("pictures")});
+const {ReportStore}=require('./report-store');
+const reportStore=new ReportStore(path.join(app.getPath('userData'),'pdf-layouts-v1'));
+function reportDocument(context,payload){const file=context.service.resolveProjectDocument(payload?.path);if(getDocumentType(file)?.kind!=='markdown')throw Error('Markdown required');return file;}
+handle('report:get',async(context,event,payload)=>reportStore.read(reportDocument(context,payload)));
+handle('report:save',async(context,event,payload)=>({ok:true,layout:await reportStore.write(reportDocument(context,payload),payload.layout)}));
 const {AnnotationStore}=require('./annotation-store');
 const annotationStore=new AnnotationStore(path.join(app.getPath('userData'),'annotations-v1'));
 handle('annotations:get',async(context,event,payload)=>annotationStore.read(context.service.resolveProjectDocument(payload.path)));
@@ -520,7 +548,7 @@ handle("document:preview-pdf", async (context, event, payload) => {
   try {
     const options = {
       footerText: normalizeFooterText(payload?.footerText),
-      includeFooter: payload?.includeFooter === true,
+      includeFooter: payload?.reportLayout === true ? false : payload?.includeFooter === true,
       colorFrame: payload?.colorFrame === true,
       ...normalizePdfLayout(payload),
     };
@@ -646,3 +674,5 @@ app.on("will-quit", (event) => {
   shutdownStarted = true;
   Promise.allSettled([...closingServices, settingsWrite]).finally(() => app.exit(0));
 });
+
+}

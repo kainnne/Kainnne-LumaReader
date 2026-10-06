@@ -1,11 +1,17 @@
 "use strict";
 
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("lumaDesktop", {
   isDesktop: true,
   platform: process.platform,
   openDocuments: () => ipcRenderer.invoke("document:open"),
+  openDroppedDocuments: (files) => {
+    if (!Array.isArray(files) || !files.length || files.length > 8) return Promise.resolve({ok:false,code:"DROP_LIMIT"});
+    const paths = files.map(file => { try { return webUtils.getPathForFile(file); } catch { return ""; } });
+    if (paths.some(path => !path)) return Promise.resolve({ok:false,code:"DROP_NO_PATH"});
+    return ipcRenderer.invoke("document:drop", paths);
+  },
   documentActivated: (path) => ipcRenderer.invoke("document:activated", path),
   chooseLibrary: () => ipcRenderer.invoke("library:choose"),
   chooseCreateDirectory: (payload) => ipcRenderer.invoke("document:choose-directory", payload),
@@ -20,6 +26,8 @@ contextBridge.exposeInMainWorld("lumaDesktop", {
   getPreferences: () => ipcRenderer.invoke("preferences:get"),
   setPreferences: (patch) => ipcRenderer.invoke("preferences:set", patch),
   createDocument: (payload) => ipcRenderer.invoke("document:create", payload),
+  getReportLayout:p=>ipcRenderer.invoke('report:get',p),
+  saveReportLayout:p=>ipcRenderer.invoke('report:save',p),
   getAnnotations:p=>ipcRenderer.invoke('annotations:get',p),
   saveAnnotations:p=>ipcRenderer.invoke('annotations:save',p),
   saveAnnotationAsset:p=>ipcRenderer.invoke('annotations:image',p),

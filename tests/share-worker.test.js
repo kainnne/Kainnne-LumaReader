@@ -108,7 +108,7 @@ test("download redirects increment one platform atomically", async () => {
   const database = new FakeD1();
   const response = await handler.fetch(new Request("https://lumareader-share.example/d/macos"), { DOWNLOADS_DB: database });
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-macOS-universal.dmg");
+  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/Kainnne-LumaReader-1.5.0-macOS-universal.dmg");
   assert.equal(database.values.macos, 1);
   assert.equal(database.values.windows, 0);
 });
@@ -125,7 +125,7 @@ test("Linux downloads increment Linux only and use the published AppImage name",
   const database = new FakeD1({ macos: 41, windows: 23, linux: 12 });
   const response = await handler.fetch(new Request("https://lumareader-share.example/d/linux"), { DOWNLOADS_DB: database });
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-Linux-x64.AppImage");
+  assert.equal(response.headers.get("Location"), "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/Kainnne-LumaReader-1.5.0-Linux-x64.AppImage");
   assert.deepEqual(database.values, { macos: 41, windows: 23, linux: 13 });
 });
 
@@ -135,7 +135,7 @@ test("download HEAD requests check all platform destinations without changing co
   for (const platform of ["macos", "windows", "linux"]) {
     const response = await handler.fetch(new Request(`https://lumareader-share.example/d/${platform}`, { method: "HEAD" }), { DOWNLOADS_DB: database });
     assert.equal(response.status, 302);
-    assert.match(response.headers.get("Location"), /releases\/download\/v1\.4\.2\//);
+    assert.match(response.headers.get("Location"), /releases\/download\/v1\.5\.0\//);
     assert.equal(await response.text(), "");
   }
   assert.deepEqual(database.values, { macos: 41, windows: 23, linux: 12 });
@@ -150,3 +150,13 @@ test("unknown platform and mutation methods cannot create download counter rows"
   }
   assert.deepEqual(database.values, { macos: 0, windows: 0, linux: 0 });
 });
+
+test('Localized downloads select all eleven real package URLs and preserve the download counter',async()=>{
+ const handler=await worker(),languages=require('../src/interface-defaults').LANGUAGES,map={macos:{},windows:{},linux:{}};for(const p of Object.keys(map))for(const l of languages)map[p][l]=`https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/LumaReader-${p}-${l}.zip`;const db=new FakeD1(),env={DOWNLOADS_DB:db,LOCALIZED_DOWNLOADS:JSON.stringify(map)};
+ for(const p of Object.keys(map)){const list=await handler.fetch(new Request('https://lumareader-share.example/api/download-languages?platform='+p),env);assert.deepEqual((await list.json()).languages,languages);for(const l of languages){const response=await handler.fetch(new Request('https://lumareader-share.example/d/'+p+'?language='+l),env);assert.equal(response.status,302);assert.equal(response.headers.get('Location'),map[p][l]);}assert.equal(db.values[p],11);}
+});
+test('Missing or invalid language packages never silently download another language or increment counts',async()=>{
+ const handler=await worker(),db=new FakeD1(),base='https://lumareader-share.example/d/macos';for(const request of [new Request(base+'?language=ja'),new Request(base+'?language=ja',{method:'HEAD'})])assert.equal((await handler.fetch(request,{DOWNLOADS_DB:db})).status,503);assert.equal((await handler.fetch(new Request(base+'?language=xx'),{DOWNLOADS_DB:db})).status,400);assert.equal((await handler.fetch(new Request(base+'?language=ja'),{DOWNLOADS_DB:db,LOCALIZED_DOWNLOADS:JSON.stringify({macos:{ja:'https://evil.example/fake.exe'}})})).status,503);assert.equal(db.values.macos,0);
+});
+
+ test('Standard English edition is available without a localized manifest',async()=>{const handler=await worker();for(const platform of ['macos','windows','linux']){const list=await handler.fetch(new Request('https://lumareader-share.example/api/download-languages?platform='+platform),{});assert.deepEqual((await list.json()).languages,['en']);const redirect=await handler.fetch(new Request('https://lumareader-share.example/d/'+platform+'?language=en',{method:'HEAD'}),{});assert.equal(redirect.status,302);assert.match(redirect.headers.get('Location'),/v1\.5\.0/);}});

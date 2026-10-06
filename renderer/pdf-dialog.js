@@ -6,21 +6,20 @@
     return pdfjs;
   });
   window.LumaPdfDialog = {
-    async open(language, { name, prepare, sections = [] }) {
+    async open(language, { name, prepare, initialOptions, reportLayout=false }) {
       if (pending) return null;
       pending = true;
       const dialog = document.querySelector("#pdf-options-dialog"), $ = selector => dialog.querySelector(selector);
       const zh = language.startsWith("zh"), text = (en, tw) => zh ? tw : en;
       const input = $("#pdf-footer-text"), footer = $("#pdf-include-footer"), frame = $("#pdf-color-frame");
-      let notes=$("#pdf-annotations");if(!notes){const label=document.createElement('label');label.className='pdf-checkbox';notes=document.createElement('input');notes.type='checkbox';notes.id='pdf-annotations';const name=document.createElement('span');name.textContent=text('Include highlighted text','包含重點標記');label.append(notes,name);frame.closest('label').after(label);}notes.checked=false;
-      const section = $("#pdf-section"), breakMode = $("#pdf-break-mode"), resetBreaks = $("#pdf-break-reset"), breaks = {};
-      const paper = $("#pdf-paper"), font = $("#pdf-font-size"), inset = $("#pdf-inset");
+      const notes = $("#pdf-annotations"); notes.checked = false;
+      const paper = $("#pdf-paper"), orientation = $("#pdf-orientation"), font = $("#pdf-font-size"), inset = $("#pdf-inset");
       const save = $("#pdf-save"), close = $("#pdf-close"), status = $("#pdf-preview-status"), retry = $("#pdf-retry");
       const viewport = $("#pdf-preview-viewport"), canvas = $("#pdf-preview-canvas"), zoom = $("#pdf-preview-zoom");
       let active = true, revision = 0, generatedRevision = -1, printing = false, saving = false;
       let timer, pdf, loading, rendering, previewId, pageNumber = 1, renderRevision = 0, result = null;
       const fail = error => { status.textContent = text("Unable to prepare preview. ", "無法產生預覽。") + (error?.message || ""); retry.hidden = false; save.disabled = true; };
-      const options = () => ({footerText:input.value, includeFooter:footer.checked, colorFrame:frame.checked, includeAnnotations:notes.checked, pageSize:paper.value, fontSize:Number(font.value), inset:Number(inset.value), breaks:{...breaks}});
+      const options = () => ({footerText:input.value, includeFooter:footer.checked, colorFrame:frame.checked, includeAnnotations:notes.checked, pageSize:paper.value, orientation:orientation.value, fontSize:Number(font.value), inset:Number(inset.value),reportLayout});
       async function clearPdf() {
         renderRevision++;
         if (rendering) { rendering.cancel(); await rendering.promise.catch(() => {}); rendering = null; }
@@ -39,6 +38,8 @@
         const view = page.getViewport({scale:scale*density});
         canvas.width = Math.ceil(view.width); canvas.height = Math.ceil(view.height);
         canvas.style.width = `${natural.width*scale}px`; canvas.style.height = `${natural.height*scale}px`;
+        $("#pdf-preview-page").style.width = canvas.style.width;
+        $("#pdf-preview-page").style.height = canvas.style.height;
         canvas.setAttribute("aria-label", text(`PDF page ${pageNumber} of ${doc.numPages}`, `PDF 第 ${pageNumber} 頁，共 ${doc.numPages} 頁`));
         $("#pdf-page-count").textContent = `${pageNumber} / ${doc.numPages}`;
         $("#pdf-prev").disabled = pageNumber <= 1; $("#pdf-next").disabled = pageNumber >= doc.numPages;
@@ -80,39 +81,27 @@
         input.disabled = !footer.checked;
         clearTimeout(timer); timer = setTimeout(generate, 450);
       }
-      const breakHelp = {
-        auto: ["Follow the document’s page breaks and automatic layout.", "依文件的換頁標記與自動排版分頁。"],
-        page: ["Start this block on a new page.", "從這一段開始另起一頁。"],
-        flow: ["Ignore a forced break before this block and allow it to split. Page space still limits placement.", "取消本段前的指定換頁，並允許段落跨頁，減少大塊留白；剩餘空間不足時仍會換頁。"],
-        keep: ["Keep this block on one page when it fits; this may leave more blank space.", "放得下一頁時，盡量讓整段留在同一頁；可能會增加前一頁的留白。"]
-      };
-      function selectBreak() { breakMode.value = breaks[section.value] || "auto"; $("#pdf-break-help").textContent = text(...breakHelp[breakMode.value]); }
-      function updateSectionLabels() { [...section.options].forEach((option,i) => option.textContent = `${breaks[sections[i].id] ? "● " : ""}${i+1}. ${sections[i].label}`); }
       const cancel = event => { if (saving) event.preventDefault(); };
       const resize = new ResizeObserver(() => { if (pdf && !printing) renderPage().catch(fail); });
       try {
         const saved = await window.lumaDesktop.getPreferences();
         $("h2").textContent = text("Export PDF", "匯出 PDF");
-        const labels = {pagination:["Adjust page breaks","微調分頁"],section:["Paragraph / block","選擇段落或區塊"],behavior:["Page break","分頁方式"],temporary:["Only this export; Markdown stays unchanged.","僅套用於這次匯出，不會修改 Markdown。"],paper:["Paper size","紙張大小"],font:["PDF text size","PDF 文字大小"],inset:["Page padding","頁面留白"],footer:["Add footer name","加上頁尾名稱"],name:["Footer name","頁尾名稱"],frame:["Add palette-colored frame","加上彩色外框"],manual:["Start a new page","指定換頁位置"],marker:["Insert this on its own line in Markdown:","在 Markdown 中另起一行，加入："]};
+        const labels = {paper:["Page size","頁面尺寸"],orientation:["Orientation","頁面方向"],font:["PDF text size","PDF 文字大小"],inset:["Page padding","頁面留白"],footer:["Add footer name","加上頁尾名稱"],name:["Footer name","頁尾名稱"],frame:["Add palette-colored frame","加上彩色外框"],annotations:["Include highlights","加上重點標記"]};
         for (const [key, values] of Object.entries(labels)) $(`[data-pdf-label="${key}"]`).textContent = text(...values);
         [...inset.options].forEach((option,i) => option.textContent = text(...[["Compact","較少"],["Standard","標準"],["Wide","較多"]][i]));
-        section.replaceChildren(...sections.map(item => new Option(item.label,String(item.id))));
-        updateSectionLabels(); selectBreak();
-        [...breakMode.options].forEach((option,i) => option.textContent = text(...[["Automatic","自動"],["Start on a new page","從本段換頁"],["Continue from previous block","接續前段・減少留白"],["Keep this block together","本段盡量同頁"]][i]));
-        resetBreaks.textContent = text("Reset page breaks","重設分頁調整");
-        section.closest('fieldset').hidden = !sections.length;
-        section.onchange = selectBreak;
-        breakMode.onchange = () => { if (breakMode.value === "auto") delete breaks[section.value]; else breaks[section.value] = breakMode.value; updateSectionLabels(); selectBreak(); schedule(); };
-        resetBreaks.onclick = () => { for (const key of Object.keys(breaks)) delete breaks[key]; updateSectionLabels(); selectBreak(); schedule(); };
+        orientation.options[0].textContent = text("Portrait","直式"); orientation.options[1].textContent = text("Landscape","橫式");
         zoom.options[0].textContent = text("Fit page","整頁預覽"); zoom.value = "fit";
         close.textContent = text("Cancel","取消"); save.textContent = text("Save PDF…","儲存 PDF…"); retry.textContent = text("Retry preview","重新產生預覽");
         input.value = typeof saved?.pdfFooterText === "string" ? saved.pdfFooterText : "LumaReader";
         footer.checked = saved?.pdfIncludeFooter === true; frame.checked = saved?.pdfColorFrame === true;
-        const layout = saved?.pdfLayout || {};
-        paper.value = layout.pageSize === "Letter" ? "Letter" : "A4"; font.value = String(layout.fontSize || 18); inset.value = [6,10,14].includes(layout.inset) ? String(layout.inset) : "6";
+        const layout = window.LumaPdfTools.normalizeLayout(initialOptions || saved?.pdfLayout || {});
+        paper.value = layout.pageSize; orientation.value = layout.orientation; font.value = String(layout.fontSize || 18); inset.value = [6,10,14].includes(layout.inset) ? String(layout.inset) : "6";
+        if(initialOptions){input.value=initialOptions.footerText;footer.checked=initialOptions.includeFooter;frame.checked=initialOptions.colorFrame;}
+        notes.closest("label").hidden=false;
         input.disabled = !footer.checked; save.disabled = true; close.disabled = false; canvas.width=0; canvas.height=0;
         $("#pdf-page-count").textContent = "—"; $("#pdf-prev").disabled = $("#pdf-next").disabled = true;
-        for (const control of [input,footer,frame,notes,paper,font,inset]) control.oninput = schedule;
+        for (const control of [input,footer,frame,notes,paper,orientation,font,inset]) control.oninput = schedule;
+        paper.oninput = () => { orientation.value = window.LumaPdfTools.normalizeLayout({pageSize:paper.value}).orientation; schedule(); };
         footer.onchange = () => { if (footer.checked) {input.focus(); input.select();} };
         close.onclick = () => { if (!saving) dialog.close(); };
         retry.onclick = schedule;
@@ -122,7 +111,7 @@
         save.onclick = async () => {
           if (!previewId || printing || saving || generatedRevision !== revision) return;
           saving = true; save.disabled = close.disabled = true;
-          for (const control of [input,footer,frame,notes,paper,font,inset,section,breakMode,resetBreaks]) control.disabled = true;
+          for (const control of [input,footer,frame,notes,paper,orientation,font,inset]) control.disabled = true;
           try {
             const exported = await window.lumaDesktop.exportPdf({name, previewId});
             if (exported?.ok) { result = exported; dialog.close(); }
@@ -130,7 +119,7 @@
           } catch (error) { status.textContent = error.message; }
           finally {
             saving = false; save.disabled = close.disabled = false;
-            for (const control of [input,footer,frame,notes,paper,font,inset,section,breakMode,resetBreaks]) control.disabled = false;
+            for (const control of [input,footer,frame,notes,paper,orientation,font,inset]) control.disabled = false;
             input.disabled = !footer.checked;
           }
         };

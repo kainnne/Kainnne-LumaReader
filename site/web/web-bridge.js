@@ -42,9 +42,9 @@
 
 ## Try the interface / 先體驗介面
 
-Open a Markdown file or edit this example directly. Turn on **Show Markdown** when you want the source beside a preview. The Web edition holds up to three documents at a time.
+Open a Markdown file or edit this example directly. Use the editing-mode menu to choose visual editing, Markdown source, or source with preview. The Web edition holds up to three documents at a time.
 
-開啟自己的 Markdown 檔案，或直接點文字編輯這份示範文件。需要對照原文時，再開啟 **顯示 Markdown**。網頁版同時最多開啟 3 份文件。
+開啟自己的 Markdown 檔案，或直接點文字編輯這份示範文件。需要對照原文時，在編輯模式選單選取 **原文＋對照預覽**。網頁版同時最多開啟 3 份文件。
 
 ## Read your way / 用喜歡的方式閱讀
 
@@ -55,9 +55,9 @@ Open a Markdown file or edit this example directly. Turn on **Show Markdown** wh
 
 ## Edit with context / 一邊編輯，一邊確認排版
 
-Select **Edit** to open the source and rendered preview together. Resize the two panes, keep their scrolling synchronized, and use **Show bottom** when an elaborate layout makes the end of the preview difficult to reach.
+Select the document-and-pencil icon to edit. The editing-mode menu also offers source editing with or without a preview. Resize the two panes, keep their scrolling synchronized, and use **Show bottom** when an elaborate layout makes the end of the preview difficult to reach.
 
-按下 **Edit** 後，原文與排版預覽會同時開啟。你可以調整兩側寬度、同步捲動；遇到較複雜的版面時，也能用 **Show bottom** 查看預覽最末端。
+按下文件與筆的圖示即可編輯；編輯模式選單提供原文編輯及原文對照預覽。你可以調整兩側寬度、同步捲動；遇到較複雜的版面時，也能用 **Show bottom** 查看預覽最末端。
 
 | Feature / 功能 | Web edition / 網頁版 |
 | --- | --- |
@@ -651,8 +651,7 @@ ${desktopDownloadMarkdown}
 
   const initialPreferences = loadPreferences();
   if (!localStorage.getItem("lumareader-language")) {
-    const browserLanguage = navigator.language || "en";
-    localStorage.setItem("lumareader-language", browserLanguage.startsWith("zh") ? "zh-Hant" : browserLanguage);
+    localStorage.setItem("lumareader-language", "en");
   }
   const ready = window.LumaEmbed ? window.LumaEmbed.ready.then(config => {
     const files=config.document.files||[{id:config.document.id,title:config.document.title||config.document.id,markdown:config.document.markdown}];

@@ -14,9 +14,9 @@
 .ProseMirror-selectednode { outline: 2px solid var(--accent); border-radius: 4px; }
 .ProseMirror-hideselection *::selection { background: transparent; }
 .ProseMirror-gapcursor { display: none; }
-.direct-protected { padding: 12px 16px; border: 1px dashed var(--line); border-radius: 10px; margin: 1em 0; color: var(--muted); font: 12px/1.5 var(--sans); }
-.direct-protected pre { margin: 8px 0; max-height: 180px; overflow: auto; }
-.direct-protected button, .direct-table-tools button, .direct-formula-dialog button { color: var(--ink); background: var(--paper); border: 1px solid var(--line); padding: 7px 10px; border-radius: 7px; cursor: pointer; font: 600 12px var(--sans); }
+.direct-retained { font:inherit; color:inherit; margin:0; }
+.direct-retained[hidden] { display:none!important; }
+.direct-table-tools button, .direct-formula-dialog button { color: var(--ink); background: var(--paper); border: 1px solid var(--line); padding: 7px 10px; border-radius: 7px; cursor: pointer; font: 600 12px var(--sans); }
 .direct-table-tools { position: fixed; z-index: 40; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; padding: 9px; width: max-content; max-width: calc(100vw - 20px); background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 25px #0002; }
 .direct-formula-dialog { width: min(560px,90vw); border: 1px solid var(--line); border-radius: 16px; color: var(--ink); background: var(--paper); padding: 24px; }
 .direct-formula-dialog::backdrop { background: #0005; }

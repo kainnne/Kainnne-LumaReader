@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="styles.css?v=1.3.1" />
   <link rel="stylesheet" href="library-ui.css?v=1.3.1" />
   <link rel="stylesheet" href="direct-editor.css" />
+  <link rel="stylesheet" href="report-layout.css" />
+  <link rel="stylesheet" href="toolbar-icons.css?v=1.5.0" />
   <style id="pdf-page-style"></style>
   <link rel="stylesheet" href="annotations.css?v=1.4.2-preview.1">
 </head>
@@ -102,16 +104,17 @@
             <input id="editor-preview-toggle" type="checkbox" />
             <span data-i18n="comparisonPreview">Preview</span>
           </label>
+          <div id="preview-form-control" class="toolbar-dropdown" hidden><button id="preview-form-toggle" class="toolbar-select-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="preview-form-menu">Standard preview</button><div id="preview-form-menu" class="toolbar-menu editor-mode-menu" role="menu" hidden></div></div>
+          <button id="report-preview-export" class="icon-button labeled-button report-preview-button report-emphasis" type="button" hidden>Preview &amp; export PDF</button>
           <button id="edit-document" class="icon-button labeled-button editor-button" data-tooltip-key="edit" type="button" hidden><span id="edit-document-icon" aria-hidden="true">✎</span><span id="edit-document-label">Edit</span></button>
           <button id="cancel-edit" class="icon-button editor-cancel-button" data-tooltip-key="exitEdit" type="button" aria-label="Exit editing" hidden>×</button>
-          <div id="editor-mode-control" class="editor-mode-control" hidden><button id="show-markdown" type="button" aria-pressed="false"><span class="mode-show-source" aria-hidden="true">Show source</span><span class="mode-show-direct" aria-hidden="true">Visual editor</span></button></div>
+          <div id="editor-mode-control" class="editor-mode-control" hidden><button id="show-markdown" class="toolbar-select-button" type="button" aria-haspopup="menu" aria-expanded="false">Normal editing</button><div id="editor-mode-menu" class="toolbar-menu editor-mode-menu" role="menu" hidden></div></div>
           <label id="code-edit-control" class="editor-preview-control" hidden><input id="code-edit-toggle" type="checkbox" /><span id="code-edit-label">Enable code editing</span></label>
           <span id="image-picker-status" class="image-picker-status" role="status" hidden></span>
           <div id="editor-insert-control" class="toolbar-dropdown editor-insert-control" hidden>
             <button id="editor-insert-toggle" class="toolbar-select-button editor-insert-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="editor-insert-menu">
-              <span class="dropdown-leading-icon" aria-hidden="true">＋</span>
+              <svg class="dropdown-leading-icon format-plus" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9"/></svg>
               <span class="dropdown-label" id="format-menu-label">Format</span>
-              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
             </button>
             <div id="editor-insert-menu" class="toolbar-menu editor-insert-menu" role="dialog" aria-label="Formatting" hidden>
               <label class="format-compact-control"><input id="format-compact" type="checkbox" /><span id="format-compact-label">Compact labels</span></label>
@@ -145,12 +148,10 @@
           </div>
           <button id="source-view" class="icon-button labeled-button" data-tooltip-key="source" type="button" data-i18n-title="source" title="Source" aria-label="Source"><span aria-hidden="true">⌘</span><span data-i18n="source">Source</span></button>
           <button id="media-view" class="icon-button labeled-button" data-tooltip-key="media" type="button" data-i18n-title="media" title="Media" aria-label="Media"><span aria-hidden="true">▧</span><span data-i18n="media">Media</span></button>
-          <button id="export-pdf" class="icon-button labeled-button export-pdf-button" data-tooltip-key="exportPdf" type="button" data-i18n-title="exportPdf" title="Export PDF" aria-label="Export PDF" hidden><span class="pdf-button-icon" aria-hidden="true">PDF</span><span data-i18n="exportPdf">Export PDF</span></button>
           <div id="reading-mode-control" class="toolbar-dropdown">
             <button id="reading-mode-toggle" class="toolbar-select-button reading-mode-button" data-tooltip-key="readingMode" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="reading-mode-menu" data-i18n-aria="readingMode" aria-label="Reading mode">
               <span id="reading-mode-icon" class="dropdown-leading-icon" aria-hidden="true">↕</span>
               <span id="reading-mode-name" class="dropdown-label">Vertical</span>
-              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
             </button>
             <select id="reading-mode" hidden aria-hidden="true" tabindex="-1">
               <option value="vertical" data-i18n="vertical" selected>Vertical</option>
@@ -161,14 +162,40 @@
             <div id="reading-mode-menu" class="toolbar-menu reading-mode-menu" role="menu" hidden></div>
           </div>
 
+
+
+          <div class="toolbar-dropdown language-control">
+            <button id="language-toggle" class="toolbar-select-button language-button" data-tooltip-key="language" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="language-menu" data-i18n-aria="language" aria-label="Interface language">
+              <span class="dropdown-leading-icon language-glyph" aria-hidden="true">文</span>
+              <span id="language-name" class="dropdown-label">English</span>
+            </button>
+            <select id="language" hidden aria-hidden="true" tabindex="-1">
+              <option value="en">English</option>
+              <option value="zh-Hant">繁體中文</option>
+              <option value="zh-Hans">简体中文</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="ru">Русский</option>
+              <option value="it">Italiano</option>
+            </select>
+            <div id="language-menu" class="toolbar-menu language-menu" role="menu" hidden></div>
+          </div>
+
+          <button id="font-down" class="icon-button text-button" data-tooltip-key="fontDown" type="button" data-i18n-title="smallerText" title="Smaller text" aria-label="Smaller text">A−</button>
+          <button id="font-up" class="icon-button text-button" data-tooltip-key="fontUp" type="button" data-i18n-title="largerText" title="Larger text" aria-label="Larger text">A＋</button>
+
           <div class="toolbar-dropdown palette-control appearance-control">
             <button id="palette-toggle" class="icon-button appearance-button" data-tooltip-key="appearance" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="palette-menu" aria-label="Appearance and toolbar settings">
-              <span id="appearance-theme-icon" class="appearance-theme-icon" aria-hidden="true">⚙</span>
+              <span id="appearance-theme-icon" class="appearance-theme-icon" data-i18n="settingsLabel">Settings</span>
               <span id="palette-name" class="visually-hidden">Dream Rose</span>
             </button>
             <div id="palette-menu" class="toolbar-menu palette-menu appearance-menu" role="dialog" aria-label="Appearance and toolbar settings" hidden>
               <header class="appearance-menu-header">
-                <div><strong data-i18n="appearanceSettings">Appearance &amp; toolbar</strong><span data-i18n="appearanceHint">Keep the reader focused on what you use.</span></div>
+                <div><strong data-i18n="appearanceSettings">Appearance &amp; toolbar</strong></div>
                 <button id="appearance-close" type="button" aria-label="Close">×</button>
               </header>
               <section class="appearance-section">
@@ -201,42 +228,18 @@
               <section class="appearance-section toolbar-visibility-section">
                 <strong data-i18n="toolbarVisibility">Toolbar visibility</strong>
                 <label><span data-i18n="language">Interface language</span><input type="checkbox" data-toolbar-visibility="language" checked /></label>
-                <label><span data-i18n="readingMode">Reading mode</span><input type="checkbox" data-toolbar-visibility="readingMode" checked /></label>
+                <label><span data-i18n="readingMode">Reading mode</span><input type="checkbox" data-toolbar-visibility="readingMode" /></label>
                 <label><span data-i18n="source">Source</span><input type="checkbox" data-toolbar-visibility="source" /></label>
                 <label><span data-i18n="media">Media</span><input type="checkbox" data-toolbar-visibility="media" /></label>
                 <label><span data-i18n="textSize">Text size</span><input type="checkbox" data-toolbar-visibility="textSize" checked /></label>
-                <label><span data-i18n="exportPdf">Export PDF</span><input type="checkbox" data-toolbar-visibility="exportPdf" /></label>
+                <label><span data-i18n="previewForm">Preview style</span><input type="checkbox" data-toolbar-visibility="previewForm" /></label>
+                <label><span data-i18n="exportPdf">Export PDF</span><input type="checkbox" data-toolbar-visibility="exportPdf" checked /></label>
                 <label><span data-i18n="settingsButton">Settings button</span><input type="checkbox" data-toolbar-visibility="settings" checked /></label>
                 <button id="toolbar-reset" class="toolbar-reset" type="button" data-i18n="restoreToolbar">Restore default toolbar</button>
               </section>
             </div>
           </div>
-
-          <div class="toolbar-dropdown language-control">
-            <button id="language-toggle" class="toolbar-select-button language-button" data-tooltip-key="language" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="language-menu" data-i18n-aria="language" aria-label="Interface language">
-              <span class="dropdown-leading-icon language-glyph" aria-hidden="true">文</span>
-              <span id="language-name" class="dropdown-label">English</span>
-              <span class="dropdown-chevron" aria-hidden="true">⌄</span>
-            </button>
-            <select id="language" hidden aria-hidden="true" tabindex="-1">
-              <option value="en">English</option>
-              <option value="zh-Hant">繁體中文</option>
-              <option value="zh-Hans">简体中文</option>
-              <option value="ja">日本語</option>
-              <option value="ko">한국어</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="pt-BR">Português (Brasil)</option>
-              <option value="ru">Русский</option>
-              <option value="it">Italiano</option>
-            </select>
-            <div id="language-menu" class="toolbar-menu language-menu" role="menu" hidden></div>
-          </div>
-
-          <button id="font-down" class="icon-button text-button" data-tooltip-key="fontDown" type="button" data-i18n-title="smallerText" title="Smaller text" aria-label="Smaller text">A−</button>
-          <button id="font-up" class="icon-button text-button" data-tooltip-key="fontUp" type="button" data-i18n-title="largerText" title="Larger text" aria-label="Larger text">A＋</button>
-
+          <button id="export-pdf" class="icon-button export-pdf-button" data-tooltip-key="exportPdf" type="button" data-i18n-title="exportPdf" aria-label="Edit / export PDF" hidden><svg class="share-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M8 10H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-3"/></svg></button>
         </div>
       </header>
 
@@ -250,6 +253,7 @@
           </button>
         </article>
         <pre id="raw-source" class="raw-source" hidden><code></code></pre>
+        <section id="report-workspace" class="report-workspace" hidden></section>
         <section id="direct-editor" class="direct-editor" hidden></section>
         <div id="direct-table-tools" class="direct-table-tools" role="toolbar" aria-label="Table editing" hidden>
           <button type="button" data-table-command="row-add" data-zh="＋列" data-en="＋ Row">＋ Row</button>
@@ -339,30 +343,23 @@
       </form>
     </dialog>
     <dialog id="pdf-options-dialog" class="pdf-options-dialog" aria-labelledby="pdf-options-title">
-      <header class="pdf-preview-header"><h2 id="pdf-options-title">Export PDF</h2><button id="pdf-close" class="compact-button" type="button">Cancel</button></header>
+      <header class="pdf-preview-header"><h2 id="pdf-options-title">Export PDF</h2><div class="pdf-header-actions"><button id="pdf-close" class="compact-button" type="button">Cancel</button><button id="pdf-save" class="compact-button primary-button" type="button" disabled>Save PDF…</button></div></header>
       <div class="pdf-workspace">
         <section class="pdf-controls">
-          <label><span data-pdf-label="paper">Paper size</span><select id="pdf-paper"><option>A4</option><option>Letter</option></select></label>
-          <label><span data-pdf-label="font">Text size</span><div class="pdf-range"><input id="pdf-font-size" type="range" min="12" max="22" step="1" value="18" /><output id="pdf-font-value">18 px</output></div></label>
+          <label><span data-pdf-label="paper">Page size</span><select id="pdf-paper"><option>A4</option><option>Letter</option><option value="16:9">16:9 / 9:16</option><option value="4:3">4:3 / 3:4</option></select></label>
+          <label><span data-pdf-label="orientation">Orientation</span><select id="pdf-orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+          <label><span data-pdf-label="font">Text size</span><div class="pdf-range"><input id="pdf-font-size" type="range" min="8" max="22" step="1" value="18" /><output id="pdf-font-value">18 px</output></div></label>
           <label><span data-pdf-label="inset">Page padding</span><select id="pdf-inset"><option value="6">Compact</option><option value="10">Standard</option><option value="14">Wide</option></select></label>
           <label class="pdf-option-check"><input id="pdf-include-footer" type="checkbox" /><span data-pdf-label="footer">Add footer name</span></label>
           <label for="pdf-footer-text"><span data-pdf-label="name">Footer name</span><input id="pdf-footer-text" type="text" maxlength="120" value="LumaReader" autocomplete="organization" /></label>
           <label class="pdf-option-check"><input id="pdf-color-frame" type="checkbox" /><span data-pdf-label="frame">Add palette-colored frame</span></label>
-          <fieldset class="pdf-pagination">
-            <legend data-pdf-label="pagination">Adjust page breaks</legend>
-            <label><span data-pdf-label="section">Paragraph / block</span><select id="pdf-section"></select></label>
-            <label><span data-pdf-label="behavior">Page break</span><select id="pdf-break-mode"><option value="auto">Automatic</option><option value="page">Start on a new page</option><option value="flow">Continue from previous block</option><option value="keep">Keep this block together</option></select></label>
-            <p id="pdf-break-help"></p><p data-pdf-label="temporary">Only this export; Markdown stays unchanged.</p>
-            <button id="pdf-break-reset" type="button">Reset page breaks</button>
-          </fieldset>
-          <details><summary data-pdf-label="manual">Start a new page</summary><p data-pdf-label="marker">Insert this on its own line in Markdown:</p><code>&lt;!-- lumareader:pagebreak --&gt;</code></details>
+          <label class="pdf-option-check"><input id="pdf-annotations" type="checkbox" /><span data-pdf-label="annotations">Include highlights</span></label>
           <p id="pdf-preview-status" role="status" aria-live="polite"></p>
           <button id="pdf-retry" class="compact-button" type="button" hidden>Retry preview</button>
-          <button id="pdf-save" class="compact-button primary-button" type="button" disabled>Save PDF…</button>
         </section>
         <section class="pdf-preview-panel" aria-label="PDF preview">
           <nav class="pdf-page-navigation"><button id="pdf-prev" class="compact-button" type="button" aria-label="Previous page">‹</button><span id="pdf-page-count"></span><button id="pdf-next" class="compact-button" type="button" aria-label="Next page">›</button><select id="pdf-preview-zoom" aria-label="Preview zoom"><option value="fit">Fit page</option><option value="1">100%</option><option value="1.5">150%</option></select></nav>
-          <div id="pdf-preview-viewport"><canvas id="pdf-preview-canvas" role="img" aria-label="PDF page preview"></canvas></div>
+          <div id="pdf-preview-viewport"><div id="pdf-preview-page"><canvas id="pdf-preview-canvas" role="img" aria-label="PDF page preview"></canvas></div></div>
         </section>
       </div>
     </dialog>
@@ -394,6 +391,9 @@
     </div>
   </div>
 
+
+  <dialog id="report-content-dialog" class="report-content-dialog"><header><strong></strong><div><button id="report-content-expand" class="report-expand-button" type="button" aria-pressed="false">⛶</button><button id="report-content-cancel" type="button">Cancel</button><button id="report-content-apply" type="button">Apply</button></div></header><nav class="report-content-toolbar" aria-label="Formatting"></nav><div class="report-content-editor"><section class="direct-editor"></section></div></dialog>
+
   <script src="vendor/marked/marked.umd.js?v=17.0.5"></script>
   <script src="vendor/katex/katex.min.js?v=0.18.3"></script>
   <script src="vendor/katex/contrib/auto-render.min.js?v=0.18.3"></script>
@@ -407,6 +407,11 @@
   <script src="pdf-dialog.js?v=1.3.1"></script>
   <script src="direct-editor.bundle.js"></script>
   <script src="code-editor.bundle.js"></script>
+  <script src="report-model.js"></script>
+  <script src="toolbar-icons.js"></script>
+  <script src="report-layout.js"></script>
+  <script src="report-ui.js"></script>
+  <script src="desktop-ui.js"></script>
   <script src="app.js?v=1.3.1"></script>
   <script src="multiformat-ui.js?v=1.3.1"></script>
 </body>

@@ -12,28 +12,28 @@ async function main(){
   if(await page.locator('#onboarding').isVisible())await page.locator('#onboarding-skip').click();
   for(const width of [1360,768,390,320]){
     await page.setViewportSize({width,height:900});
-    for(const id of ['#font-up','#font-down','#language-toggle','#reading-mode-toggle'])assert.equal(await page.locator(id).isVisible(),false,id);
-    assert.equal(await page.locator('#edit-document-label').isVisible(),true);
-    assert.equal(await page.locator('[data-i18n=webSettings]').innerText(),'設定');
+    for(const id of ['#font-up','#font-down','#language-toggle'])assert.equal(await page.locator(id).isVisible(),false,id);
+    assert.equal(await page.locator('#edit-document').isVisible(),true);assert.equal(await page.locator('#reading-mode-toggle').isVisible(),true);
+    assert.equal(await page.locator('[data-i18n=webSettings]').textContent(),'設定');
     assert.equal(await page.locator('.reader-actions').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'toolbar fits '+width);
   }
   await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>!document.body.classList.contains('booting'));await page.waitForTimeout(250);await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:'/private/tmp/luma141-web-mobile.png'});
   await page.locator('#palette-toggle').tap();await page.locator('#appearance-close').tap();
   const size=()=>page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reader-size')));
   const before=await size();await page.keyboard.press('Meta+=');assert.ok(await size()>before);await page.keyboard.press('Meta+-');assert.equal(await size(),before);await page.waitForTimeout(250);
-  await page.locator('#palette-toggle').click();await page.locator('#settings-language').selectOption('en');assert.equal(await page.locator('#edit-document-label').innerText(),'Edit');
+  await page.locator('#palette-toggle').click();await page.locator('#settings-language').selectOption('en');assert.equal(await page.locator('#edit-document-label').textContent(),'Edit');
   if(!(await page.locator('#palette-menu').isVisible()))await page.locator('#palette-toggle').click();await page.locator('#settings-language').selectOption('zh-Hant');assert.equal(await page.locator('#language-hide-prompt').isVisible(),false);
   await page.locator('#settings-reading-mode').selectOption('horizontal');assert.equal(await page.locator('#reader-shell').getAttribute('data-mode'),'horizontal');
   await page.locator('#palette-toggle').click();await page.locator('#settings-reading-mode').selectOption('vertical');
   await page.setViewportSize({width:1360,height:950});
-  await page.locator('#edit-document').click();await page.locator('.direct-prose').waitFor();assert.equal(await page.locator('#show-markdown').getAttribute('aria-pressed'),'false');
-  await page.locator('#show-markdown').click();await page.locator('#source-editor').waitFor();assert.equal(await page.locator('#editor-preview-toggle').isChecked(),true);
-  const source=await page.locator('#source-editor').inputValue();await page.locator('#source-editor').fill(source+'\nWeb 1.4 test\n');await page.locator('#show-markdown').click();assert.ok((await page.locator('.direct-prose').innerText()).includes('Web 1.4 test'));
+  await page.locator('#edit-document').click();await page.locator('.direct-prose').waitFor();assert.equal(await page.locator('#show-markdown').locator('.luma-action-icon').getAttribute('data-icon'),'modeDirect');
+  await page.locator('#show-markdown').click();await page.locator('[data-editor-mode=split]').click();await page.locator('#source-editor').waitFor();assert.equal(await page.locator('#editor-preview-toggle').isChecked(),true);
+  const source=await page.locator('#source-editor').inputValue();await page.locator('#source-editor').fill(source+'\nWeb 1.4 test\n');await page.locator('#show-markdown').click();await page.locator('[data-editor-mode=direct]').click();assert.ok((await page.locator('.direct-prose').innerText()).includes('Web 1.4 test'));
   await page.locator('#edit-document').click();await page.waitForFunction(()=>document.querySelector('#edit-document-label').textContent==='已儲存'||document.querySelector('#edit-document-label').textContent==='Saved');await page.locator('#cancel-edit').click();
-  await page.locator('#edit-document').click();assert.equal(await page.locator('#show-markdown').getAttribute('aria-pressed'),'false');await page.locator('#cancel-edit').click();
+  await page.locator('#edit-document').click();assert.equal(await page.locator('#show-markdown').locator('.luma-action-icon').getAttribute('data-icon'),'modeDirect');await page.locator('#cancel-edit').click();
   assert.equal(await page.locator('#export-pdf').isVisible(),false);
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(250);await page.screenshot({path:'/private/tmp/luma14-web-mobile.png'});
-  await page.goto(origin+'/');await page.setViewportSize({width:1360,height:950});await page.locator('.language-toggle').click();await page.waitForFunction(()=>document.querySelector('[data-copy=release-1-title]').textContent.includes('預覽'));assert.ok((await page.locator('[data-copy=release-1-title]').innerText()).includes('預覽'));assert.ok((await page.locator('[data-copy=download-note]').innerText()).includes('1.4.1'));await page.screenshot({path:'/private/tmp/luma14-site.png'});
+  await page.goto(origin+'/');await page.setViewportSize({width:1360,height:950});await page.locator('.language-toggle').click();await page.waitForFunction(()=>document.querySelector('[data-copy=release-1-title]').textContent.includes('報告'));assert.ok((await page.locator('[data-copy=release-1-title]').innerText()).includes('報告'));assert.ok((await page.locator('[data-copy=download-note]').innerText()).includes('1.5.0'));await page.screenshot({path:'/private/tmp/luma14-site.png'});
   assert.deepEqual(errors,[]);console.log('PASS Web direct/source toggle, preview, edit/save, new-session default, mobile rendering, and bilingual release copy.');
  }catch(error){if(page){await page.screenshot({path:"/private/tmp/luma14-web-failure.png"});console.error((await page.locator("body").innerText()).slice(-1600));}throw error;}finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 }

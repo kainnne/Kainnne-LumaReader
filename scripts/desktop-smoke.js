@@ -227,7 +227,10 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       // Click the label at desktop width: its text can overlap the checkbox at mobile widths.
       await page.setViewportSize({ width: 1360, height: 880 });
       const toggle = page.locator("#editor-preview-toggle");
-      if (await toggle.isChecked() !== enabled) await page.locator("#editor-preview-control").click();
+      if (await toggle.isChecked() !== enabled) {
+        await page.locator("#show-markdown").click();
+        await page.locator(`[data-editor-mode=${enabled ? "split" : "source"}]`).click();
+      }
       await page.waitForFunction((value) => document.querySelector("#editor-preview-toggle").checked === value, enabled);
       await page.waitForFunction(async (value) => (await window.lumaDesktop.getPreferences()).editorPreview === value, enabled);
       await page.waitForFunction((value) => document.body.classList.contains("editor-preview-enabled") === value, enabled);
@@ -306,40 +309,38 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     await reloadDocument();
     await page.waitForFunction(async () => {
       const saved = await window.lumaDesktop.getPreferences();
-      return saved.readerDefaultsVersion === 6 && saved.editorPreview === true && saved.toolbarVisibility.exportPdf === false;
+      return saved.readerDefaultsVersion === 12 && saved.editorPreview === true && saved.toolbarVisibility.exportPdf === true && saved.toolbarVisibility.readingMode === true;
     });
-    await page.waitForFunction(() => document.querySelector("#export-pdf").dataset.userHidden === "true");
+    await page.waitForSelector("#export-pdf:not([data-user-hidden])", {state:"visible"});
     await page.locator("#palette-toggle").click();
     const pdfCheckbox = page.locator('[data-toolbar-visibility="exportPdf"]');
-    assert.equal(await pdfCheckbox.isChecked(), false);
-    await pdfCheckbox.check();
-    await page.waitForFunction(async () => (await window.lumaDesktop.getPreferences()).toolbarVisibility.exportPdf === true);
+    assert.equal(await pdfCheckbox.isChecked(), true);
+    await pdfCheckbox.uncheck();
+    await page.waitForFunction(async () => (await window.lumaDesktop.getPreferences()).toolbarVisibility.exportPdf === false);
     await reloadDocument();
-    await page.waitForSelector("#export-pdf:not([data-user-hidden])", { state: "visible" });
+    await page.waitForFunction(() => document.querySelector("#export-pdf").dataset.userHidden === "true");
     await page.locator("#palette-toggle").click();
     await page.locator("#toolbar-reset").click();
-    await page.waitForFunction(() => document.querySelector("#export-pdf").dataset.userHidden === "true");
+    await page.waitForSelector("#export-pdf:not([data-user-hidden])", {state:"visible"});
     await page.keyboard.press("Escape");
 
-    currentStage = "PDF footer prompt and cancellation";
-    console.log(`[smoke] ${label}: ${currentStage}`);
-    const footerChoices = ["LumaReader", "時光設計公司", ""];
-    for (const footer of footerChoices) {
-      // The actual successful-export write is covered by main-process tests. Here
-      // only read preferences and cancel, so CI never opens an OS save dialog.
-      await page.evaluate((pdfFooterText) => window.lumaDesktop.setPreferences({ pdfFooterText, pdfIncludeFooter: true, pdfColorFrame: true }), footer);
+    currentStage = "Separate PDF layout footer save and cancellation";
+    const footerChoices=["LumaReader","時光設計公司",""];
+    for(const footer of footerChoices){
+      await page.locator('#export-pdf').click();
+      await page.waitForFunction(()=>/pages$|頁$/.test(document.querySelector('#report-status')?.textContent||''));
+      if(await page.locator('#report-help-continue').isVisible())await page.locator('#report-help-continue').click();
+      assert.equal(await page.locator('#pdf-options-dialog').isVisible(),false);
+      const input=page.locator('[data-option=footerText]');
+      await input.fill(footer);await page.locator('#edit-document').click();
+      await page.waitForFunction(()=>document.querySelector('#edit-document-label').textContent==='Saved');
+      assert.equal(await page.evaluate(async()=>{const layout=await window.lumaDesktop.getReportLayout({path:new URL(location.href).searchParams.get('source')});return layout.options.footerText;}),footer);
+      await input.fill('Cancelled footer must not be saved');
+      await page.locator('#cancel-edit').click();await page.locator('#discard-edit-confirm').click();
+      await page.locator('#discard-edit-dialog').waitFor({state:'hidden'});
       await reloadDocument();
-      await page.evaluate(() => document.querySelector("#export-pdf").click());
-      await page.waitForSelector("#pdf-options-dialog[open]");
-      const input = page.locator("#pdf-footer-text");
-      assert.equal(await input.inputValue(), footer);
-      const selection = await input.evaluate((element) => ({ start: element.selectionStart, end: element.selectionEnd, focused: document.activeElement === element }));
-      assert.deepEqual(selection, { start: 0, end: footer.length, focused: true });
-      await input.fill("Cancelled footer must not be saved");
-      await page.locator('#pdf-close').click();
-      await page.waitForSelector("#pdf-options-dialog[open]", { state: "detached" });
-      await settleLayout();
-      assert.equal(await page.evaluate(async () => (await window.lumaDesktop.getPreferences()).pdfFooterText), footer);
+      assert.equal(await page.evaluate(async()=>{const layout=await window.lumaDesktop.getReportLayout({path:new URL(location.href).searchParams.get('source')});return layout.options.footerText;}),footer);
+      assert.equal(await fs.readFile(first,'utf8'),text,'PDF layout must not modify Markdown');
     }
 
     await checkEditorBehavior(page);
@@ -364,14 +365,14 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     }
     await page.locator("#source-view").click();
     await page.locator("#edit-document").click();
-    assert.equal(await page.locator("#show-markdown").getAttribute("aria-pressed"), "false", "Direct editing is the default");
-    await page.locator("#show-markdown").click();
+    assert.equal(await page.locator("#show-markdown .luma-action-icon").getAttribute("data-icon"),"modeDirect","Normal editing is the default");
+    await page.locator("#show-markdown").click();await page.locator("[data-editor-mode=split]").click();
     assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true);
     await setPreview(false);
     await reloadDocument();
     await page.locator("#edit-document").click();
-    assert.equal(await page.locator("#show-markdown").getAttribute("aria-pressed"), "false");
-    await page.locator("#show-markdown").click();
+    assert.equal(await page.locator("#show-markdown .luma-action-icon").getAttribute("data-icon"),"modeDirect");
+    await page.locator("#show-markdown").click();await page.locator("[data-editor-mode=split]").click();
     assert.equal(await page.locator("#editor-preview-toggle").isChecked(), true, "Showing Markdown also enables comparison preview");
     const edited = text + "\nSaved from window A.\n";
     await page.locator("#source-editor").fill(edited);
@@ -414,7 +415,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       deepChineseFilenameSearch: true, folderNameSearchExpandsAncestors: true, indexedFolderDepth: nestedParts.length,
       refreshFindsAddedAndRemovesDeletedFiles: true, emptySearchSuggestsRefresh: true,
       pdfHiddenDefaultAndPreferencePersisted: true, editorPreviewDefaultMigrated: true, editorPreviewExplicitOptOutPersisted: true,
-      pdfFooterDialogRestoresSavedChoice: true, pdfFooterInputSelected: true, pdfCancelPreservesPreference: true,
+      pdfFooterDialogRestoresSavedChoice: true, pdfLayoutFooterPersists: true, pdfCancelPreservesLayout: true,
       pdfFooterChoices: footerChoices, manualDefaultAppGuidance: true,
       formattingUndoRedo: true, insertSelectionVisible: true, unequalPaneTypingStable: true,
       longChineseAsciiAndUrlWrap: true, softWrapPreservesExactText: true, wrappingWidths: widths, wrappingModes: wrapModes,

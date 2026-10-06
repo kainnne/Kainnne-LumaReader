@@ -5,7 +5,7 @@ import {baseKeymap, toggleMark, setBlockType, wrapIn, chainCommands, exitCode} f
 import {gapCursor} from 'prosemirror-gapcursor';
 import {history, undo, redo, closeHistory} from 'prosemirror-history';
 import {keymap} from 'prosemirror-keymap';
-import {inputRules, textblockTypeInputRule, wrappingInputRule, undoInputRule} from 'prosemirror-inputrules';
+import {InputRule, inputRules, textblockTypeInputRule, wrappingInputRule, undoInputRule} from 'prosemirror-inputrules';
 import {splitListItem, sinkListItem, liftListItem, wrapInList} from 'prosemirror-schema-list';
 import {schema as commonSchema, defaultMarkdownParser, defaultMarkdownSerializer, MarkdownParser, MarkdownSerializer} from 'prosemirror-markdown';
 import {tableNodes, tableEditing, addRowAfter, addColumnAfter, deleteRow, deleteColumn, deleteTable, goToNextCell} from 'prosemirror-tables';
@@ -127,12 +127,52 @@ export function selectionSourceRanges(doc,source,from,to){
 }
 function latex(source){return source.replace(/^(?:\$\$|\$|\\\[|\\\()/,'').replace(/(?:\$\$|\$|\\\]|\\\))$/,'').trim();}
 
-export function create({element,text,onChange,resolveImage,onImage,onFiles,onSource,onTableState,language='en',annotationOptions}){
+export function markdownInputRules(){
+  const mark=(pattern,name)=>new InputRule(pattern,(state,match,start,end)=>{
+    const from=start+match[1].length,marks=schema.marks[name].create().addToSet(state.doc.resolve(from).marks());
+    return state.tr.replaceWith(from,end,schema.text(match[2],marks)).removeStoredMark(schema.marks[name]);
+  },{inCodeMark:false});
+  const task=new InputRule(/^\[([ xX])\]\s$/,(state,match,start,end)=>{
+    const {$from}=state.selection;for(let depth=$from.depth;depth>0;depth--){const item=$from.node(depth);if(item.type===schema.nodes.list_item)return state.tr.delete(start,end).setNodeMarkup($from.before(depth),null,{...item.attrs,checked:match[1]!==' '});}return null;
+  },{inCodeMark:false});
+  return [
+    textblockTypeInputRule(/^(#{1,6})\s$/,schema.nodes.heading,m=>({level:m[1].length})),
+    wrappingInputRule(/^\s*>\s$/,schema.nodes.blockquote),
+    wrappingInputRule(/^\s*([-+*])\s$/,schema.nodes.bullet_list),
+    wrappingInputRule(/^\s*(\d+)[.)]\s$/,schema.nodes.ordered_list,m=>({order:Number(m[1])}),(match,node)=>node.childCount+node.attrs.order===Number(match[1])),task,
+    mark(/(^|[^\\*])\*\*([^*\n]+)\*\*$/,'strong'),
+    mark(/(^|[^\\*])\*([^*\n]+)\*$/,'em'),
+    mark(/(^|[^\\\w])__([^_\n]+)__$/,'strong'),
+    mark(/(^|[^\\\w])_([^_\n]+)_$/,'em'),
+    mark(/(^|[^\\~])~~([^~\n]+)~~$/,'strike'),
+    mark(/(^|[^\\`])`([^`\n]+)`$/,'code')
+  ];
+}
+
+// Commit a plain Markdown line before the normal Enter action. Formatted
+// paragraphs, code, tables and IME composition keep their existing behavior.
+function enterMarkdown(state,dispatch,view){
+  const {$from,$to,empty}=state.selection,parent=$from.parent;
+  if(view.composing||!empty||$from.parent!==$to.parent||parent.type!==schema.nodes.paragraph||$from.parentOffset!==parent.content.size||!parent.textContent)return false;
+  let plain=true;parent.forEach(node=>{if(!node.isText||node.marks.length)plain=false;});if(!plain)return false;
+  const parsedLine=parseMarkdown(parent.textContent).doc;
+  if(parsedLine.childCount!==1)return false;
+  const node=parsedLine.firstChild;
+  if(!['paragraph','heading','bullet_list','ordered_list','blockquote','horizontal_rule','code_block'].includes(node.type.name)||node.content.eq(parent.content)&&node.type===parent.type)return false;
+  const pos=$from.before(),tr=closeHistory(state.tr);
+  if(node.type===schema.nodes.horizontal_rule){tr.replaceWith(pos,pos+parent.nodeSize,[node,schema.nodes.paragraph.create()]);tr.setSelection(TextSelection.create(tr.doc,pos+node.nodeSize+1));}
+  else {tr.replaceWith(pos,pos+parent.nodeSize,node);tr.setSelection(TextSelection.near(tr.doc.resolve(pos+node.nodeSize-1)));}
+  dispatch(tr);
+  if(node.type===schema.nodes.code_block||node.type===schema.nodes.horizontal_rule)return true;
+  return chainCommands(splitListItem(schema.nodes.list_item),baseKeymap.Enter)(view.state,dispatch,view);
+}
+
+export function create({element,text,onChange,resolveImage,onImage,onFiles,onSource,renderRaw,onTableState,language='en',annotationOptions}){
   let parsed=parseMarkdown(text),view;
   if(annotationOptions)parsed.doc=parsed.doc.type.create({lumaAnnotations:restoreAnnotations(annotationOptions.snapshot,parsed.doc,text)},parsed.doc.content);
   const annotations=annotationOptions?createAnnotations({options:{...annotationOptions,language},getText:()=>serializeMarkdown(view.state.doc,parsed),sourceRanges:(from,to)=>selectionSourceRanges(view.state.doc,parsed,from,to)}):null;
   const zh=language.startsWith('zh'),tr=(en,cn)=>zh?cn:en;
-  const rules=inputRules({rules:[textblockTypeInputRule(/^(#{1,6})\s$/,schema.nodes.heading,m=>({level:m[1].length})),wrappingInputRule(/^\s*>\s$/,schema.nodes.blockquote),wrappingInputRule(/^\s*([-+*])\s$/,schema.nodes.bullet_list)]});
+  const rules=inputRules({rules:markdownInputRules()});
   function mathView(node,getPos){
     const dom=document.createElement(node.isInline?'span':'div');dom.className='direct-math';dom.contentEditable='false';dom.tabIndex=0;dom.title=tr('Double-click to edit formula','按兩下編輯數學式');
     const draw=()=>{try{window.katex.render(latex(node.attrs.source),dom,{displayMode:node.attrs.display,throwOnError:false,strict:'ignore',trust:false,maxExpand:1000});}catch{dom.textContent=node.attrs.source;}};draw();
@@ -140,13 +180,21 @@ export function create({element,text,onChange,resolveImage,onImage,onFiles,onSou
     dom.addEventListener('dblclick',edit);dom.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();edit();}});
     return {dom,stopEvent:()=>true,ignoreMutation:()=>true,update:n=>{if(n.type!==node.type)return false;node=n;draw();return true;}};
   }
-  const keybindings={'Mod-k':()=>command('link'),'Mod-z':undo,'Shift-Mod-z':redo,'Mod-y':redo,'Mod-b':toggleMark(schema.marks.strong),'Mod-i':toggleMark(schema.marks.em),'Mod-`':toggleMark(schema.marks.code),Backspace:undoInputRule,Enter:splitListItem(schema.nodes.list_item),'Mod-Enter':exitCode,'Tab':chainCommands(goToNextCell(1),sinkListItem(schema.nodes.list_item)), 'Shift-Tab':chainCommands(goToNextCell(-1),liftListItem(schema.nodes.list_item))};
+  const keybindings={'Mod-k':()=>command('link'),'Mod-z':undo,'Shift-Mod-z':redo,'Mod-y':redo,'Mod-b':toggleMark(schema.marks.strong),'Mod-i':toggleMark(schema.marks.em),'Mod-`':toggleMark(schema.marks.code),Backspace:undoInputRule,Enter:chainCommands(enterMarkdown,splitListItem(schema.nodes.list_item)),'Mod-Enter':exitCode,'Tab':chainCommands(goToNextCell(1),sinkListItem(schema.nodes.list_item)), 'Shift-Tab':chainCommands(goToNextCell(-1),liftListItem(schema.nodes.list_item))};
   view=new EditorView(element,{state:EditorState.create({doc:parsed.doc,plugins:[...(annotations?[annotations.plugin]:[]),history(),rules,keymap(keybindings),keymap(baseKeymap),gapCursor(),tableEditing()]}),
     attributes:{class:'prose direct-prose',role:'textbox','aria-multiline':'true','aria-label':tr('Direct Markdown editor','直接編輯文件'),spellcheck:'false'},
     dispatchTransaction(transaction){if(annotationOptions?.readOnlyText&&!transaction.doc.content.eq(view.state.doc.content))return;if(annotations)transaction=mapAnnotations(transaction);const state=view.state.apply(transaction);view.updateState(state);if(transaction.docChanged)onChange(serializeMarkdown(state.doc,parsed),annotations?.getSnapshot());onTableState?.(inTable());annotations?.afterTransaction(transaction);},
     nodeViews:{list_item(node,editor,getPos){const dom=document.createElement('li'),contentDOM=document.createElement('div');if(node.attrs.checked!==null){dom.className='direct-task';const check=document.createElement('input');check.type='checkbox';check.checked=node.attrs.checked;check.contentEditable='false';check.setAttribute('aria-label',tr('Task completed','完成待辦事項'));check.addEventListener('change',()=>{if(!view.editable)return;view.dispatch(closeHistory(view.state.tr).setNodeMarkup(getPos(),null,{...node.attrs,checked:check.checked}));});dom.append(check);}dom.append(contentDOM);return {dom,contentDOM};},math_inline:(n,v,p)=>mathView(n,p),math_block:(n,v,p)=>mathView(n,p),
       image(node){const dom=document.createElement('span');dom.className='direct-image';dom.contentEditable='false';const img=document.createElement('img');img.src=resolveImage(safeURL(node.attrs.src));img.alt=node.attrs.alt||'';img.title=tr('Double-click to enlarge','按兩下放大圖片');img.addEventListener('dblclick',()=>onImage(img));dom.append(img);return {dom};},
-      raw_block(node){const dom=document.createElement('div');dom.className='direct-protected';dom.contentEditable='false';const caption=document.createElement('span');caption.textContent=node.attrs.source.includes('lumareader:pagebreak')?tr('PDF page break','PDF 換頁'):tr('Special syntax · preserved as written','特殊語法・保留原文');const pre=document.createElement('pre');pre.textContent=node.attrs.source;const button=document.createElement('button');button.type='button';button.textContent=tr('Edit source','在原文中調整');button.addEventListener('click',onSource);dom.append(caption,pre,button);return {dom,stopEvent:()=>true};}
+      raw_block(node){
+        const dom=document.createElement('div');dom.className='direct-retained';dom.contentEditable='false';
+        const source=node.attrs.source,trimmed=source.trim(),metadata=/^---\r?\n/.test(trimmed)||/^(?:\[\^[^\]]+\]:|\*\[[^\]]+\]:)/.test(trimmed)||!trimmed.replace(/<!--[\s\S]*?-->/g,'').trim();
+        if(metadata){dom.hidden=true;dom.setAttribute('aria-hidden','true');}
+        else if(renderRaw){Promise.resolve(renderRaw(source,dom)).catch(()=>{dom.textContent=source;});}
+        else dom.textContent=source;
+        dom.addEventListener('dblclick',e=>{const image=e.target.closest('img');if(image)onImage?.(image);});
+        return {dom,stopEvent:()=>true,ignoreMutation:()=>true};
+      }
     },
     handleDOMEvents:{click(view,event){if(event.target.closest('a'))event.preventDefault();return false;}},
     handlePaste(view,event){if(event.clipboardData?.files.length){onFiles(event.clipboardData.files);return true;}return false;},
@@ -158,10 +206,13 @@ export function create({element,text,onChange,resolveImage,onImage,onFiles,onSou
   function run(command){view.focus();return command(view.state,view.dispatch,view);}
   function insertMarkdown(markdown){const content=parseMarkdown(markdown).doc.content;view.dispatch(closeHistory(view.state.tr).replaceSelection(new Slice(content,0,0)).scrollIntoView());view.focus();}
   function command(name){
+    if(name==='undo')return run(undo);if(name==='redo')return run(redo);
     const marks={bold:'strong',italic:'em',strike:'strike'};if(marks[name])return run(toggleMark(schema.marks[marks[name]]));
     if(/^heading-[1-6]$/.test(name))return run(setBlockType(schema.nodes.heading,{level:Number(name.at(-1))}));
     if(name==='paragraph')return run(setBlockType(schema.nodes.paragraph));
     if(name==='quote')return run(wrapIn(schema.nodes.blockquote));
+    if(name==='bullet-list')return run(wrapInList(schema.nodes.bullet_list));
+    if(name==='ordered-list')return run(wrapInList(schema.nodes.ordered_list));
     if(name==='code')return run(setBlockType(schema.nodes.code_block));
     if(name==='task'){insertMarkdown('- [ ] '+tr('Task','待辦事項'));return true;}
     if(name==='link'){const {from,to}=view.state.selection;if(from===to)return false;const dialog=document.createElement('dialog');dialog.className='direct-formula-dialog';const form=document.createElement('form');form.method='dialog';const label=document.createElement('label');label.textContent=tr('Link address','連結網址');const input=document.createElement('input');input.type='url';input.placeholder='https://';label.append(input);const cancel=document.createElement('button');cancel.textContent=tr('Cancel','取消');cancel.value='cancel';cancel.formNoValidate=true;const save=document.createElement('button');save.textContent=tr('Apply','套用');save.value='save';form.append(label,cancel,save);dialog.append(form);document.body.append(dialog);dialog.addEventListener('close',()=>{if(dialog.returnValue==='save'&&safeURL(input.value))view.dispatch(closeHistory(view.state.tr).addMark(from,to,schema.marks.link.create({href:input.value})));dialog.remove();view.focus();},{once:true});dialog.showModal();input.focus();return true;}

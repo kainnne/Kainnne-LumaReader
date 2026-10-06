@@ -1,0 +1,81 @@
+name: Localized desktop packages
+# Produces verified downloads only. Publishing remains a separate release step.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        options: [all, macos, windows, linux]
+        default: all
+      language:
+        type: choice
+        options: [all, en, zh-Hant, zh-Hans, ja, ko, es, fr, de, pt-BR, ru, it]
+        default: all
+permissions:
+  contents: read
+jobs:
+  matrix:
+    runs-on: ubuntu-22.04
+    outputs:
+      builds: ${{ steps.builds.outputs.value }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - id: builds
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          LANGUAGE: ${{ inputs.language }}
+        run: |
+          node - <<'JS' >> "$GITHUB_OUTPUT"
+          const {LANGUAGES}=require('./src/interface-defaults');
+          const platforms={macos:'macos-15',windows:'windows-2022',linux:'ubuntu-22.04'};
+          if(!['all',...Object.keys(platforms)].includes(process.env.PLATFORM)||!['all',...LANGUAGES].includes(process.env.LANGUAGE))throw Error('Unsupported selection');
+          const include=Object.entries(platforms).filter(([p])=>process.env.PLATFORM==='all'||p===process.env.PLATFORM).flatMap(([platform,runner])=>LANGUAGES.filter(l=>process.env.LANGUAGE==='all'||l===process.env.LANGUAGE).map(language=>({platform,runner,language})));
+          console.log('value='+JSON.stringify({include}));
+          JS
+  build:
+    needs: matrix
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.matrix.outputs.builds) }}
+    runs-on: ${{ matrix.runner }}
+    environment: release
+    timeout-minutes: 55
+    env:
+      LUMAREADER_DEFAULT_LANGUAGE: ${{ matrix.language }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build:editor
+      - if: matrix.platform == 'macos'
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npx electron-builder --mac dmg zip --universal --publish never --config build/language.config.cjs
+      - if: matrix.platform == 'macos'
+        run: |
+          APP="dist/languages/$LUMAREADER_DEFAULT_LANGUAGE/mac-universal/Kainnne LumaReader.app"
+          codesign --verify --deep --strict "$APP"
+          spctl --assess --type execute "$APP"
+          xcrun stapler validate "$APP"
+          node scripts/macos-smoke.js "$APP/Contents/MacOS/Kainnne LumaReader"
+      - if: matrix.platform == 'windows'
+        run: npx electron-builder --win nsis portable --x64 --publish never --config build/language.config.cjs
+      - if: matrix.platform == 'linux'
+        run: npx electron-builder --linux AppImage deb --x64 --publish never --config build/language.config.cjs
+      - name: Verify embedded default language
+        run: node scripts/verify-language-package.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: LumaReader-${{ matrix.platform }}-${{ matrix.language }}
+          path: dist/languages/${{ matrix.language }}/
+          if-no-files-found: error

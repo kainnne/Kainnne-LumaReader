@@ -6,10 +6,11 @@ const fs=require('node:fs/promises'),path=require('node:path'),{transform,build:
 const canonical = text => text.replace(/\r\n/g, '\n');
 const groups={
  'bootstrap.bundle.js':['embed-bridge.js','web-bridge.js'],
- 'reader.bundle.js':['vendor/marked/marked.umd.js','vendor/katex/katex.min.js','vendor/katex/contrib/auto-render.min.js','vendor/highlight/highlight.min.js','reader-utils.js','adapters/core.js','adapters/plain-text.js','adapters/index.js','library-search.js','pdf-tools.js','pdf-dialog.js','direct-editor.bundle.js','app.js','multiformat-ui.js'],
+ 'reader.bundle.js':['vendor/marked/marked.umd.js','vendor/katex/katex.min.js','vendor/katex/contrib/auto-render.min.js','vendor/highlight/highlight.min.js','reader-utils.js','adapters/core.js','adapters/plain-text.js','adapters/index.js','library-search.js','pdf-tools.js','pdf-dialog.js','direct-editor.bundle.js','toolbar-icons.js','app.js','multiformat-ui.js'],
 };
 async function build({check=false}={}){
  const root=path.resolve(__dirname,'../site/web');
+ for(const name of ['toolbar-icons.js','toolbar-icons.css']){const source=await fs.readFile(path.resolve(__dirname,'../renderer',name),'utf8');if(check){if(canonical(await fs.readFile(path.join(root,name),'utf8'))!==canonical(source))throw Error(name+' is stale');}else await fs.writeFile(path.join(root,name),source);}
  const css=await fs.readFile(path.resolve(__dirname,'../renderer/annotations.css'),'utf8');
  if(check){if(await fs.readFile(path.join(root,'annotations.css'),'utf8')!==css)throw Error('Annotation styles are stale');}else await fs.writeFile(path.join(root,'annotations.css'),css);
  const editorOutput=path.join(root,'direct-editor.bundle.js');

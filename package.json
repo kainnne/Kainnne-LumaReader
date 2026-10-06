@@ -1,6 +1,6 @@
 {
   "name": "kainnne-lumareader",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "A local Markdown reader and editor for macOS, Windows and Linux.",
   "main": "src/main.js",
   "private": true,
@@ -10,7 +10,7 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check src/open-target.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js && node --check src/library-index.js && node --check src/pdf-export.js && node --check renderer/library-search.js && node --check renderer/pdf-tools.js && node --check renderer/pdf-dialog.js && node --check renderer/direct-editor.mjs && node --check renderer/code-editor.mjs && node --check src/image-picker.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/local-server.js && node --check src/document-types.js && node --check src/open-target.js && node --check renderer/reader-utils.js && node --check renderer/app.js && node --check renderer/multiformat-ui.js && node --check renderer/adapters/core.js && node --check renderer/adapters/plain-text.js && node --check renderer/adapters/index.js && node --check src/library-index.js && node --check src/pdf-export.js && node --check renderer/library-search.js && node --check renderer/pdf-tools.js && node --check renderer/pdf-dialog.js && node --check renderer/direct-editor.mjs && node --check renderer/code-editor.mjs && node --check src/image-picker.js && node --check renderer/report-model.js && node --check renderer/report-layout.js && node --check renderer/report-ui.js && node --check renderer/desktop-ui.js && node --check src/report-store.js && node --check src/agent-plan.js && node --check src/agent-cli.js && node --check src/agent-preload.js && node --check renderer/toolbar-icons.js",
     "pack:mac": "npm run build:editor && electron-builder --mac --universal --dir --publish never",
     "pack:mac:unsigned": "npm run build:editor && electron-builder --mac --universal --dir --publish never -c.mac.identity=- -c.mac.hardenedRuntime=false -c.mac.notarize=false -c.mac.forceCodeSigning=false",
     "dist:mac": "npm run build:editor && electron-builder --mac dmg zip --universal --publish never",
@@ -84,6 +84,7 @@
       "renderer/styles.css",
       "renderer/reader-utils.js",
       "renderer/app.js",
+      "renderer/desktop-ui.js",
       "renderer/multiformat-ui.js",
       "renderer/assets/**/*",
       "renderer/adapters/core.js",
@@ -104,7 +105,14 @@
       "renderer/direct-editor.css",
       "renderer/code-editor.bundle.js",
       "renderer/vendor/pdfjs/**/*",
-      "renderer/annotations.css"
+      "renderer/annotations.css",
+      "renderer/report-model.js",
+      "renderer/report-layout.js",
+      "renderer/report-ui.js",
+      "renderer/report-layout.css",
+      "docs/AGENT-PDF.md",
+      "renderer/toolbar-icons.js",
+      "renderer/toolbar-icons.css"
     ],
     "mac": {
       "icon": "build/icon.icns",

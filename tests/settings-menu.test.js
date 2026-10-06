@@ -16,3 +16,5 @@ test('menu choices cannot introduce arbitrary native roles, shortcuts or command
  assert.deepEqual(result.visibility,[{id:'settings',label:'Settings',checked:false}]);assert.deepEqual(result.themes,[]);assert.equal(result.palettes.length,32);assert.equal(result.palettes[0].label.length,120);
  assert.equal(normalizeSettingsMenu(null),null);assert.equal(settingsMenuTemplate(null,()=>{}).submenu[0].enabled,false);
 });
+
+test('native settings can also toggle the document preview style button',()=>{const m=normalizeSettingsMenu({visibility:[{id:'previewForm',label:'預覽方式',checked:false}]});assert.deepEqual(m.visibility,[{id:'previewForm',label:'預覽方式',checked:false}]);const commands=[],menu=settingsMenuTemplate(m,c=>commands.push(c));menu.submenu[2].submenu[0].click({checked:true});assert.deepEqual(commands,[{type:'visibility',value:'previewForm',checked:true}]);});

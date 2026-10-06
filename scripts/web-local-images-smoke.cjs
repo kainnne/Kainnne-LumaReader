@@ -26,12 +26,12 @@ async function main(){
 
   await page.screenshot({path:path.join(os.tmpdir(),'luma-local-images-mobile.png')});
   await page.setViewportSize({width:1280,height:850});
-  await page.locator('#edit-document').click();await page.locator('#show-markdown').click();
+  await page.locator('#edit-document').click();await page.locator('#show-markdown').click();await page.locator('[data-editor-mode=split]').click();
   await page.locator('#source-editor').waitFor();
   const stage=await page.locator('.document-stage').boundingBox();
   const notice=await page.locator('#local-media-notice').boundingBox();
   assert.ok(stage.y>=notice.y+notice.height);assert.ok(stage.y+stage.height<=851);
-  await page.locator('#show-markdown').click();
+  await page.locator('#show-markdown').click();await page.locator('[data-editor-mode=direct]').click();
   await page.locator('#cancel-edit').click();
   await page.locator('#local-media-folder-picker').setInputFiles(fixture);
   await page.locator('#local-media-notice').waitFor({state:'hidden'});

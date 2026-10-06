@@ -8,10 +8,16 @@ const SHARE_ID_PATTERN = /^[23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWX
 const SHARE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
 const SOCIAL_IMAGE = "https://lumareader.kainnne.com/icon.png";
 const DOWNLOADS = Object.freeze({
-  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-macOS-universal.dmg",
-  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-Windows-x64-Setup.exe",
-  linux: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.4.2/Kainnne-LumaReader-1.4.2-Linux-x64.AppImage",
+  macos: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/Kainnne-LumaReader-1.5.0-macOS-universal.dmg",
+  windows: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/Kainnne-LumaReader-1.5.0-Windows-x64-Setup.exe",
+  linux: "https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/Kainnne-LumaReader-1.5.0-Linux-x64.AppImage",
 });
+
+const DOWNLOAD_LANGUAGES=['en','zh-Hant','zh-Hans','ja','ko','es','fr','de','pt-BR','ru','it'];
+function languageDownloads(env){
+  try{const value=JSON.parse(env.LOCALIZED_DOWNLOADS||'{}'),out={};for(const platform of Object.keys(DOWNLOADS)){out[platform]={en:DOWNLOADS[platform]};for(const language of DOWNLOAD_LANGUAGES){const target=value[platform]?.[language];if(typeof target!=='string')continue;const url=new URL(target);if(url.protocol==='https:'&&url.hostname==='github.com'&&!url.username&&!url.password&&url.pathname.startsWith('/kainnne/Kainnne-LumaReader/releases/download/')&&!url.search&&!url.hash)out[platform][language]=url.href;}}return out;}catch{return {};}
+}
+function downloadTarget(platform,language,env){return language?languageDownloads(env)[platform]?.[language]:DOWNLOADS[platform];}
 
 function corsHeaders(origin) {
   if (origin !== ALLOWED_ORIGIN) return {};
@@ -174,7 +180,8 @@ async function downloadCounts(request, env) {
   }
 }
 
-async function recordDownload(platform, env) {
+async function recordDownload(platform, env, language) {
+  const target=downloadTarget(platform,language,env);if(!target)return json({ok:false,error:"This language edition has not been published yet."},503);
   if (!DOWNLOADS[platform] || !env.DOWNLOADS_DB) return new Response("Download counter is unavailable", { status: 503 });
   try {
     await env.DOWNLOADS_DB.prepare(
@@ -184,13 +191,14 @@ async function recordDownload(platform, env) {
   } catch {
     return new Response("Download counter is unavailable", { status: 503 });
   }
-  return downloadRedirect(platform);
+  return downloadRedirect(platform,language,env);
 }
 
-function downloadRedirect(platform) {
+function downloadRedirect(platform,language,env={}) {
+  const target=downloadTarget(platform,language,env);if(!target)return json({ok:false,error:"This language edition has not been published yet."},503);
   return new Response(null, {
     status: 302,
-    headers: { Location: DOWNLOADS[platform], "Cache-Control": "no-store" },
+    headers: { Location: target, "Cache-Control": "no-store" },
   });
 }
 
@@ -204,10 +212,16 @@ export default {
     }
     if (request.method === "POST" && url.pathname === "/api/shares") return createShare(request, env);
     if (request.method === "GET" && url.pathname === "/api/downloads") return downloadCounts(request, env);
+    if(request.method==='GET'&&url.pathname==='/api/download-languages'){
+      const origin=request.headers.get('Origin')||'',platform=url.searchParams.get('platform');if(origin&&origin!==ALLOWED_ORIGIN)return json({ok:false},403);if(!Object.hasOwn(DOWNLOADS,platform))return json({ok:false},400);
+      return json({languages:Object.keys(languageDownloads(env)[platform]||{})},200,{...corsHeaders(origin),'Cache-Control':'no-store'});
+    }
     const download = /^\/d\/(macos|windows|linux)$/.exec(url.pathname);
-    if (download && request.method === "GET") return recordDownload(download[1], env);
+    const language=url.searchParams.get("language");
+    if(download&&language&&!DOWNLOAD_LANGUAGES.includes(language))return json({ok:false,error:"Unsupported language"},400);
+    if (download && request.method === "GET") return recordDownload(download[1], env, language);
     // HEAD verifies the release destination without recording a download.
-    if (download && request.method === "HEAD") return downloadRedirect(download[1]);
+    if (download && request.method === "HEAD") return downloadRedirect(download[1],language,env);
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "lumareader-share" }, 200, { "Cache-Control": "no-store" });
     const match = request.method === "GET" ? /^\/s\/([^/]+)$/.exec(url.pathname) : null;
     if (match) return openShare(request, env, match[1]);
