@@ -343,6 +343,8 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       await input.fill('Cancelled footer must not be saved');
       await page.locator('#cancel-edit').click();await page.locator('#discard-edit-confirm').click();
       await page.locator('#discard-edit-dialog').waitFor({state:'hidden'});
+      // Dialog.close queues its close handler; wait for editing to finish before reload.
+      await page.waitForFunction(()=>document.querySelector('#cancel-edit').hidden&&!document.body.classList.contains('editing-document'));
       await reloadDocument();
       assert.equal(await page.evaluate(async()=>{const layout=await window.lumaDesktop.getReportLayout({path:new URL(location.href).searchParams.get('source')});return layout.options.footerText;}),footer);
       assert.equal(await fs.readFile(first,'utf8'),text,'PDF layout must not modify Markdown');
