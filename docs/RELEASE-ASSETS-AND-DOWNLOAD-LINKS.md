@@ -4,7 +4,8 @@ This file tells future agents how to name, store, and link LumaReader installers
 
 ## Current version
 
-- Current version: `1.5.0`
+- Current public desktop version: `1.4.2`
+- Prepared release version: `1.5.0` (awaiting signed/notarized package validation)
 - Source of truth: `package.json` → `version`
 - Git tag: `v1.5.0`
 - Release title: `Kainnne LumaReader 1.5.0`
