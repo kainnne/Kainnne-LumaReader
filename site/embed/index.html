@@ -57,11 +57,11 @@
 &lt;/script&gt;
 &lt;!-- 在原本 install.js 的 script 加上此屬性，不要再安裝一份：
      data-luma-options="my-luma-options" --&gt;</code></pre>
-<p><strong>寫 Markdown 原文：</strong>改成 <code>"mode": "source"</code>，預設有對照預覽。想讓使用者自由切換兩種編輯方式，再設 <code>"modeSwitch": true</code>。<strong>只展示文件：</strong>使用 <code>"mode": "preview", "readOnly": true</code>；若省略唯讀，使用者仍可點「編輯」。</p>
+<p><strong>寫 Markdown 原文：</strong>改成 <code>"mode": "source"</code>，預設有對照預覽。想讓使用者自由切換編輯方式，再設 <code>"modeSwitch": true</code>。<strong>只展示文件：</strong>使用 <code>"mode": "preview", "readOnly": true</code>；若省略唯讀，使用者仍可點「編輯」。</p>
 <dl class="embed-options">
 <dt><code>mode</code></dt><dd><code>direct</code> 直接編輯（預設）、<code>source</code> 原文編輯、<code>preview</code> 先閱讀。</dd>
-<dt><code>sourcePreview</code></dt><dd>原文編輯的對照預覽預設為 <code>true</code>，可設為 <code>false</code>。使用者仍可操作對照預覽按鈕。</dd>
-<dt><code>features.sidebar</code>、<code>features.modeSwitch</code></dt><dd>側邊欄預設可展開（<code>true</code>），一開始收起；不需要文件列表時可設 <code>false</code>，仍可拖曳匯入。Markdown 切換鈕預設 <code>false</code>，需要切換兩種編輯方式時設 <code>true</code>。</dd>
+<dt><code>sourcePreview</code></dt><dd>原文編輯的對照預覽預設為 <code>true</code>，可設為 <code>false</code>。若開放編輯模式切換，使用者可從模式選單選擇原文或原文對照預覽。</dd>
+<dt><code>features.sidebar</code>、<code>features.modeSwitch</code></dt><dd>側邊欄預設可展開（<code>true</code>），一開始收起；不需要文件列表時可設 <code>false</code>，仍可拖曳匯入。編輯模式選單預設 <code>false</code>，需要切換編輯方式時設 <code>true</code>。</dd>
 <dt><code>language</code>、<code>features.language</code></dt><dd>例如 <code>"language": "zh-Hant"</code>（繁中）、<code>"en"</code>（英文）、<code>"ja"</code>（日文）。要固定網站指定的語言，就把 <code>features.language</code> 設為 <code>false</code>；預設 <code>true</code> 可讓訪客在設定中切換。</dd>
 <dt><code>toolbar.formatting</code>、<code>toolbar.share</code></dt><dd>嵌入版的「格式」與「分享 Markdown」預設不勾選，使用者可在設定中開啟。網站若要預設勾選，可加入 <code>"toolbar": {"formatting": true, "share": true}</code>。每次掛載以網站設定為初始值；若 <code>features</code> 明確關閉該功能，設定中也不提供勾選。</dd>
 <dt><code>features.rename</code>、<code>features.share</code></dt><dd>預設 <code>true</code>。設為 <code>false</code> 可關閉改名、隱藏分享。處理私人文案時可關閉分享；標題由網站決定時可關閉改名。</dd>
@@ -84,7 +84,7 @@
 <section id="annotations" class="guide-section"><h2>文字註記</h2><p>可選擇開啟重點、文字備註與圖片註記。反白後加上註記，原文改動時會跟隨位置，或標示需要確認的關聯。<a href="annotations.html">試用註記示範 →</a> · <a href="annotations-api.md">整合 API 與限制</a></p></section>
 <section id="updates" class="guide-section"><p class="eyebrow">嵌入版更新</p><h2>更新現有的嵌入區塊</h2>
 <p><strong>1.5.0-web.1 · 2026 年 10 月 6 日</strong></p>
-<ul><li>與 1.5 桌面版共用圓角細線圖示，移上功能即顯示簡短提示；亮、暗模式維持一致。原文切換可選一般編輯、原文編輯與原文對照預覽；嵌入版仍尊重網站設定，預設不開放切換。</li><li>本機圖片自動配對：偵測到缺圖後，授權並選取一次文件資料夾，即可自動顯示圖片，不必逐張比對路徑。支援中文檔名、子資料夾、處理進度與取消。圖片只供目前分頁使用；分享連結仍不包含本機圖片。</li><li>修正閱讀時自行微幅回捲：圖片載入及手機瀏覽器高度變化不再強制調整閱讀位置；新的捲動操作會取消先前待執行的位置還原。</li><li>註記浮動工具列採半透明設計，可在下方中央與右下角切換位置，並記住選擇。編輯按鈕改用置中的純文字；既有嵌入指令與資料接口維持相容。</li><li>新增可選的文字註記：重點、備註與素材關聯；圖片可拖入並在滑過標記時預覽，Markdown 原文不變；支援原生復原、獨立唯讀設定及完整快照儲存。</li><li>加快嵌入編輯器首次載入：合併啟動資源，程式碼編輯器改為需要時才載入。既有編輯功能與安裝方式維持不變。</li><li>儲存移至右上角，採柔和粉紅色；設定整合進左側匯入區，頂端不再顯示註記數字。格式與分享仍可在設定中開啟。</li><li>網站以目前開啟的文件作為文章，其餘文件僅作草稿暫存。</li><li>嵌入版新增空白起始畫面、最多 3 份 Markdown 匯入與草稿保留，可設定預設語言和語言切換。</li><li>網頁與嵌入版支援點檔名修改，副檔名固定；嵌入版沿用原文件 ID 儲存。</li><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器可選擇直接編輯、Markdown 原文或預覽，並調整開放的功能。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
+<ul><li>與 1.5 桌面版共用圓角細線圖示，移上功能即顯示簡短提示；亮、暗模式維持一致。原文切換可選一般編輯、原文編輯與原文對照預覽；嵌入版仍尊重網站設定，預設不開放切換。</li><li>本機圖片自動配對：偵測到缺圖後，授權並選取一次文件資料夾，即可自動顯示圖片，不必逐張比對路徑。支援中文檔名、子資料夾、處理進度與取消。圖片只供目前分頁使用；分享連結仍不包含本機圖片。</li><li>修正閱讀時自行微幅回捲：圖片載入及手機瀏覽器高度變化不再強制調整閱讀位置；新的捲動操作會取消先前待執行的位置還原。</li><li>註記浮動工具列採半透明設計，可在下方中央與右下角切換位置，並記住選擇。編輯按鈕採用共用文件圖示；既有嵌入指令與資料接口維持相容。</li><li>新增可選的文字註記：重點、備註與素材關聯；圖片可拖入並在滑過標記時預覽，Markdown 原文不變；支援原生復原、獨立唯讀設定及完整快照儲存。</li><li>加快嵌入編輯器首次載入：合併啟動資源，程式碼編輯器改為需要時才載入。既有編輯功能與安裝方式維持不變。</li><li>儲存移至右上角，採柔和粉紅色；設定整合進左側匯入區，頂端不再顯示註記數字。格式與分享仍可在設定中開啟。</li><li>網站以目前開啟的文件作為文章，其餘文件僅作草稿暫存。</li><li>嵌入版新增空白起始畫面、最多 3 份 Markdown 匯入與草稿保留，可設定預設語言和語言切換。</li><li>網頁與嵌入版支援點檔名修改，副檔名固定；嵌入版沿用原文件 ID 儲存。</li><li>放大／縮回使用與 Kainnne × Gemini 相同的圖示；可填滿瀏覽器，再回到原本的嵌入大小。</li><li>嵌入編輯器可選擇直接編輯、Markdown 原文或預覽，並調整開放的功能。</li><li>窄版工具列收納次要操作；格式選單改成分類的半高面板，保留文件閱讀空間。</li></ul>
 <p>使用官方固定網址的嵌入區塊，重新整理網頁後，就會在快取更新時載入相容新版，不必重新安裝。正在編輯時請先儲存。</p>
 <p>若原本用一行指令安裝，可執行以下更新指令，取得目前維護的載入版本：</p>
 <div class="code-heading"><span>更新已安裝的 HTML</span><button type="button" data-copy-code="update-command">複製更新指令</button></div>

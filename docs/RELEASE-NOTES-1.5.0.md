@@ -9,7 +9,7 @@
 - PDF 橫向把手採低飽和度細線滑片，與六點移動把手分開；拉伸限制在所在欄。靠右分欄更直覺，同一右欄可放多段短文。
 - 桌面程式碼編輯改善縮排與行距，保留語法上色；閱讀時可選擇切換深色模式。支援本機 GIF 與網頁分享中內嵌 GIF 動畫。
 - 大型本機資料夾掃描可顯示進度並逐批使用結果，搜尋包含資料夾名稱；閱讀和手機版不再因圖片載入或視窗尺寸變化微幅回捲。本機與網頁的相對圖片保留既有授權及自動配對流程。
-- 桌面 App 新增 Agent 指令介面：`--luma-agent help`、`inspect`、`export`。可用 JSON 排版稿輸出同一套 PDF，不改主介面、不改原始 Markdown，預設不覆寫 PDF。使用方式見 [AGENT-PDF.md](AGENT-PDF.md)。
+- 桌面 App 新增 Agent 指令介面：`--luma-agent help`、`inspect`、`export`。可用 JSON 排版稿輸出同一套 PDF，不改主介面、不改原始 Markdown，預設不覆寫 PDF。使用方式見 [AGENT-PDF.md](https://github.com/kainnne/Kainnne-LumaReader/blob/v1.5.0/docs/AGENT-PDF.md)。
 
 PDF 排版稿及桌面註記存在 App 的本機資料中，單獨複製 Markdown 不會帶走這些資料。嵌入網站的後台儲存仍由整合網站透過既有接口負責。
 
@@ -22,7 +22,7 @@ PDF 排版稿及桌面註記存在 App 的本機資料中，單獨複製 Markdow
 - Muted fine-line horizontal handles are separated from the six-dot movement grips and constrained to their column. Multiple short passages can stack in one right column.
 - Desktop code editing improves indentation and line spacing while retaining syntax highlighting and optional dark-mode guidance. Local GIFs and self-contained GIF images in Web shares retain animation.
 - Large desktop libraries show scan progress and make partial results available. Search includes folder names. Image loading and viewport changes no longer nudge the reading position. Existing authorized image-matching flows remain available.
-- The desktop executable includes `--luma-agent help`, `inspect`, and `export`, using the same PDF renderer and JSON layout data without changing the normal UI or source Markdown. Existing output files are protected by default. See [AGENT-PDF.md](AGENT-PDF.md).
+- The desktop executable includes `--luma-agent help`, `inspect`, and `export`, using the same PDF renderer and JSON layout data without changing the normal UI or source Markdown. Existing output files are protected by default. See [AGENT-PDF.md](https://github.com/kainnne/Kainnne-LumaReader/blob/v1.5.0/docs/AGENT-PDF.md).
 
 Desktop PDF layouts and annotations are stored separately in app-local data. Embedded hosts remain responsible for backend persistence through the existing APIs.
 
