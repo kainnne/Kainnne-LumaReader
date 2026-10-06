@@ -124,7 +124,13 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     while (!pages().length && Date.now() < deadline) await delay(100);
     const page = pages()[0];
     assert.ok(page, "App has no document window");
+    const pageErrors = [];
     page.setDefaultTimeout(20000);
+    // Electron also handles beforeunload; CDP may report an already-closed dialog.
+    // Only test-owned pages are reloaded here. Catch that close race explicitly.
+    page.on("dialog", dialog => dialog.accept().catch(error => {
+      if(!/No dialog is showing|Target closed|has been closed/.test(error.message))pageErrors.push(error.message);
+    }));
     // Start with one explicit viewport on every runner. Later checks resize it deliberately.
     await page.setViewportSize({ width: 1360, height: 880 });
     await page.bringToFront();
@@ -143,7 +149,6 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       apiEvents.push({ event: "response", url: response.url(), status: response.status(), at: Date.now() - startedAt });
       if (apiEvents.length > 50) apiEvents.shift();
     });
-    const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     async function settleLayout() {
       await page.evaluate(async () => {
