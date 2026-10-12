@@ -109,6 +109,7 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
     await fs.mkdir(path.dirname(nested), { recursive: true });
     await fs.writeFile(nested, "# 喜帖比對基準\n\n深層中文文件必須出現在搜尋結果。\n");
     await fs.writeFile(path.join(root, "folder-a", "assets", "portable image.png"), imageBytes);
+    await fs.writeFile(path.join(root, "folder-a", "assets", "empty.png"), "");
     const port = await reservePort();
     child = spawn(executable, [`--remote-debugging-port=${port}`, "--remote-debugging-address=127.0.0.1", first], { stdio: ["ignore", "pipe", "pipe"] });
     child.stdout.on("data", (data) => { output = (output + data).slice(-12000); });
@@ -270,6 +271,13 @@ async function runPackagedSmoke(executable, label = "Packaged application") {
       return { status: response.status, type: response.headers.get("content-type"), bytes: [...new Uint8Array(await response.arrayBuffer())] };
     }, path.basename(first));
     assert.equal(media.status, 200); assert.equal(media.type, "image/png"); assert.deepEqual(Buffer.from(media.bytes), imageBytes);
+    const emptyMedia = await page.evaluate(async () => {
+      const query = new URLSearchParams({ path: "assets/empty.png", from: "閱讀 筆記.md" });
+      const response = await fetch(`/api/media?${query}`);
+      return {status: response.status, bytes: (await response.arrayBuffer()).byteLength};
+    });
+    assert.deepEqual(emptyMedia, {status: 200, bytes: 0});
+    // Following real UI operations also prove the main process survives.
 
     currentStage = "deep folders, filename search, and refresh";
     console.log(`[smoke] ${label}: ${currentStage}`);

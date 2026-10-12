@@ -18,6 +18,7 @@ const {createImagePicker}=require("./image-picker");
 const {getDocumentType}=require("./document-types");
 const { normalizeFooterText, pdfOptions, normalizePdfLayout } = require("./pdf-export");
 const { normalizeSettingsMenu, settingsMenuTemplate } = require("./settings-menu");
+const { createOpenDiagnostics } = require("./open-diagnostics");
 
 const PREVIEW_BUILD = packageMetadata.lumareaderPreview === true || packageMetadata.lumareaderPreview === "true";
 const REPORT_PREVIEW = PREVIEW_BUILD && packageMetadata.lumareaderPreviewSeries === '1.5';
@@ -56,6 +57,9 @@ const PREFERENCE_KEYS = new Set([
 
 app.setName(APP_TITLE);
 app.setPath("userData", path.join(app.getPath("appData"), APP_TITLE));
+const recordOpenFailure = createOpenDiagnostics(path.join(app.getPath("userData"), "diagnostics"), {
+  version: packageMetadata.version, platform: process.platform, electron: process.versions?.electron,
+});
 
 const singleInstance = app.requestSingleInstanceLock();
 if (!singleInstance) app.quit();
@@ -110,6 +114,7 @@ function openSource(source) {
     return true;
   }
   openQueue = openQueue.then(() => openDocumentWindow(source)).catch((error) => {
+    void recordOpenFailure({ kind: "open-document", code: error.code });
     dialog.showErrorBox("Unable to open document", error.message || String(error));
   });
   return true;
@@ -119,7 +124,10 @@ function openEmptyWindow() {
   openQueue = openQueue.then(() => {
     const context = focusedContext();
     return context ? focusWindow(context.window) : createWindow();
-  }).catch((error) => dialog.showErrorBox("Unable to open window", error.message));
+  }).catch((error) => {
+    void recordOpenFailure({ kind: "open-window", code: error.code });
+    dialog.showErrorBox("Unable to open window", error.message);
+  });
 }
 
 async function openDocumentWindow(source) {
@@ -363,6 +371,7 @@ async function createWindow(target = null) {
     rendererRoot: path.join(__dirname, "..", "renderer"),
     libraryRoot: target?.root || settings.libraryRoot,
     accessToken,
+    onRequestError: recordOpenFailure,
   });
   await readerService.listen(0);
   const origin = `http://127.0.0.1:${readerService.port}`;
@@ -390,6 +399,9 @@ async function createWindow(target = null) {
       callback({ requestHeaders: { ...details.requestHeaders, "X-LumaReader-Token": accessToken } });
     });
     protectNavigation(window, origin);
+    window.webContents.on("did-fail-load", (_event, code, _description, _url, isMainFrame) => {
+      if (isMainFrame) void recordOpenFailure({ kind: "page", code });
+    });
     window.webContents.on("page-title-updated", (event) => event.preventDefault());
     window.setTitle(target?.path ? `${target.path} — ${APP_TITLE}` : APP_TITLE);
     window.webContents.on("will-prevent-unload", async () => {
@@ -672,7 +684,7 @@ app.on("will-quit", (event) => {
   if (shutdownStarted) return;
   event.preventDefault();
   shutdownStarted = true;
-  Promise.allSettled([...closingServices, settingsWrite]).finally(() => app.exit(0));
+  Promise.allSettled([...closingServices, settingsWrite, recordOpenFailure.flush()]).finally(() => app.exit(0));
 });
 
 }

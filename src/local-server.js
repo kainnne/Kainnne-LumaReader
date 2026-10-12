@@ -625,12 +625,36 @@ function streamFile(request, response, filePath, stat, mime, allowRange = false)
     headers["Content-Range"] = `bytes ${start}-${end}/${stat.size}`;
   }
   headers["Content-Length"] = Math.max(0, end - start + 1);
-  response.writeHead(status, headers);
-  if (request.method === "HEAD") {
+  if (request.method === "HEAD" || stat.size === 0) {
+    response.writeHead(status, headers);
     response.end();
     return;
   }
-  fs.createReadStream(filePath, { start, end }).pipe(response);
+  // Opening/reading can fail after stat (deleted file, cloud storage or I/O).
+  // Keep that failure inside this request, never as an unhandled stream error.
+  return new Promise((resolve, reject) => {
+    const stream = fs.createReadStream(filePath, { start, end });
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      stream.unpipe(response);
+      stream.destroy();
+      response.removeListener("finish", complete);
+      response.removeListener("close", complete);
+      error ? reject(error) : resolve();
+    };
+    const complete = () => finish();
+    stream.on("error", finish);
+    response.on("error", finish);
+    response.once("finish", complete);
+    response.once("close", complete);
+    stream.once("open", () => {
+      if (settled || response.destroyed) return complete();
+      response.writeHead(status, headers);
+      stream.pipe(response);
+    });
+  });
 }
 
 function publicDocumentTypes() {
@@ -638,11 +662,12 @@ function publicDocumentTypes() {
 }
 
 class LocalReaderService {
-  constructor({ rendererRoot, libraryRoot = null, accessToken = null }) {
+  constructor({ rendererRoot, libraryRoot = null, accessToken = null, onRequestError = null }) {
     // Native realpath matches fs.promises.realpath, including Windows 8.3 aliases.
     this.rendererRoot = fs.realpathSync.native(path.resolve(rendererRoot));
     this.libraryRoot = null;
     this.accessToken = accessToken;
+    this.onRequestError = onRequestError;
     this.libraryIndex = null;
     this.server = null;
     this.port = null;
@@ -1024,14 +1049,14 @@ class LocalReaderService {
       const { stat, type } = await statDocument(filePath);
       if (!type.binary) throw new HttpError("Text documents must use the document endpoint", 415, "TEXT_DOCUMENT");
       await this.preflightBinary(filePath, type, stat);
-      streamFile(request, response, filePath, stat, documentContentType(type), type.kind === "pdf");
+      await streamFile(request, response, filePath, stat, documentContentType(type), type.kind === "pdf");
       return true;
     }
     if (url.pathname === "/api/media") {
       const filePath = this.resolveMedia(url.searchParams.get("path") || "", url.searchParams.get("from") || "");
       const stat = await fsp.stat(filePath);
       if (!stat.isFile() || stat.size > MAX_MEDIA_BYTES) throw new HttpError("Media is unavailable or exceeds the 32 MB limit", 413, "MEDIA_TOO_LARGE");
-      streamFile(request, response, filePath, stat, mediaContentType(filePath), false);
+      await streamFile(request, response, filePath, stat, mediaContentType(filePath), false);
       return true;
     }
     return false;
@@ -1050,7 +1075,7 @@ class LocalReaderService {
     if (!isInside(this.rendererRoot, filePath)) throw new HttpError("Static path is outside the application", 403, "PATH_OUTSIDE_RENDERER");
     const stat = await fsp.stat(filePath);
     if (!stat.isFile()) throw new HttpError("Static file not found", 404, "STATIC_NOT_FOUND");
-    streamFile(request, response, filePath, stat, staticContentType(filePath), false);
+    await streamFile(request, response, filePath, stat, staticContentType(filePath), false);
   }
 
   async route(request, response) {
@@ -1071,7 +1096,12 @@ class LocalReaderService {
       }
       await this.serveStatic(request, response, url.pathname);
     } catch (error) {
-      sendError(response, error);
+      if (!(error instanceof HttpError)) {
+        try { this.onRequestError?.({ kind: "request", code: error.code, headersSent: Boolean(response.headersSent) }); } catch {}
+      }
+      if (response.destroyed || response.writableEnded) return;
+      if (response.headersSent) response.destroy();
+      else sendError(response, error);
     }
   }
 
