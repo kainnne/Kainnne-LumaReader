@@ -31,7 +31,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
-    <script src="./app.js?v=1.5.0" defer></script>
+    <script src="./app.js?v=1.5.1" defer></script>
     <script src="./download-language.js" defer></script>
     <title>Kain³e LumaReader</title>
   </head>
@@ -86,10 +86,10 @@
           <div class="download-specs" aria-label="Installer formats">
             <span data-copy="macos-spec">Universal app · Apple silicon + Intel · DMG</span>
             <span data-copy="windows-spec">64-bit Windows · Setup installer</span>
-            <span><span data-copy="linux-spec">AppImage · Tested on Ubuntu 22.04 x64</span><br /><a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.0/Kainnne-LumaReader-1.5.0-Linux-x64.deb" data-copy="linux-deb">Ubuntu 22.04 / 24.04 · .deb download</a></span>
+            <span><span data-copy="linux-spec">AppImage · Tested on Ubuntu 22.04 x64</span><br /><a href="https://github.com/kainnne/Kainnne-LumaReader/releases/download/v1.5.1/Kainnne-LumaReader-1.5.1-Linux-x64.deb" data-copy="linux-deb">Ubuntu 22.04 / 24.04 · .deb download</a></span>
           </div>
 
-          <p class="download-note" id="download-note" data-copy="download-note">Desktop v1.5.0 · macOS, Windows and Linux</p>
+          <p class="download-note" id="download-note" data-copy="download-note">Desktop v1.5.1 · macOS, Windows and Linux</p>
           <details class="download-activity" id="download-activity">
             <summary data-copy="download-activity-summary">Download activity</summary>
             <p id="download-activity-count" aria-live="polite" data-copy="download-activity-loading">Checking the count…</p>
@@ -139,16 +139,16 @@
         <div class="release-heading">
           <div>
             <p class="section-label" data-copy="release-label">VERSION HISTORY</p>
-            <h2 id="release-title" data-copy="release-title">LumaReader 1.5.0 · Desktop, Web and embed</h2>
+            <h2 id="release-title" data-copy="release-title">LumaReader 1.5.1 · Desktop opening fix</h2>
           </div>
-          <time datetime="2026-10-06" data-copy="release-date">October 6, 2026</time>
+          <time datetime="2026-10-12" data-copy="release-date">October 12, 2026</time>
         </div>
         <div class="release-grid">
           <article>
             <span class="release-number">01</span>
             <div>
-              <h3 data-copy="release-1-title">Arrange Markdown for PDF reports</h3>
-              <p data-copy="release-1-body">Arrange text and images in a separate layout workspace. Drag blocks into columns, resize their width, group selections, and undo changes. Paper size, typography, footer and page numbering remain controllable; your original Markdown stays unchanged.</p>
+              <h3 data-copy="release-1-title">Keep file errors inside one request</h3>
+              <p data-copy="release-1-body">Empty or unreadable resources and cancelled reads no longer leave unhandled file-stream errors in the desktop main process. The existing interface, editing and PDF layout features stay unchanged.</p>
             </div>
           </article>
           <article>
@@ -161,13 +161,13 @@
           <article>
             <span class="release-number">03</span>
             <div>
-              <h3 data-copy="release-3-title">One icon system, with immediate hints</h3>
-              <p data-copy="release-3-body">Desktop, Web and embedded readers share a consistent icon toolbar with immediate function hints. Reading mode is visible by default on desktop and Web. The desktop Agent CLI exports PDFs through the same layout and rendering engine.</p>
+              <h3 data-copy="release-3-title">Private, local opening diagnostics</h3>
+              <p data-copy="release-3-body">A bounded local log records versions, timestamps and error codes for opening failures. It excludes document names, paths, contents, URLs and tokens, and is not uploaded.</p>
             </div>
           </article>
         </div>
         <div class="release-links">
-          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.5.0"><span data-copy="release-notes-link">Read the 1.5.0 release notes</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/kainnne/Kainnne-LumaReader/releases/tag/v1.5.1"><span data-copy="release-notes-link">Read the 1.5.1 release notes</span><span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
